@@ -1,0 +1,48 @@
+name: lablio
+description: "Track your lab results, monitor biomarkers, and understand your health."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Backend
+  supabase_flutter: ^2.8.4
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Navigation
+  go_router: ^14.6.3
+
+  # Charts
+  fl_chart: ^0.70.2
+
+  # File picker (PDF upload)
+  file_picker: ^8.3.7
+
+  # Open URLs / PDFs
+  url_launcher: ^6.3.1
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  google_fonts: ^6.2.1
+  shimmer: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/data/biomarkers.json
