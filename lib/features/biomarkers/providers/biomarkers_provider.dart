@@ -67,7 +67,8 @@ final biomarkerHistoryProvider =
       ),
 );
 
-// Unique biomarkers the user has logged (deduplicated by id)
+// Unique biomarkers the user has logged (latest entry per biomarker).
+// Entries arrive newest-first (date desc) so the first seen per id is latest.
 final trackedBiomarkersProvider =
     Provider<AsyncValue<List<BiomarkerEntryModel>>>((ref) {
   final entriesAsync = ref.watch(biomarkerEntriesProvider);
@@ -76,3 +77,12 @@ final trackedBiomarkersProvider =
     return entries.where((e) => seen.add(e.biomarkerId)).toList();
   });
 });
+
+// ── Biomarkers list UI state (search / filter / sort) ──────────────────────
+enum BiomarkerFilter { all, normal, outOfRange, high, low }
+
+enum BiomarkerSort { name, recent, status }
+
+/// Set by the Home screen before navigating so the list opens pre-filtered.
+final biomarkerInitialFilterProvider =
+    StateProvider<BiomarkerFilter>((ref) => BiomarkerFilter.all);

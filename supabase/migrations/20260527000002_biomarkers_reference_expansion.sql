@@ -1,0 +1,52 @@
+-- ============================================================
+-- Lablio – Biomarkers reference table expansion (+42 markers)
+-- Brings the reference set from 59 to 101 biomarkers.
+-- Adds a new "Cardiac" category plus additional CBC differential,
+-- kidney, liver, lipid, thyroid antibody, diabetes, vitamin,
+-- hormone, and cancer markers.
+-- ============================================================
+
+insert into public.biomarkers (id, name, short_name, category, unit, ref_range_low, ref_range_high, description) values
+  ('basophils_pct', 'Basophils', 'Baso%', 'Complete Blood Count', '%', 0.0, 1.0, 'White blood cells involved in allergic and inflammatory responses.'),
+  ('rdw', 'Red Cell Distribution Width', 'RDW', 'Complete Blood Count', '%', 11.5, 14.5, 'Variation in red blood cell size. Elevated values can indicate certain anemias.'),
+  ('mpv', 'Mean Platelet Volume', 'MPV', 'Complete Blood Count', 'fL', 7.5, 11.5, 'Average size of platelets. Helps evaluate platelet production and clotting.'),
+  ('neutrophils_abs', 'Neutrophils (Absolute)', 'Neut#', 'Complete Blood Count', 'K/µL', 1.8, 7.7, 'Absolute count of neutrophils; first responders to bacterial infection.'),
+  ('lymphocytes_abs', 'Lymphocytes (Absolute)', 'Lymph#', 'Complete Blood Count', 'K/µL', 1.0, 4.8, 'Absolute count of lymphocytes, central to the immune response.'),
+  ('phosphorus', 'Phosphorus', 'Phos', 'Metabolic Panel', 'mg/dL', 2.5, 4.5, 'Mineral important for bone health and energy metabolism.'),
+  ('anion_gap', 'Anion Gap', 'AG', 'Metabolic Panel', 'mEq/L', 8.0, 16.0, 'Calculated value used to assess acid-base balance and metabolic disorders.'),
+  ('cystatin_c', 'Cystatin C', 'CysC', 'Metabolic Panel', 'mg/L', 0.5, 1.0, 'Marker of kidney filtration, often more sensitive than creatinine.'),
+  ('ggt', 'Gamma-Glutamyl Transferase', 'GGT', 'Liver Function', 'U/L', 9.0, 48.0, 'Liver enzyme. Elevated in bile duct issues and alcohol use.'),
+  ('ldh', 'Lactate Dehydrogenase', 'LDH', 'Liver Function', 'U/L', 140.0, 280.0, 'Enzyme found in many tissues; elevated with tissue damage.'),
+  ('globulin', 'Globulin', 'Glob', 'Liver Function', 'g/dL', 2.0, 3.5, 'Group of proteins including antibodies; reflects immune and liver status.'),
+  ('vldl', 'VLDL Cholesterol', 'VLDL', 'Lipid Panel', 'mg/dL', 5.0, 40.0, 'Very-low-density lipoprotein that carries triglycerides in the blood.'),
+  ('apob', 'Apolipoprotein B', 'ApoB', 'Lipid Panel', 'mg/dL', 0.0, 90.0, 'Protein on atherogenic particles; strong predictor of cardiovascular risk.'),
+  ('apoa1', 'Apolipoprotein A1', 'ApoA1', 'Lipid Panel', 'mg/dL', 120.0, 999.0, 'Main protein in HDL; higher levels are protective against heart disease.'),
+  ('lpa', 'Lipoprotein(a)', 'Lp(a)', 'Lipid Panel', 'nmol/L', 0.0, 75.0, 'Genetically determined lipoprotein; elevated levels raise cardiovascular risk.'),
+  ('total_t4', 'Total T4', 'TT4', 'Thyroid', 'µg/dL', 4.5, 12.0, 'Total thyroxine, both bound and free forms.'),
+  ('total_t3', 'Total T3', 'TT3', 'Thyroid', 'ng/dL', 80.0, 200.0, 'Total triiodothyronine; reflects overall thyroid hormone production.'),
+  ('tpo_ab', 'Thyroid Peroxidase Antibodies', 'TPO Ab', 'Thyroid', 'IU/mL', 0.0, 34.0, 'Autoantibodies elevated in Hashimoto''s and other autoimmune thyroid disease.'),
+  ('reverse_t3', 'Reverse T3', 'rT3', 'Thyroid', 'ng/dL', 9.2, 24.1, 'Inactive form of T3; can rise during illness or stress.'),
+  ('c_peptide', 'C-Peptide', 'C-Pep', 'Diabetes', 'ng/mL', 0.8, 3.1, 'Byproduct of insulin production; reflects how much insulin the body makes.'),
+  ('glucose_2hr', '2-Hour Glucose (OGTT)', '2h-Gluc', 'Diabetes', 'mg/dL', 0.0, 140.0, 'Blood sugar 2 hours after a glucose load. Used to diagnose diabetes.'),
+  ('fructosamine', 'Fructosamine', 'Fruct', 'Diabetes', 'µmol/L', 200.0, 285.0, 'Reflects average blood sugar over 2-3 weeks.'),
+  ('vitamin_b6', 'Vitamin B6', 'B6', 'Vitamins & Minerals', 'µg/L', 5.0, 50.0, 'Vitamin essential for metabolism and nervous system function.'),
+  ('vitamin_a', 'Vitamin A (Retinol)', 'Vit A', 'Vitamins & Minerals', 'µg/dL', 38.0, 98.0, 'Fat-soluble vitamin important for vision, immunity, and skin.'),
+  ('vitamin_e', 'Vitamin E', 'Vit E', 'Vitamins & Minerals', 'mg/L', 5.5, 17.0, 'Fat-soluble antioxidant that protects cells from damage.'),
+  ('copper', 'Copper', 'Cu', 'Vitamins & Minerals', 'µg/dL', 70.0, 140.0, 'Trace mineral involved in iron metabolism and connective tissue.'),
+  ('selenium', 'Selenium', 'Se', 'Vitamins & Minerals', 'µg/L', 70.0, 150.0, 'Trace mineral with antioxidant and thyroid functions.'),
+  ('transferrin_sat', 'Transferrin Saturation', 'TSAT', 'Vitamins & Minerals', '%', 20.0, 50.0, 'Percentage of transferrin bound to iron; used to assess iron status.'),
+  ('prolactin', 'Prolactin', 'PRL', 'Hormones', 'ng/mL', 4.0, 15.2, 'Hormone involved in lactation; elevated levels can affect fertility.'),
+  ('shbg', 'Sex Hormone Binding Globulin', 'SHBG', 'Hormones', 'nmol/L', 16.5, 55.9, 'Protein that binds sex hormones, affecting how much is available to tissues.'),
+  ('pth', 'Parathyroid Hormone', 'PTH', 'Hormones', 'pg/mL', 15.0, 65.0, 'Regulates calcium and phosphorus balance in the body.'),
+  ('progesterone', 'Progesterone', 'Prog', 'Hormones', 'ng/mL', 0.1, 0.9, 'Hormone involved in the menstrual cycle and pregnancy. Ranges vary by sex and cycle phase.'),
+  ('nt_probnp', 'NT-proBNP', 'NT-proBNP', 'Cardiac', 'pg/mL', 0.0, 125.0, 'Marker of heart strain; elevated in heart failure.'),
+  ('troponin_i', 'Troponin I', 'TnI', 'Cardiac', 'ng/mL', 0.0, 0.04, 'Protein released when heart muscle is damaged. Key marker for heart attack.'),
+  ('ck', 'Creatine Kinase', 'CK', 'Cardiac', 'U/L', 30.0, 200.0, 'Enzyme found in muscle and heart; elevated with muscle or cardiac damage.'),
+  ('ck_mb', 'Creatine Kinase-MB', 'CK-MB', 'Cardiac', 'ng/mL', 0.0, 5.0, 'Heart-specific form of creatine kinase; used to detect cardiac injury.'),
+  ('cea', 'Carcinoembryonic Antigen', 'CEA', 'Cancer Markers', 'ng/mL', 0.0, 3.0, 'Tumor marker used to monitor certain cancers, especially colorectal.'),
+  ('ca125', 'Cancer Antigen 125', 'CA-125', 'Cancer Markers', 'U/mL', 0.0, 35.0, 'Tumor marker associated with ovarian cancer.'),
+  ('afp', 'Alpha-Fetoprotein', 'AFP', 'Cancer Markers', 'ng/mL', 0.0, 10.0, 'Tumor marker for liver and germ cell cancers.'),
+  ('ca199', 'Cancer Antigen 19-9', 'CA 19-9', 'Cancer Markers', 'U/mL', 0.0, 37.0, 'Tumor marker associated with pancreatic and biliary cancers.'),
+  ('ca153', 'Cancer Antigen 15-3', 'CA 15-3', 'Cancer Markers', 'U/mL', 0.0, 30.0, 'Tumor marker used to monitor breast cancer.'),
+  ('fibrinogen', 'Fibrinogen', 'Fib', 'Inflammation', 'mg/dL', 200.0, 400.0, 'Clotting protein that also rises with inflammation.')
+on conflict (id) do nothing;

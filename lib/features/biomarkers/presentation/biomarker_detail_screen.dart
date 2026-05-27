@@ -103,10 +103,8 @@ class BiomarkerDetailScreen extends ConsumerWidget {
       children: [
         _LatestValueCard(entry: latest),
         const SizedBox(height: 16),
-        if (entries.length >= 2) ...[
-          _TrendChart(entries: entries),
-          const SizedBox(height: 16),
-        ],
+        _TrendChart(entries: entries),
+        const SizedBox(height: 16),
         Text('History', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         ...entries.reversed.map(
@@ -224,14 +222,22 @@ class _TrendChart extends StatelessWidget {
     final refLow = entries.first.refRangeLow;
     final refHigh = entries.first.refRangeHigh;
     final values = entries.map((e) => e.value).toList();
-    final minY = (refLow != null
+    var minY = (refLow != null
             ? [refLow, ...values].reduce((a, b) => a < b ? a : b)
             : values.reduce((a, b) => a < b ? a : b)) *
         0.9;
-    final maxY = (refHigh != null
+    var maxY = (refHigh != null
             ? [refHigh, ...values].reduce((a, b) => a > b ? a : b)
             : values.reduce((a, b) => a > b ? a : b)) *
         1.1;
+    // Guard against a flat/zero range (e.g. a single value of 0, or all-equal
+    // values) which would collapse the chart's vertical axis.
+    if (maxY <= minY) {
+      final mid = maxY == 0 ? 1.0 : maxY;
+      minY = mid * 0.8;
+      maxY = mid * 1.2;
+    }
+    final single = entries.length == 1;
 
     return Card(
       child: Padding(
@@ -250,6 +256,55 @@ class _TrendChart extends StatelessWidget {
                 LineChartData(
                   minY: minY,
                   maxY: maxY,
+                  minX: single ? -0.5 : null,
+                  maxX: single ? 0.5 : null,
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipColor: (_) => AppColors.textPrimary,
+                      tooltipRoundedRadius: 8,
+                      tooltipPadding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      getTooltipItems: (spots) => spots.map((s) {
+                        final idx = s.x.toInt();
+                        final dateStr = (idx >= 0 && idx < entries.length)
+                            ? DateFormat('MMM d, yyyy').format(entries[idx].date)
+                            : '';
+                        return LineTooltipItem(
+                          '${s.y}\n',
+                          const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: dateStr,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                    getTouchedSpotIndicator: (barData, indexes) => indexes
+                        .map((i) => TouchedSpotIndicatorData(
+                              const FlLine(
+                                  color: AppColors.primary, strokeWidth: 1.5),
+                              FlDotData(
+                                getDotPainter: (spot, _, __, ___) =>
+                                    FlDotCirclePainter(
+                                  radius: 6,
+                                  color: AppColors.primary,
+                                  strokeWidth: 3,
+                                  strokeColor: Colors.white,
+                                ),
+                              ),
+                            ))
+                        .toList(),
+                  ),
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,

@@ -216,17 +216,35 @@ class _PdfButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: () async {
         final uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Could not open PDF'),
-                behavior: SnackBarBehavior.floating,
-              ),
+        // Try the external browser/viewer first, then fall back to the
+        // in-app webview. Don't gate on canLaunchUrl — it can report false
+        // negatives on Android even when the URL is perfectly launchable.
+        bool launched = false;
+        try {
+          launched = await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+        } catch (_) {
+          launched = false;
+        }
+        if (!launched) {
+          try {
+            launched = await launchUrl(
+              uri,
+              mode: LaunchMode.inAppBrowserView,
             );
+          } catch (_) {
+            launched = false;
           }
+        }
+        if (!launched && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not open PDF'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       },
       style: OutlinedButton.styleFrom(

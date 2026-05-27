@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../constants/app_colors.dart';
 import '../../features/auth/presentation/auth_gate.dart';
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
 import '../../features/biomarkers/data/biomarker_model.dart';
@@ -11,6 +13,7 @@ import '../../features/biomarkers/presentation/biomarker_detail_screen.dart';
 import '../../features/biomarkers/presentation/biomarkers_screen.dart';
 import '../../features/biomarkers/presentation/browse_biomarkers_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/reports/data/report_model.dart';
 import '../../features/reports/presentation/add_report_screen.dart';
@@ -31,10 +34,60 @@ class AppRoutes {
   static const biomarkerDetail = '/biomarkers/detail';
   static const addEntry = '/biomarkers/add-entry';
   static const profile = '/profile';
+  static const editProfile = '/profile/edit';
 }
+
+/// Notifies GoRouter whenever Supabase auth state changes (sign-in / sign-out),
+/// so the `redirect` below re-runs and moves the user to the right place.
+class _AuthChangeNotifier extends ChangeNotifier {
+  _AuthChangeNotifier(Stream<AuthState> stream) {
+    _subscription = stream.listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<AuthState> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+// Routes reachable while signed out (excluding splash, which is transient).
+const _authRoutes = {
+  AppRoutes.login,
+  AppRoutes.signup,
+  AppRoutes.forgotPassword,
+};
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
+  refreshListenable:
+      _AuthChangeNotifier(Supabase.instance.client.auth.onAuthStateChange),
+  redirect: (context, state) {
+    final loggedIn = Supabase.instance.client.auth.currentSession != null;
+    final loc = state.matchedLocation;
+
+    // Splash is just a launch point — always resolve it to a real screen
+    // based on session state (otherwise we get stuck on the spinner, e.g.
+    // after a hot restart which resets the location to '/').
+    if (loc == AppRoutes.splash) {
+      return loggedIn ? AppRoutes.home : AppRoutes.login;
+    }
+
+    final onAuthRoute = _authRoutes.contains(loc);
+
+    // Not signed in and trying to reach a protected route → login.
+    if (!loggedIn && !onAuthRoute) return AppRoutes.login;
+
+    // Signed in but sitting on the login/signup screens → home.
+    if (loggedIn &&
+        (loc == AppRoutes.login || loc == AppRoutes.signup)) {
+      return AppRoutes.home;
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       path: AppRoutes.splash,
@@ -50,7 +103,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.forgotPassword,
-      builder: (_, __) => const _ForgotPasswordScreen(),
+      builder: (_, __) => const ForgotPasswordScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) => _AppShell(child: child),
@@ -83,6 +136,10 @@ final appRouter = GoRouter(
         final report = state.extra as ReportModel;
         return ReportDetailScreen(report: report);
       },
+    ),
+    GoRoute(
+      path: AppRoutes.editProfile,
+      builder: (_, __) => const EditProfileScreen(),
     ),
     GoRoute(
       path: AppRoutes.browseBiomarkers,
@@ -175,54 +232,4 @@ class _AppShell extends StatelessWidget {
   }
 }
 
-class _ForgotPasswordScreen extends StatefulWidget {
-  const _ForgotPasswordScreen();
-
-  @override
-  State<_ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
-}
-
-class _ForgotPasswordScreenState extends State<_ForgotPasswordScreen> {
-  final _controller = TextEditingController();
-  bool _sent = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reset Password')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Enter your email to receive a password reset link.',
-                style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: 24),
-            if (_sent)
-              const Text(
-                '✅ Reset link sent! Check your email.',
-                style: TextStyle(color: AppColors.normal),
-              )
-            else ...[
-              TextField(
-                controller: _controller,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  await Supabase.instance.client.auth
-                      .resetPasswordForEmail(_controller.text.trim());
-                  setState(() => _sent = true);
-                },
-                child: const Text('Send Reset Link'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
 

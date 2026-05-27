@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../profile/providers/profile_provider.dart';
 import '../data/biomarker_entry_model.dart';
 import '../data/biomarker_model.dart';
 import '../providers/biomarkers_provider.dart';
@@ -66,6 +67,8 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     setState(() => _loading = true);
 
     final biomarker = widget.biomarker;
+    final sex = ref.read(profileProvider).valueOrNull?.sex;
+    final range = biomarker?.rangeForSex(sex);
     final entry = BiomarkerEntryModel(
       id: const Uuid().v4(),
       userId: Supabase.instance.client.auth.currentUser!.id,
@@ -78,8 +81,8 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
-      refRangeLow: biomarker?.refRangeLow,
-      refRangeHigh: biomarker?.refRangeHigh,
+      refRangeLow: range?.low,
+      refRangeHigh: range?.high,
       reportId: widget.reportId,
       createdAt: DateTime.now(),
     );
@@ -105,12 +108,12 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   }
 
   // Determine status colour based on typed value + ref range
-  Color? _statusColor() {
+  Color? _statusColor(String? sex) {
     final biomarker = widget.biomarker;
     if (biomarker == null) return null;
     final val = double.tryParse(_valueController.text);
     if (val == null) return null;
-    final status = biomarker.statusForValue(val);
+    final status = biomarker.statusForValue(val, sex: sex);
     return switch (status) {
       RangeStatus.normal => AppColors.normal,
       RangeStatus.high => AppColors.high,
@@ -122,8 +125,9 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   @override
   Widget build(BuildContext context) {
     final biomarker = widget.biomarker;
-    final hasRange =
-        biomarker?.refRangeLow != null && biomarker?.refRangeHigh != null;
+    final sex = ref.watch(profileProvider).valueOrNull?.sex;
+    final range = biomarker?.rangeForSex(sex);
+    final hasRange = range?.low != null && range?.high != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -160,14 +164,19 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                     controller: _valueController,
                     focusNode: _valueFocus,
                     unit: biomarker?.unit,
-                    statusColor: _statusColor,
+                    statusColor: () => _statusColor(sex),
                     onChanged: (_) => setState(() {}),
                   ),
 
                   // ── Live range hint ──────────────────────────────────
                   if (hasRange) ...[
                     const SizedBox(height: 10),
-                    _RangeHint(biomarker: biomarker!),
+                    _RangeHint(
+                      low: range!.low!,
+                      high: range.high!,
+                      unit: biomarker!.unit,
+                      sexSpecific: biomarker.hasSexSpecificRange && sex != null,
+                    ),
                   ],
 
                   const SizedBox(height: 24),
@@ -328,7 +337,7 @@ class _ValueField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
-      autofocus: true,
+      autofocus: false,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       textInputAction: TextInputAction.next,
       onChanged: onChanged,
@@ -400,8 +409,16 @@ class _ValueField extends StatelessWidget {
 }
 
 class _RangeHint extends StatelessWidget {
-  final BiomarkerModel biomarker;
-  const _RangeHint({required this.biomarker});
+  final double low;
+  final double high;
+  final String unit;
+  final bool sexSpecific;
+  const _RangeHint({
+    required this.low,
+    required this.high,
+    required this.unit,
+    required this.sexSpecific,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -409,10 +426,12 @@ class _RangeHint extends StatelessWidget {
       children: [
         const Icon(Icons.info_outline, size: 13, color: AppColors.textTertiary),
         const SizedBox(width: 5),
-        Text(
-          'Reference range: ${biomarker.refRangeLow} – ${biomarker.refRangeHigh} ${biomarker.unit}',
-          style: const TextStyle(
-              fontSize: 12, color: AppColors.textTertiary),
+        Expanded(
+          child: Text(
+            'Reference range: $low – $high $unit'
+            '${sexSpecific ? ' (for your profile)' : ''}',
+            style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+          ),
         ),
       ],
     );

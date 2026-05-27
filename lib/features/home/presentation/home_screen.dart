@@ -45,6 +45,17 @@ class HomeScreen extends ConsumerWidget {
             _StatsRow(
               reportsAsync: reportsAsync,
               entriesAsync: entriesAsync,
+              onReports: () => context.go(AppRoutes.reports),
+              onResults: () {
+                ref.read(biomarkerInitialFilterProvider.notifier).state =
+                    BiomarkerFilter.all;
+                context.go(AppRoutes.biomarkers);
+              },
+              onOutOfRange: () {
+                ref.read(biomarkerInitialFilterProvider.notifier).state =
+                    BiomarkerFilter.outOfRange;
+                context.go(AppRoutes.biomarkers);
+              },
             ),
             const SizedBox(height: 24),
             _QuickActions(),
@@ -58,7 +69,8 @@ class HomeScreen extends ConsumerWidget {
               data: (entries) => entries.isEmpty
                   ? _buildEmptyResults(context)
                   : Column(
-                      children: entries
+                      children: ([...entries]
+                            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
                           .take(5)
                           .map((e) => Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
@@ -100,38 +112,50 @@ class HomeScreen extends ConsumerWidget {
 class _StatsRow extends StatelessWidget {
   final AsyncValue reportsAsync;
   final AsyncValue entriesAsync;
+  final VoidCallback onReports;
+  final VoidCallback onResults;
+  final VoidCallback onOutOfRange;
 
-  const _StatsRow({required this.reportsAsync, required this.entriesAsync});
+  const _StatsRow({
+    required this.reportsAsync,
+    required this.entriesAsync,
+    required this.onReports,
+    required this.onResults,
+    required this.onOutOfRange,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final reportCount =
-        reportsAsync.valueOrNull?.length ?? 0;
-    final entryCount =
-        entriesAsync.valueOrNull?.length ?? 0;
+    final reportCount = reportsAsync.valueOrNull?.length ?? 0;
+    final entryCount = entriesAsync.valueOrNull?.length ?? 0;
 
     // Count out-of-range entries (latest per biomarker)
     final entries = entriesAsync.valueOrNull ?? [];
-    final outOfRange = entries
-        .where((e) => e.isHigh || e.isLow)
-        .length;
+    final outOfRange = entries.where((e) => e.isHigh || e.isLow).length;
 
     return Row(
       children: [
         Expanded(
             child: _StatCard(
-                label: 'Reports', value: '$reportCount', icon: Icons.folder_outlined)),
+                label: 'Reports',
+                value: '$reportCount',
+                icon: Icons.folder_outlined,
+                onTap: onReports)),
         const SizedBox(width: 12),
         Expanded(
             child: _StatCard(
-                label: 'Results', value: '$entryCount', icon: Icons.science_outlined)),
+                label: 'Results',
+                value: '$entryCount',
+                icon: Icons.science_outlined,
+                onTap: onResults)),
         const SizedBox(width: 12),
         Expanded(
             child: _StatCard(
                 label: 'Out of Range',
                 value: '$outOfRange',
                 icon: Icons.warning_amber_outlined,
-                valueColor: outOfRange > 0 ? AppColors.high : null)),
+                valueColor: outOfRange > 0 ? AppColors.high : null,
+                onTap: onOutOfRange)),
       ],
     );
   }
@@ -142,36 +166,50 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color? valueColor;
+  final VoidCallback? onTap;
 
   const _StatCard({
     required this.label,
     required this.value,
     required this.icon,
     this.valueColor,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: AppColors.primary, size: 20),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: valueColor ?? AppColors.textPrimary,
-                  ),
-            ),
-            Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontSize: 12)),
-          ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: AppColors.primary, size: 20),
+                  const Spacer(),
+                  if (onTap != null)
+                    const Icon(Icons.chevron_right,
+                        color: AppColors.textTertiary, size: 16),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: valueColor ?? AppColors.textPrimary,
+                    ),
+              ),
+              Text(label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontSize: 12)),
+            ],
+          ),
         ),
       ),
     );

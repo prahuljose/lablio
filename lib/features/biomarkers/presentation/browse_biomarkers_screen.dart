@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../profile/providers/profile_provider.dart';
 import '../data/biomarker_model.dart';
 import '../providers/biomarkers_provider.dart';
 
@@ -85,6 +86,7 @@ class _BrowseBiomarkersScreenState
                         (b) => _BiomarkerListTile(
                           biomarker: b,
                           reportId: widget.reportId,
+                          sex: ref.watch(profileProvider).valueOrNull?.sex,
                         ),
                       ),
                     ],
@@ -102,10 +104,12 @@ class _BrowseBiomarkersScreenState
 class _BiomarkerListTile extends StatelessWidget {
   final BiomarkerModel biomarker;
   final String? reportId;
-  const _BiomarkerListTile({required this.biomarker, this.reportId});
+  final String? sex;
+  const _BiomarkerListTile({required this.biomarker, this.reportId, this.sex});
 
   @override
   Widget build(BuildContext context) {
+    final range = biomarker.rangeForSex(sex);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -117,9 +121,9 @@ class _BiomarkerListTile extends StatelessWidget {
           children: [
             Text(biomarker.shortName,
                 style: Theme.of(context).textTheme.bodyMedium),
-            if (biomarker.refRangeLow != null && biomarker.refRangeHigh != null)
+            if (range.low != null && range.high != null)
               Text(
-                'Ref: ${biomarker.refRangeLow} – ${biomarker.refRangeHigh} ${biomarker.unit}',
+                'Ref: ${range.low} – ${range.high} ${biomarker.unit}',
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium

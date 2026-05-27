@@ -6,15 +6,99 @@ import '../../../core/router/app_router.dart';
 import '../data/biomarker_entry_model.dart';
 import '../providers/biomarkers_provider.dart';
 
-class BiomarkersScreen extends ConsumerWidget {
+class BiomarkersScreen extends ConsumerStatefulWidget {
   const BiomarkersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BiomarkersScreen> createState() => _BiomarkersScreenState();
+}
+
+class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
+  String _query = '';
+  BiomarkerFilter _filter = BiomarkerFilter.all;
+  BiomarkerSort _sort = BiomarkerSort.name;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pick up a filter requested by another screen (e.g. Home "Out of Range").
+    _filter = ref.read(biomarkerInitialFilterProvider);
+    // Reset so it doesn't stick on the next visit.
+    Future.microtask(() => ref
+        .read(biomarkerInitialFilterProvider.notifier)
+        .state = BiomarkerFilter.all);
+  }
+
+  bool _matchesFilter(BiomarkerEntryModel e) {
+    switch (_filter) {
+      case BiomarkerFilter.all:
+        return true;
+      case BiomarkerFilter.normal:
+        return e.isNormal;
+      case BiomarkerFilter.high:
+        return e.isHigh;
+      case BiomarkerFilter.low:
+        return e.isLow;
+      case BiomarkerFilter.outOfRange:
+        return e.isHigh || e.isLow;
+    }
+  }
+
+  int _statusRank(BiomarkerEntryModel e) {
+    if (e.isHigh) return 0;
+    if (e.isLow) return 1;
+    if (e.isNormal) return 2;
+    return 3;
+  }
+
+  List<BiomarkerEntryModel> _process(List<BiomarkerEntryModel> tracked) {
+    var list = tracked.where(_matchesFilter).toList();
+    if (_query.isNotEmpty) {
+      final q = _query.toLowerCase();
+      list = list
+          .where((e) => e.biomarkerName.toLowerCase().contains(q) ||
+              e.biomarkerCategory.toLowerCase().contains(q))
+          .toList();
+    }
+    switch (_sort) {
+      case BiomarkerSort.name:
+        list.sort((a, b) => a.biomarkerName.compareTo(b.biomarkerName));
+      case BiomarkerSort.recent:
+        list.sort((a, b) => b.date.compareTo(a.date));
+      case BiomarkerSort.status:
+        list.sort((a, b) {
+          final c = _statusRank(a).compareTo(_statusRank(b));
+          return c != 0 ? c : a.biomarkerName.compareTo(b.biomarkerName);
+        });
+    }
+    return list;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final trackedAsync = ref.watch(trackedBiomarkersProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Biomarkers')),
+      appBar: AppBar(
+        title: const Text('Biomarkers'),
+        actions: [
+          PopupMenuButton<BiomarkerSort>(
+            icon: const Icon(Icons.sort),
+            tooltip: 'Sort',
+            initialValue: _sort,
+            onSelected: (s) => setState(() => _sort = s),
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                  value: BiomarkerSort.name, child: Text('Sort: Name (A–Z)')),
+              PopupMenuItem(
+                  value: BiomarkerSort.recent,
+                  child: Text('Sort: Most recent')),
+              PopupMenuItem(
+                  value: BiomarkerSort.status, child: Text('Sort: Status')),
+            ],
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(AppRoutes.browseBiomarkers),
         icon: const Icon(Icons.add),
@@ -25,9 +109,46 @@ class BiomarkersScreen extends ConsumerWidget {
       body: trackedAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (tracked) => tracked.isEmpty
-            ? _buildEmpty(context)
-            : _buildList(context, tracked),
+        data: (tracked) {
+          if (tracked.isEmpty) return _buildEmpty(context);
+          final list = _process(tracked);
+          return Column(
+            children: [
+              _SearchBar(onChanged: (v) => setState(() => _query = v)),
+              _FilterChips(
+                selected: _filter,
+                onSelected: (f) => setState(() => _filter = f),
+              ),
+              Expanded(
+                child: list.isEmpty
+                    ? _buildNoMatches(context)
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+                        itemCount: list.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (_, i) =>
+                            _BiomarkerTile(entry: list[i]),
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNoMatches(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.filter_alt_off_outlined,
+              size: 48, color: AppColors.textTertiary),
+          const SizedBox(height: 12),
+          Text('No biomarkers match your filters',
+              style: Theme.of(context).textTheme.bodyMedium),
+        ],
       ),
     );
   }
@@ -49,44 +170,80 @@ class BiomarkersScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildList(BuildContext context, List<BiomarkerEntryModel> tracked) {
-    // Group by category
-    final grouped = <String, List<BiomarkerEntryModel>>{};
-    for (final entry in tracked) {
-      grouped.putIfAbsent(entry.biomarkerCategory, () => []).add(entry);
-    }
+class _SearchBar extends StatelessWidget {
+  final ValueChanged<String> onChanged;
+  const _SearchBar({required this.onChanged});
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        for (final category in grouped.keys) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8, top: 8),
-            child: Text(category,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.5,
-                    )),
-          ),
-          ...grouped[category]!.map(
-            (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _BiomarkerTile(entry: entry),
-            ),
-          ),
-        ],
-      ],
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: TextField(
+        onChanged: onChanged,
+        decoration: const InputDecoration(
+          hintText: 'Search biomarkers…',
+          prefixIcon: Icon(Icons.search),
+          isDense: true,
+        ),
+      ),
     );
   }
 }
 
-class _BiomarkerTile extends ConsumerWidget {
+class _FilterChips extends StatelessWidget {
+  final BiomarkerFilter selected;
+  final ValueChanged<BiomarkerFilter> onSelected;
+  const _FilterChips({required this.selected, required this.onSelected});
+
+  static const _labels = {
+    BiomarkerFilter.all: 'All',
+    BiomarkerFilter.outOfRange: 'Out of Range',
+    BiomarkerFilter.high: 'High',
+    BiomarkerFilter.low: 'Low',
+    BiomarkerFilter.normal: 'Normal',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: _labels.entries.map((e) {
+          final isSel = e.key == selected;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(e.value),
+              selected: isSel,
+              showCheckmark: false,
+              labelStyle: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSel ? Colors.white : AppColors.textSecondary,
+              ),
+              selectedColor: AppColors.primary,
+              backgroundColor: AppColors.surface,
+              side: BorderSide(
+                  color: isSel ? AppColors.primary : AppColors.divider),
+              onSelected: (_) => onSelected(e.key),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _BiomarkerTile extends StatelessWidget {
   final BiomarkerEntryModel entry;
   const _BiomarkerTile({required this.entry});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final statusColor = entry.isNormal
         ? AppColors.normal
         : entry.isHigh
@@ -131,20 +288,15 @@ class _BiomarkerTile extends ConsumerWidget {
                   children: [
                     Text(entry.biomarkerName,
                         style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text('Latest: ${entry.value} ${entry.unit}',
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    if (entry.refRangeLow != null &&
-                        entry.refRangeHigh != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'Ref: ${entry.refRangeLow} – ${entry.refRangeHigh} ${entry.unit}',
+                    const SizedBox(height: 2),
+                    Text(entry.biomarkerCategory,
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
-                            ?.copyWith(fontSize: 12),
-                      ),
-                    ],
+                            ?.copyWith(fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Text('Latest: ${entry.value} ${entry.unit}',
+                        style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
               ),
