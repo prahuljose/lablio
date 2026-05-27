@@ -1,8 +1,14 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/units/unit_converter.dart';
+import '../../../core/units/unit_system_provider.dart';
+import '../../../core/widgets/skeletons.dart';
+import '../../../core/widgets/status_style.dart';
 import '../data/biomarker_entry_model.dart';
 import '../providers/biomarkers_provider.dart';
 
@@ -107,7 +113,7 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
         foregroundColor: Colors.white,
       ),
       body: trackedAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (tracked) {
           if (tracked.isEmpty) return _buildEmpty(context);
@@ -117,7 +123,10 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
               _SearchBar(onChanged: (v) => setState(() => _query = v)),
               _FilterChips(
                 selected: _filter,
-                onSelected: (f) => setState(() => _filter = f),
+                onSelected: (f) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _filter = f);
+                },
               ),
               Expanded(
                 child: list.isEmpty
@@ -127,8 +136,10 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
                         itemCount: list.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 10),
-                        itemBuilder: (_, i) =>
-                            _BiomarkerTile(entry: list[i]),
+                        itemBuilder: (_, i) => _BiomarkerTile(
+                          entry: list[i],
+                          system: ref.watch(unitSystemProvider),
+                        ),
                       ),
               ),
             ],
@@ -143,7 +154,7 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.filter_alt_off_outlined,
+          Icon(Icons.filter_alt_off_outlined,
               size: 48, color: AppColors.textTertiary),
           const SizedBox(height: 12),
           Text('No biomarkers match your filters',
@@ -238,39 +249,32 @@ class _FilterChips extends StatelessWidget {
   }
 }
 
-class _BiomarkerTile extends StatelessWidget {
+class _BiomarkerTile extends ConsumerWidget {
   final BiomarkerEntryModel entry;
-  const _BiomarkerTile({required this.entry});
+  final UnitSystem system;
+  const _BiomarkerTile({required this.entry, required this.system});
 
   @override
-  Widget build(BuildContext context) {
-    final statusColor = entry.isNormal
-        ? AppColors.normal
-        : entry.isHigh
-            ? AppColors.high
-            : entry.isLow
-                ? AppColors.low
-                : AppColors.textTertiary;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final conv = UnitConverter.display(
+      biomarkerId: entry.biomarkerId,
+      value: entry.value,
+      unit: entry.unit,
+      system: system,
+    );
+    final status = StatusStyle.from(
+        isNormal: entry.isNormal, isHigh: entry.isHigh, isLow: entry.isLow);
 
-    final statusBg = entry.isNormal
-        ? AppColors.normalBg
-        : entry.isHigh
-            ? AppColors.highBg
-            : entry.isLow
-                ? AppColors.lowBg
-                : AppColors.surfaceVariant;
-
-    final statusLabel = entry.isNormal
-        ? 'Normal'
-        : entry.isHigh
-            ? 'High'
-            : entry.isLow
-                ? 'Low'
-                : '—';
+    // History for the sparkline (oldest → newest).
+    final history = (ref.watch(biomarkerEntriesProvider).valueOrNull ?? [])
+        .where((e) => e.biomarkerId == entry.biomarkerId)
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    final sparkValues = history.map((e) => e.value).toList();
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
         onTap: () => context.push(
           AppRoutes.biomarkerDetail,
           extra: {
@@ -278,53 +282,107 @@ class _BiomarkerTile extends StatelessWidget {
             'biomarkerName': entry.biomarkerName,
           },
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: IntrinsicHeight(
           child: Row(
             children: [
+              // Status accent bar.
+              Container(width: 4, color: status.color),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(entry.biomarkerName,
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 2),
-                    Text(entry.biomarkerCategory,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(fontSize: 12)),
-                    const SizedBox(height: 4),
-                    Text('Latest: ${entry.value} ${entry.unit}',
-                        style: Theme.of(context).textTheme.bodyMedium),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusBg,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(statusLabel,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        )),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(entry.biomarkerName,
+                                style:
+                                    Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 2),
+                            Text(entry.biomarkerCategory,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text('Latest: ${conv.value} ${conv.unit}',
+                                style: Theme.of(context).textTheme.bodyMedium),
+                          ],
+                        ),
+                      ),
+                      if (sparkValues.length >= 2) ...[
+                        const SizedBox(width: 10),
+                        _Sparkline(values: sparkValues, color: status.color),
+                      ],
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: status.bg,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(status.label,
+                                style: TextStyle(
+                                  color: status.color,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                )),
+                          ),
+                          const SizedBox(height: 4),
+                          Icon(Icons.chevron_right,
+                              color: AppColors.textTertiary, size: 18),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  const Icon(Icons.chevron_right,
-                      color: AppColors.textTertiary, size: 18),
-                ],
+                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Sparkline extends StatelessWidget {
+  final List<double> values;
+  final Color color;
+  const _Sparkline({required this.values, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final spots = [
+      for (var i = 0; i < values.length; i++) FlSpot(i.toDouble(), values[i])
+    ];
+    return SizedBox(
+      width: 56,
+      height: 30,
+      child: LineChart(
+        LineChartData(
+          gridData: const FlGridData(show: false),
+          titlesData: const FlTitlesData(show: false),
+          borderData: FlBorderData(show: false),
+          lineTouchData: const LineTouchData(enabled: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              curveSmoothness: 0.3,
+              color: color,
+              barWidth: 2,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: color.withValues(alpha: 0.12),
+              ),
+            ),
+          ],
         ),
       ),
     );

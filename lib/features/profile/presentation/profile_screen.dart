@@ -5,7 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/security/app_lock.dart';
+import '../../../core/theme/theme_mode_provider.dart';
+import '../../../core/units/unit_converter.dart';
+import '../../../core/units/unit_system_provider.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../biomarkers/providers/biomarkers_provider.dart';
+import '../data/account_service.dart';
 import '../data/profile_model.dart';
 import '../providers/profile_provider.dart';
 
@@ -62,13 +68,85 @@ class ProfileScreen extends ConsumerWidget {
           _HealthDetailsCard(profileAsync: profileAsync),
           const SizedBox(height: 16),
           Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Row(
+                children: [
+                  Icon(Icons.brightness_6_outlined,
+                      color: AppColors.textSecondary),
+                  const SizedBox(width: 16),
+                  const Expanded(child: Text('Appearance')),
+                  SegmentedButton<ThemeMode>(
+                    showSelectedIcon: false,
+                    style: const ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    segments: const [
+                      ButtonSegment(
+                          value: ThemeMode.system,
+                          icon: Icon(Icons.brightness_auto, size: 18),
+                          tooltip: 'System'),
+                      ButtonSegment(
+                          value: ThemeMode.light,
+                          icon: Icon(Icons.light_mode, size: 18),
+                          tooltip: 'Light'),
+                      ButtonSegment(
+                          value: ThemeMode.dark,
+                          icon: Icon(Icons.dark_mode, size: 18),
+                          tooltip: 'Dark'),
+                    ],
+                    selected: {ref.watch(themeModeProvider)},
+                    onSelectionChanged: (s) =>
+                        ref.read(themeModeProvider.notifier).set(s.first),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: SwitchListTile(
+              value: ref.watch(unitSystemProvider) == UnitSystem.si,
+              onChanged: (v) => ref.read(unitSystemProvider.notifier).set(
+                  v ? UnitSystem.si : UnitSystem.conventional),
+              secondary: Icon(Icons.straighten,
+                  color: AppColors.textSecondary),
+              title: const Text('SI units'),
+              subtitle: const Text('Show values in mmol/L, µmol/L, etc.'),
+              activeThumbColor: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: SwitchListTile(
+              value: ref.watch(appLockEnabledProvider),
+              onChanged: (v) => _toggleAppLock(context, ref, v),
+              secondary: Icon(Icons.fingerprint,
+                  color: AppColors.textSecondary),
+              title: const Text('Biometric lock'),
+              subtitle: const Text('Require unlock when opening the app'),
+              activeThumbColor: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.info_outline,
+                  leading: Icon(Icons.download_outlined,
+                      color: AppColors.textSecondary),
+                  title: const Text('Export my data'),
+                  subtitle: const Text('Download all results as CSV'),
+                  trailing: Icon(Icons.chevron_right,
+                      color: AppColors.textTertiary),
+                  onTap: () => _exportData(context, ref),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Icon(Icons.info_outline,
                       color: AppColors.textSecondary),
                   title: const Text('About Lablio'),
-                  trailing: const Icon(Icons.chevron_right,
+                  trailing: Icon(Icons.chevron_right,
                       color: AppColors.textTertiary),
                   onTap: () => _showAbout(context),
                 ),
@@ -86,8 +164,112 @@ class ProfileScreen extends ConsumerWidget {
               foregroundColor: AppColors.high,
             ),
           ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () => _confirmDeleteAccount(context, ref),
+            icon: const Icon(Icons.delete_forever_outlined,
+                color: AppColors.high, size: 20),
+            label: const Text('Delete account',
+                style: TextStyle(color: AppColors.high)),
+          ),
         ],
       ),
+    );
+  }
+
+  Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final entries = ref.read(biomarkerEntriesProvider).valueOrNull ?? [];
+    if (entries.isEmpty) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text('No results to export yet.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+    try {
+      await AccountService(Supabase.instance.client).exportEntries(entries);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('Export failed: $e'),
+        backgroundColor: AppColors.high,
+        behavior: SnackBarBehavior.floating,
+      ));
+    }
+  }
+
+  void _confirmDeleteAccount(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        var canDelete = false;
+        var deleting = false;
+        return StatefulBuilder(
+          builder: (ctx, setLocal) => AlertDialog(
+            title: const Text('Delete account'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'This permanently deletes your account, all reports, '
+                  'biomarker results, and uploaded files. This cannot be undone.',
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Type DELETE to confirm',
+                  ),
+                  onChanged: (v) =>
+                      setLocal(() => canDelete = v.trim().toUpperCase() == 'DELETE'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: deleting ? null : () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: (!canDelete || deleting)
+                    ? null
+                    : () async {
+                        setLocal(() => deleting = true);
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          await AccountService(Supabase.instance.client)
+                              .deleteAccount();
+                          await ref
+                              .read(_profileAuthRepoProvider)
+                              .signOut();
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                        } catch (e) {
+                          setLocal(() => deleting = false);
+                          messenger.showSnackBar(SnackBar(
+                            content: Text('Could not delete account: $e'),
+                            backgroundColor: AppColors.high,
+                            behavior: SnackBarBehavior.floating,
+                          ));
+                        }
+                      },
+                child: deleting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Delete forever',
+                        style: TextStyle(color: AppColors.high)),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -121,6 +303,28 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _toggleAppLock(
+      BuildContext context, WidgetRef ref, bool enable) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (!enable) {
+      await ref.read(appLockEnabledProvider.notifier).set(false);
+      return;
+    }
+    final service = ref.read(biometricServiceProvider);
+    if (!await service.isAvailable()) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text('No biometrics or device lock set up on this device.'),
+        backgroundColor: AppColors.high,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+    final ok = await service.authenticate('Confirm to enable biometric lock');
+    if (ok) {
+      await ref.read(appLockEnabledProvider.notifier).set(true);
+    }
   }
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {

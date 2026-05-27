@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/router/app_router.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../data/biomarker_entry_model.dart';
 import '../data/biomarker_model.dart';
@@ -89,7 +91,23 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
     try {
       await ref.read(biomarkerEntriesProvider.notifier).add(entry);
-      if (mounted) context.pop();
+      HapticFeedback.lightImpact();
+      if (!mounted) return;
+      if (widget.reportId != null) {
+        // Logging against a report — return to it (it shows linked results).
+        context.pop();
+      } else {
+        // Open this biomarker's results page, with the Biomarkers tab beneath
+        // it so Back returns to the list rather than the add/browse flow.
+        context.go(AppRoutes.biomarkers);
+        context.push(
+          AppRoutes.biomarkerDetail,
+          extra: {
+            'biomarkerId': widget.biomarkerId,
+            'biomarkerName': widget.biomarkerName,
+          },
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -202,12 +220,12 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                       fillColor: AppColors.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                             color: AppColors.divider, width: 1),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                             color: AppColors.divider, width: 1),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -242,7 +260,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
           color: AppColors.textSecondary,
@@ -270,7 +288,7 @@ class _InfoCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.biotech_outlined,
@@ -286,7 +304,7 @@ class _InfoCard extends StatelessWidget {
                         fontWeight: FontWeight.w600, fontSize: 15)),
                 const SizedBox(height: 2),
                 Text(biomarker.category,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13, color: AppColors.textSecondary)),
               ],
             ),
@@ -296,7 +314,7 @@ class _InfoCard extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withOpacity(0.12),
+              color: AppColors.primaryLight.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -341,7 +359,7 @@ class _ValueField extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       textInputAction: TextInputAction.next,
       onChanged: onChanged,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
@@ -349,7 +367,7 @@ class _ValueField extends StatelessWidget {
       ),
       decoration: InputDecoration(
         hintText: '0.0',
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.w700,
           color: AppColors.textTertiary,
@@ -362,7 +380,7 @@ class _ValueField extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 16),
                 child: Text(
                   unit!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
@@ -375,12 +393,12 @@ class _ValueField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide:
-              const BorderSide(color: AppColors.divider, width: 1.5),
+              BorderSide(color: AppColors.divider, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide:
-              const BorderSide(color: AppColors.divider, width: 1.5),
+              BorderSide(color: AppColors.divider, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -424,13 +442,13 @@ class _RangeHint extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.info_outline, size: 13, color: AppColors.textTertiary),
+        Icon(Icons.info_outline, size: 13, color: AppColors.textTertiary),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
             'Reference range: $low – $high $unit'
             '${sexSpecific ? ' (for your profile)' : ''}',
-            style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
           ),
         ),
       ],
@@ -461,7 +479,7 @@ class _DateTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.calendar_today_outlined,
@@ -471,13 +489,13 @@ class _DateTile extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Date of test',
+                Text('Date of test',
                     style: TextStyle(
                         fontSize: 12, color: AppColors.textSecondary)),
                 const SizedBox(height: 2),
                 Text(
                   DateFormat('MMMM d, yyyy').format(selectedDate),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary),
@@ -485,7 +503,7 @@ class _DateTile extends StatelessWidget {
               ],
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right,
+            Icon(Icons.chevron_right,
                 color: AppColors.textTertiary, size: 20),
           ],
         ),
@@ -504,7 +522,7 @@ class _SaveButton extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
@@ -517,7 +535,7 @@ class _SaveButton extends StatelessWidget {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 0,
-          disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
         ),
         child: loading
             ? const SizedBox(

@@ -1,10 +1,15 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/units/unit_converter.dart';
+import '../../../core/units/unit_system_provider.dart';
+import '../../../core/widgets/skeletons.dart';
+import '../../../core/widgets/status_style.dart';
 import '../data/biomarker_entry_model.dart';
 import '../data/biomarker_model.dart';
 import '../providers/biomarkers_provider.dart';
@@ -62,11 +67,11 @@ class BiomarkerDetailScreen extends ConsumerWidget {
         ],
       ),
       body: historyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(itemCount: 4),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (entries) => entries.isEmpty
             ? _buildEmpty(context, biomarker)
-            : _buildContent(context, ref, entries),
+            : _buildContent(context, ref, entries, ref.watch(unitSystemProvider)),
       ),
     );
   }
@@ -94,23 +99,23 @@ class BiomarkerDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(
-      BuildContext context, WidgetRef ref, List<BiomarkerEntryModel> entries) {
+  Widget _buildContent(BuildContext context, WidgetRef ref,
+      List<BiomarkerEntryModel> entries, UnitSystem system) {
     final latest = entries.last;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _LatestValueCard(entry: latest),
+        _LatestValueCard(entry: latest, system: system),
         const SizedBox(height: 16),
-        _TrendChart(entries: entries),
+        _TrendSection(entries: entries, system: system),
         const SizedBox(height: 16),
         Text('History', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         ...entries.reversed.map(
           (e) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: _EntryRow(entry: e, ref: ref),
+            child: _EntryRow(entry: e, ref: ref, system: system),
           ),
         ),
       ],
@@ -120,87 +125,103 @@ class BiomarkerDetailScreen extends ConsumerWidget {
 
 class _LatestValueCard extends StatelessWidget {
   final BiomarkerEntryModel entry;
-  const _LatestValueCard({required this.entry});
+  final UnitSystem system;
+  const _LatestValueCard({required this.entry, required this.system});
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = entry.isNormal
-        ? AppColors.normal
-        : entry.isHigh
-            ? AppColors.high
-            : entry.isLow
-                ? AppColors.low
-                : AppColors.textTertiary;
-
-    final statusBg = entry.isNormal
-        ? AppColors.normalBg
-        : entry.isHigh
-            ? AppColors.highBg
-            : entry.isLow
-                ? AppColors.lowBg
-                : AppColors.surfaceVariant;
-
-    final statusLabel = entry.isNormal
-        ? 'Normal'
-        : entry.isHigh
-            ? 'High'
-            : entry.isLow
-                ? 'Low'
-                : 'No range';
+    final conv = UnitConverter.display(
+      biomarkerId: entry.biomarkerId,
+      value: entry.value,
+      unit: entry.unit,
+      low: entry.refRangeLow,
+      high: entry.refRangeHigh,
+      system: system,
+    );
+    final status = StatusStyle.from(
+      isNormal: entry.isNormal,
+      isHigh: entry.isHigh,
+      isLow: entry.isLow,
+    );
+    final hasRange = conv.low != null && conv.high != null;
+    final numColor = hasRange ? status.color : AppColors.primary;
+    final decimals = conv.value.truncateToDouble() == conv.value ? 0 : 2;
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Latest result',
-                      style: Theme.of(context).textTheme.bodyMedium),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        entry.value.toStringAsFixed(
-                            entry.value.truncateToDouble() == entry.value
-                                ? 0
-                                : 2),
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineLarge
-                            ?.copyWith(color: AppColors.primary),
-                      ),
-                      const SizedBox(width: 6),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(entry.unit,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                      ),
-                    ],
-                  ),
-                  if (entry.refRangeLow != null && entry.refRangeHigh != null)
-                    Text(
-                      'Reference: ${entry.refRangeLow} – ${entry.refRangeHigh} ${entry.unit}',
-                      style: Theme.of(context).textTheme.bodyMedium,
+            Text('LATEST RESULT',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 11,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: conv.value),
+                  duration: const Duration(milliseconds: 650),
+                  curve: Curves.easeOutCubic,
+                  builder: (_, v, __) => Text(
+                    v.toStringAsFixed(decimals),
+                    style: TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.w800,
+                      height: 1,
+                      color: numColor,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(conv.unit,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: AppColors.textTertiary)),
+              ],
+            ),
+            if (hasRange) ...[
+              const SizedBox(height: 4),
+              Text('Reference: ${conv.low} – ${conv.high} ${conv.unit}',
+                  style: Theme.of(context).textTheme.bodyMedium),
+            ],
+            const SizedBox(height: 16),
+            // Full-width status banner.
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: status.bg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                        color: status.color, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(status.label,
+                      style: TextStyle(
+                          color: status.color,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14)),
+                  const Spacer(),
+                  Text(DateFormat('MMM d, yyyy').format(entry.date),
+                      style: TextStyle(
+                          color: status.color.withValues(alpha: 0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500)),
                 ],
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: statusBg,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(statusLabel,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  )),
             ),
           ],
         ),
@@ -209,19 +230,115 @@ class _LatestValueCard extends StatelessWidget {
   }
 }
 
-class _TrendChart extends StatelessWidget {
+enum _TrendRange { m3, m6, y1, all }
+
+extension on _TrendRange {
+  String get label => switch (this) {
+        _TrendRange.m3 => '3M',
+        _TrendRange.m6 => '6M',
+        _TrendRange.y1 => '1Y',
+        _TrendRange.all => 'All',
+      };
+
+  Duration? get window => switch (this) {
+        _TrendRange.m3 => const Duration(days: 90),
+        _TrendRange.m6 => const Duration(days: 180),
+        _TrendRange.y1 => const Duration(days: 365),
+        _TrendRange.all => null,
+      };
+}
+
+/// Trend chart plus a time-range selector. Entries are assumed sorted oldest→newest.
+class _TrendSection extends StatefulWidget {
   final List<BiomarkerEntryModel> entries;
-  const _TrendChart({required this.entries});
+  final UnitSystem system;
+  const _TrendSection({required this.entries, required this.system});
+
+  @override
+  State<_TrendSection> createState() => _TrendSectionState();
+}
+
+class _TrendSectionState extends State<_TrendSection> {
+  _TrendRange _range = _TrendRange.all;
 
   @override
   Widget build(BuildContext context) {
+    final cutoff = _range.window == null
+        ? null
+        : DateTime.now().subtract(_range.window!);
+    var filtered = cutoff == null
+        ? widget.entries
+        : widget.entries.where((e) => e.date.isAfter(cutoff)).toList();
+    // Always keep at least the most recent point so the chart isn't empty.
+    if (filtered.isEmpty) filtered = [widget.entries.last];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: Wrap(
+            spacing: 6,
+            children: _TrendRange.values.map((r) {
+              final sel = r == _range;
+              return GestureDetector(
+                onTap: () => setState(() => _range = r),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: sel ? AppColors.primary : AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: sel ? AppColors.primary : AppColors.divider),
+                  ),
+                  child: Text(
+                    r.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: sel ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _TrendChart(entries: filtered, system: widget.system),
+      ],
+    );
+  }
+}
+
+class _TrendChart extends StatelessWidget {
+  final List<BiomarkerEntryModel> entries;
+  final UnitSystem system;
+  const _TrendChart({required this.entries, required this.system});
+
+  static Color _dotColor(double y, double? low, double? high) {
+    if (low != null && y < low) return AppColors.low;
+    if (high != null && y > high) return AppColors.high;
+    if (low != null || high != null) return AppColors.normal;
+    return AppColors.primary;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final id = entries.first.biomarkerId;
+    double cv(double v) => UnitConverter.convertValue(id, v, system);
+
     final spots = entries.asMap().entries.map((e) {
-      return FlSpot(e.key.toDouble(), e.value.value);
+      return FlSpot(e.key.toDouble(), cv(e.value.value));
     }).toList();
 
-    final refLow = entries.first.refRangeLow;
-    final refHigh = entries.first.refRangeHigh;
-    final values = entries.map((e) => e.value).toList();
+    final refLow =
+        entries.first.refRangeLow == null ? null : cv(entries.first.refRangeLow!);
+    final refHigh = entries.first.refRangeHigh == null
+        ? null
+        : cv(entries.first.refRangeHigh!);
+    final values = entries.map((e) => cv(e.value)).toList();
     var minY = (refLow != null
             ? [refLow, ...values].reduce((a, b) => a < b ? a : b)
             : values.reduce((a, b) => a < b ? a : b)) *
@@ -238,6 +355,12 @@ class _TrendChart extends StatelessWidget {
       maxY = mid * 1.2;
     }
     final single = entries.length == 1;
+    // Pick an axis date format based on how much time the data spans.
+    // Within ~18 months, day-level labels ("May 27") are clearer; for longer
+    // histories switch to month+year ("May 26" = May 2026) to avoid clutter.
+    final spanDays =
+        entries.last.date.difference(entries.first.date).inDays.abs();
+    final axisDateFormat = spanDays > 540 ? 'MMM yy' : 'MMM d';
 
     return Card(
       child: Padding(
@@ -260,7 +383,9 @@ class _TrendChart extends StatelessWidget {
                   maxX: single ? 0.5 : null,
                   lineTouchData: LineTouchData(
                     touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => AppColors.textPrimary,
+                      // Fixed deep-blue background so white text stays legible
+                      // in both light and dark themes (textPrimary inverts).
+                      getTooltipColor: (_) => AppColors.primaryDark,
                       tooltipRoundedRadius: 8,
                       tooltipPadding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
@@ -322,7 +447,7 @@ class _TrendChart extends StatelessWidget {
                         reservedSize: 40,
                         getTitlesWidget: (value, _) => Text(
                           value.toStringAsFixed(0),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 10, color: AppColors.textTertiary),
                         ),
                       ),
@@ -330,15 +455,27 @@ class _TrendChart extends StatelessWidget {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        getTitlesWidget: (value, _) {
-                          final idx = value.toInt();
-                          if (idx < 0 || idx >= entries.length) {
-                            return const SizedBox();
+                        // One tick per data point only — prevents fractional
+                        // ticks all flooring to the same index (which showed
+                        // the same date repeated, e.g. for a single value).
+                        interval: 1,
+                        getTitlesWidget: (value, meta) {
+                          // Skip non-integer tick positions.
+                          if ((value - value.roundToDouble()).abs() > 0.01) {
+                            return const SizedBox.shrink();
                           }
-                          return Text(
-                            DateFormat('MMM yy').format(entries[idx].date),
-                            style: const TextStyle(
-                                fontSize: 9, color: AppColors.textTertiary),
+                          final idx = value.round();
+                          if (idx < 0 || idx >= entries.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return SideTitleWidget(
+                            meta: meta,
+                            child: Text(
+                              DateFormat(axisDateFormat)
+                                  .format(entries[idx].date),
+                              style: TextStyle(
+                                  fontSize: 9, color: AppColors.textTertiary),
+                            ),
                           );
                         },
                       ),
@@ -348,20 +485,32 @@ class _TrendChart extends StatelessWidget {
                     rightTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false)),
                   ),
+                  // Shade the healthy reference range as a soft green band so
+                  // "in / out of range" is readable at a glance.
+                  rangeAnnotations: RangeAnnotations(
+                    horizontalRangeAnnotations: [
+                      if (refLow != null && refHigh != null)
+                        HorizontalRangeAnnotation(
+                          y1: refLow,
+                          y2: refHigh,
+                          color: AppColors.normal.withValues(alpha: 0.10),
+                        ),
+                    ],
+                  ),
                   extraLinesData: ExtraLinesData(
                     horizontalLines: [
                       if (refLow != null)
                         HorizontalLine(
                           y: refLow,
-                          color: AppColors.low.withOpacity(0.5),
-                          strokeWidth: 1.5,
+                          color: AppColors.normal.withValues(alpha: 0.35),
+                          strokeWidth: 1,
                           dashArray: [4, 4],
                         ),
                       if (refHigh != null)
                         HorizontalLine(
                           y: refHigh,
-                          color: AppColors.high.withOpacity(0.5),
-                          strokeWidth: 1.5,
+                          color: AppColors.normal.withValues(alpha: 0.35),
+                          strokeWidth: 1,
                           dashArray: [4, 4],
                         ),
                     ],
@@ -378,14 +527,15 @@ class _TrendChart extends StatelessWidget {
                         getDotPainter: (spot, _, __, ___) =>
                             FlDotCirclePainter(
                           radius: 4,
-                          color: AppColors.primary,
+                          // Colour each point by its status vs the range.
+                          color: _dotColor(spot.y, refLow, refHigh),
                           strokeWidth: 2,
-                          strokeColor: Colors.white,
+                          strokeColor: AppColors.surface,
                         ),
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                       ),
                     ),
                   ],
@@ -402,10 +552,18 @@ class _TrendChart extends StatelessWidget {
 class _EntryRow extends StatelessWidget {
   final BiomarkerEntryModel entry;
   final WidgetRef ref;
-  const _EntryRow({required this.entry, required this.ref});
+  final UnitSystem system;
+  const _EntryRow(
+      {required this.entry, required this.ref, required this.system});
 
   @override
   Widget build(BuildContext context) {
+    final conv = UnitConverter.display(
+      biomarkerId: entry.biomarkerId,
+      value: entry.value,
+      unit: entry.unit,
+      system: system,
+    );
     final statusColor = entry.isNormal
         ? AppColors.normal
         : entry.isHigh
@@ -444,13 +602,13 @@ class _EntryRow extends StatelessWidget {
               ),
             ),
             Text(
-              '${entry.value} ${entry.unit}',
+              '${conv.value} ${conv.unit}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => _confirmDelete(context),
-              child: const Icon(Icons.delete_outline,
+              child: Icon(Icons.delete_outline,
                   color: AppColors.textTertiary, size: 18),
             ),
           ],
@@ -471,6 +629,7 @@ class _EntryRow extends StatelessWidget {
               child: const Text('Cancel')),
           TextButton(
             onPressed: () {
+              HapticFeedback.mediumImpact();
               Navigator.pop(context);
               ref.read(biomarkerEntriesProvider.notifier).remove(entry.id);
             },

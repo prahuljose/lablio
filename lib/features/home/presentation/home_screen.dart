@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
+import '../../biomarkers/providers/insights_provider.dart';
 import '../../reports/providers/reports_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -60,6 +61,21 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             _QuickActions(),
             const SizedBox(height: 24),
+            _InsightsCard(
+              insightsAsync: ref.watch(healthInsightsProvider),
+              onViewAll: () {
+                ref.read(biomarkerInitialFilterProvider.notifier).state =
+                    BiomarkerFilter.outOfRange;
+                context.go(AppRoutes.biomarkers);
+              },
+              onTapMarker: (i) => context.push(
+                AppRoutes.biomarkerDetail,
+                extra: {
+                  'biomarkerId': i.biomarkerId,
+                  'biomarkerName': i.name,
+                },
+              ),
+            ),
             Text('Recent Results',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
@@ -94,7 +110,7 @@ class HomeScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.science_outlined,
+          Icon(Icons.science_outlined,
               size: 40, color: AppColors.textTertiary),
           const SizedBox(height: 8),
           Text('No results yet',
@@ -104,6 +120,172 @@ class HomeScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center),
         ],
+      ),
+    );
+  }
+}
+
+class _InsightsCard extends StatelessWidget {
+  final AsyncValue<HealthInsights> insightsAsync;
+  final VoidCallback onViewAll;
+  final void Function(BiomarkerInsight) onTapMarker;
+
+  const _InsightsCard({
+    required this.insightsAsync,
+    required this.onViewAll,
+    required this.onTapMarker,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final data = insightsAsync.valueOrNull;
+    if (data == null || data.tracked == 0) return const SizedBox.shrink();
+
+    final inRange = data.tracked - data.outOfRange;
+    final highlights = data.highlights.take(4).toList();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Card(
+        child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.insights_outlined,
+                    size: 18, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text('Health Insights',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                const Spacer(),
+                if (data.outOfRange > 0)
+                  GestureDetector(
+                    onTap: onViewAll,
+                    child: const Text('View all',
+                        style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Headline summary
+            Text(
+              data.outOfRange == 0
+                  ? 'All ${data.tracked} markers in range 🎉'
+                  : '${data.outOfRange} of ${data.tracked} markers out of range',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: data.outOfRange == 0
+                    ? AppColors.normal
+                    : AppColors.textPrimary,
+              ),
+            ),
+            if (data.improving > 0 || data.worsening > 0) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  if (data.improving > 0) ...[
+                    const Icon(Icons.trending_down,
+                        size: 14, color: AppColors.normal),
+                    const SizedBox(width: 4),
+                    Text('${data.improving} improving',
+                        style: const TextStyle(
+                            fontSize: 12, color: AppColors.normal)),
+                    const SizedBox(width: 12),
+                  ],
+                  if (data.worsening > 0) ...[
+                    const Icon(Icons.trending_up,
+                        size: 14, color: AppColors.high),
+                    const SizedBox(width: 4),
+                    Text('${data.worsening} worsening',
+                        style: const TextStyle(
+                            fontSize: 12, color: AppColors.high)),
+                  ],
+                ],
+              ),
+            ],
+            const SizedBox(height: 4),
+            ...highlights.map((i) => _InsightRow(
+                  insight: i,
+                  onTap: () => onTapMarker(i),
+                )),
+            if (data.outOfRange == 0 && inRange > 0) const SizedBox(height: 4),
+          ],
+        ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InsightRow extends StatelessWidget {
+  final BiomarkerInsight insight;
+  final VoidCallback onTap;
+  const _InsightRow({required this.insight, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = insight.latest.isNormal
+        ? AppColors.normal
+        : insight.latest.isHigh
+            ? AppColors.high
+            : insight.latest.isLow
+                ? AppColors.low
+                : AppColors.textTertiary;
+
+    final (arrow, arrowColor) = switch (insight.direction) {
+      TrendDirection.up => (
+          Icons.north_east,
+          insight.improving ? AppColors.normal : AppColors.high
+        ),
+      TrendDirection.down => (
+          Icons.south_east,
+          insight.improving ? AppColors.normal : AppColors.high
+        ),
+      TrendDirection.flat => (Icons.east, AppColors.textTertiary),
+      TrendDirection.none => (Icons.fiber_manual_record, AppColors.textTertiary),
+    };
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration:
+                  BoxDecoration(color: statusColor, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(insight.name,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+            ),
+            Text('${insight.latest.value} ${insight.unit}',
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 8),
+            Icon(
+                insight.direction == TrendDirection.none
+                    ? Icons.remove
+                    : arrow,
+                size: 16,
+                color: arrowColor),
+          ],
+        ),
       ),
     );
   }
@@ -192,7 +374,7 @@ class _StatCard extends StatelessWidget {
                   Icon(icon, color: AppColors.primary, size: 20),
                   const Spacer(),
                   if (onTap != null)
-                    const Icon(Icons.chevron_right,
+                    Icon(Icons.chevron_right,
                         color: AppColors.textTertiary, size: 16),
                 ],
               ),
@@ -246,6 +428,14 @@ class _QuickActions extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        // Scan Report is not ready yet — disabled with a "Coming soon" badge.
+        const _ActionCard(
+          icon: Icons.document_scanner_outlined,
+          label: 'Scan Report (auto-extract values)',
+          color: AppColors.primaryDark,
+          comingSoon: true,
+        ),
       ],
     );
   }
@@ -255,37 +445,66 @@ class _ActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool comingSoon;
 
   const _ActionCard({
     required this.icon,
     required this.label,
     required this.color,
-    required this.onTap,
+    this.onTap,
+    this.comingSoon = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tint = comingSoon ? AppColors.textTertiary : color;
     return InkWell(
-      onTap: onTap,
+      onTap: comingSoon
+          ? () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Scan Report is coming soon'),
+                behavior: SnackBarBehavior.floating,
+              ))
+          : onTap,
       borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(width: 10),
-            Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: color)),
-          ],
+      child: Opacity(
+        opacity: comingSoon ? 0.65 : 1,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: tint.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: tint.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: tint, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(label,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: tint)),
+              ),
+              if (comingSoon)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.textTertiary.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('SOON',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                        color: AppColors.textSecondary,
+                      )),
+                ),
+            ],
+          ),
         ),
       ),
     );

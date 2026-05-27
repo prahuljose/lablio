@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../onboarding/onboarding_state.dart';
 import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -13,7 +14,11 @@ import '../../features/biomarkers/presentation/biomarker_detail_screen.dart';
 import '../../features/biomarkers/presentation/biomarkers_screen.dart';
 import '../../features/biomarkers/presentation/browse_biomarkers_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
+import '../../features/scan/data/lab_report_parser.dart';
+import '../../features/scan/presentation/review_extraction_screen.dart';
+import '../../features/scan/presentation/scan_report_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/reports/data/report_model.dart';
 import '../../features/reports/presentation/add_report_screen.dart';
@@ -35,6 +40,9 @@ class AppRoutes {
   static const addEntry = '/biomarkers/add-entry';
   static const profile = '/profile';
   static const editProfile = '/profile/edit';
+  static const onboarding = '/onboarding';
+  static const scanReport = '/scan';
+  static const reviewExtraction = '/scan/review';
 }
 
 /// Notifies GoRouter whenever Supabase auth state changes (sign-in / sign-out),
@@ -60,6 +68,31 @@ const _authRoutes = {
   AppRoutes.forgotPassword,
 };
 
+/// A subtle fade + rise transition for drill-in screens, giving a polished
+/// "hero" feel instead of the default platform push.
+CustomTransitionPage<void> _fadeRisePage(
+    GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: const Duration(milliseconds: 300),
+    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionsBuilder: (context, animation, secondary, child) {
+      final curved =
+          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+                  begin: const Offset(0, 0.035), end: Offset.zero)
+              .animate(curved),
+          child: child,
+        ),
+      );
+    },
+    child: child,
+  );
+}
+
 final appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
   refreshListenable:
@@ -72,7 +105,13 @@ final appRouter = GoRouter(
     // based on session state (otherwise we get stuck on the spinner, e.g.
     // after a hot restart which resets the location to '/').
     if (loc == AppRoutes.splash) {
-      return loggedIn ? AppRoutes.home : AppRoutes.login;
+      if (!loggedIn) return AppRoutes.login;
+      return gOnboardingSeen ? AppRoutes.home : AppRoutes.onboarding;
+    }
+
+    // Show first-run onboarding once, after the user is signed in.
+    if (loggedIn && !gOnboardingSeen && loc != AppRoutes.onboarding) {
+      return AppRoutes.onboarding;
     }
 
     final onAuthRoute = _authRoutes.contains(loc);
@@ -132,14 +171,36 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.reportDetail,
-      builder: (_, state) {
-        final report = state.extra as ReportModel;
-        return ReportDetailScreen(report: report);
-      },
+      pageBuilder: (_, state) => _fadeRisePage(
+        state,
+        ReportDetailScreen(report: state.extra as ReportModel),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.onboarding,
+      builder: (_, __) => const OnboardingScreen(),
     ),
     GoRoute(
       path: AppRoutes.editProfile,
       builder: (_, __) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.scanReport,
+      pageBuilder: (_, state) =>
+          _fadeRisePage(state, const ScanReportScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.reviewExtraction,
+      pageBuilder: (_, state) {
+        final result = state.extra as ExtractionResult;
+        return _fadeRisePage(
+          state,
+          ReviewExtractionScreen(
+            candidates: result.candidates,
+            rawText: result.rawText,
+          ),
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.browseBiomarkers,
@@ -152,23 +213,29 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.biomarkerDetail,
-      builder: (_, state) {
+      pageBuilder: (_, state) {
         final extra = state.extra as Map<String, dynamic>;
-        return BiomarkerDetailScreen(
-          biomarkerId: extra['biomarkerId'] as String,
-          biomarkerName: extra['biomarkerName'] as String,
+        return _fadeRisePage(
+          state,
+          BiomarkerDetailScreen(
+            biomarkerId: extra['biomarkerId'] as String,
+            biomarkerName: extra['biomarkerName'] as String,
+          ),
         );
       },
     ),
     GoRoute(
       path: AppRoutes.addEntry,
-      builder: (_, state) {
+      pageBuilder: (_, state) {
         final extra = state.extra as Map<String, dynamic>;
-        return AddEntryScreen(
-          biomarkerId: extra['biomarkerId'] as String,
-          biomarkerName: extra['biomarkerName'] as String,
-          biomarker: extra['biomarker'] as BiomarkerModel?,
-          reportId: extra['reportId'] as String?,
+        return _fadeRisePage(
+          state,
+          AddEntryScreen(
+            biomarkerId: extra['biomarkerId'] as String,
+            biomarkerName: extra['biomarkerName'] as String,
+            biomarker: extra['biomarker'] as BiomarkerModel?,
+            reportId: extra['reportId'] as String?,
+          ),
         );
       },
     ),

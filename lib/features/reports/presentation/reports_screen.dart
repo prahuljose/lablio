@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/skeletons.dart';
 import '../data/report_model.dart';
 import '../providers/reports_provider.dart';
 
@@ -32,7 +33,7 @@ class ReportsScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
       ),
       body: reportsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (reports) => reports.isEmpty
             ? _buildEmpty(context)
@@ -90,7 +91,7 @@ class _ReportCard extends ConsumerWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withOpacity(0.1),
+                  color: AppColors.primaryLight.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.description_outlined,
@@ -108,7 +109,7 @@ class _ReportCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined,
+                        Icon(Icons.calendar_today_outlined,
                             size: 12, color: AppColors.textTertiary),
                         const SizedBox(width: 4),
                         Flexible(

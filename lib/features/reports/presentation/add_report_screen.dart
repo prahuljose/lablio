@@ -129,7 +129,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined,
+                    Icon(Icons.calendar_today_outlined,
                         color: AppColors.textSecondary),
                     const SizedBox(width: 12),
                     Column(
@@ -147,7 +147,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                       ],
                     ),
                     const Spacer(),
-                    const Icon(Icons.chevron_right,
+                    Icon(Icons.chevron_right,
                         color: AppColors.textTertiary),
                   ],
                 ),
@@ -180,7 +180,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: _pdfFile != null
-              ? AppColors.primary.withOpacity(0.05)
+              ? AppColors.primary.withValues(alpha: 0.05)
               : AppColors.surfaceVariant,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -221,7 +221,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
             ),
             if (_pdfFile != null)
               IconButton(
-                icon: const Icon(Icons.close, color: AppColors.textTertiary),
+                icon: Icon(Icons.close, color: AppColors.textTertiary),
                 onPressed: () => setState(() {
                   _pdfFile = null;
                   _pdfName = null;

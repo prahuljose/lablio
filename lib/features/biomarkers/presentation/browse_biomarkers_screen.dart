@@ -131,7 +131,7 @@ class _BiomarkerListTile extends StatelessWidget {
               ),
           ],
         ),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+        trailing: Icon(Icons.chevron_right, color: AppColors.textTertiary),
         onTap: () => context.push(
           AppRoutes.addEntry,
           extra: {

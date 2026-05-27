@@ -119,7 +119,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
           color: AppColors.textSecondary,
@@ -150,7 +150,7 @@ class _HeaderCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.description_outlined,
@@ -167,12 +167,12 @@ class _HeaderCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined,
+                        Icon(Icons.calendar_today_outlined,
                             size: 13, color: AppColors.textTertiary),
                         const SizedBox(width: 5),
                         Text(
                           DateFormat('MMMM d, yyyy').format(report.date),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary),
                         ),
@@ -190,12 +190,12 @@ class _HeaderCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.notes_outlined,
+                Icon(Icons.notes_outlined,
                     size: 16, color: AppColors.textTertiary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(report.notes!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14, color: AppColors.textSecondary)),
                 ),
               ],
@@ -275,10 +275,10 @@ class _EmptyEntries extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.science_outlined,
+          Icon(Icons.science_outlined,
               size: 40, color: AppColors.textTertiary),
           const SizedBox(height: 12),
-          const Text('No results logged for this report',
+          Text('No results logged for this report',
               style: TextStyle(
                   fontSize: 14, color: AppColors.textSecondary)),
           const SizedBox(height: 16),
@@ -354,7 +354,7 @@ class _EntryRow extends StatelessWidget {
                   entry.refRangeLow != null && entry.refRangeHigh != null
                       ? 'Ref: ${entry.refRangeLow} – ${entry.refRangeHigh} ${entry.unit}'
                       : entry.unit,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],

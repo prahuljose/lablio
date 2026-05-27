@@ -315,7 +315,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
           color: AppColors.textSecondary,
@@ -347,10 +347,10 @@ class _PickerTile extends StatelessWidget {
             Icon(icon, color: AppColors.textSecondary, size: 20),
             const SizedBox(width: 12),
             Text(text,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 16, color: AppColors.textPrimary)),
             const Spacer(),
-            const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+            Icon(Icons.chevron_right, color: AppColors.textTertiary),
           ],
         ),
       ),
