@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="g15" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0096C7"/><stop offset="1" stop-color="#023E8A"/></linearGradient></defs>
+  <rect width="512" height="512" rx="114" fill="url(#g15)"/>
+  <!-- dial arc with 3 zones (low/normal/high) -->
+  <path d="M150 326 A130 130 0 0 1 196 196" fill="none" stroke="#7CE0FF" stroke-width="22" stroke-linecap="round"/>
+  <path d="M205 188 A130 130 0 0 1 307 188" fill="none" stroke="#ffffff" stroke-width="22"/>
+  <path d="M316 196 A130 130 0 0 1 362 326" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" opacity="0.4"/>
+  <!-- needle pointing to "normal" -->
+  <line x1="256" y1="300" x2="232" y2="196" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="256" cy="300" r="22" fill="#ffffff"/>
+</svg>

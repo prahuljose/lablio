@@ -175,18 +175,34 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
                 );
               }),
               Expanded(
-                child: list.isEmpty
-                    ? _buildNoMatches(context)
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
-                        itemCount: list.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _BiomarkerTile(
-                          entry: list[i],
-                          system: ref.watch(unitSystemProvider),
+                child: RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () =>
+                      ref.read(biomarkerEntriesProvider.notifier).refresh(),
+                  child: list.isEmpty
+                      // AlwaysScrollable so pull-to-refresh works even when empty.
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.5,
+                              child: _buildNoMatches(context),
+                            ),
+                          ],
+                        )
+                      : ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+                          itemCount: list.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (_, i) => _BiomarkerTile(
+                            entry: list[i],
+                            system: ref.watch(unitSystemProvider),
+                          ),
                         ),
-                      ),
+                ),
               ),
             ],
           );

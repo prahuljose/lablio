@@ -1,0 +1,24 @@
+<svg width="1140" height="820" viewBox="0 0 1140 820" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect width="1140" height="820" fill="#F4F7FB"/>
+  <text x="40" y="56" font-family="sans-serif" font-size="34" font-weight="700" fill="#1A1D23">Lablio — App Icon Concepts</text>
+
+  <!-- Row 1 -->
+  <image x="40"  y="100" width="300" height="300" xlink:href="01_droplet_trend.png"/>
+  <text x="190" y="430" font-family="sans-serif" font-size="22" font-weight="600" fill="#1A1D23" text-anchor="middle">1 · Droplet + Trend</text>
+
+  <image x="420" y="100" width="300" height="300" xlink:href="02_pulse_L.png"/>
+  <text x="570" y="430" font-family="sans-serif" font-size="22" font-weight="600" fill="#1A1D23" text-anchor="middle">2 · Pulse L</text>
+
+  <image x="800" y="100" width="300" height="300" xlink:href="03_bars_trend.png"/>
+  <text x="950" y="430" font-family="sans-serif" font-size="22" font-weight="600" fill="#1A1D23" text-anchor="middle">3 · Rising Bars</text>
+
+  <!-- Row 2 -->
+  <image x="40"  y="470" width="300" height="300" xlink:href="04_molecule.png"/>
+  <text x="190" y="800" font-family="sans-serif" font-size="22" font-weight="600" fill="#1A1D23" text-anchor="middle">4 · Molecule</text>
+
+  <image x="420" y="470" width="300" height="300" xlink:href="05_droplet_pulse.png"/>
+  <text x="570" y="800" font-family="sans-serif" font-size="22" font-weight="600" fill="#1A1D23" text-anchor="middle">5 · Droplet Pulse (outline)</text>
+
+  <image x="800" y="470" width="300" height="300" xlink:href="06_L_monogram.png"/>
+  <text x="950" y="800" font-family="sans-serif" font-size="22" font-weight="600" fill="#1A1D23" text-anchor="middle">6 · L Monogram + Drop</text>
+</svg>

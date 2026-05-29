@@ -2,7 +2,7 @@
     <!-- Biometric authentication (app lock) -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <application
-        android:label="lablio"
+        android:label="Lablio"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

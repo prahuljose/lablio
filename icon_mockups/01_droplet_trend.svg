@@ -1,0 +1,17 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#023E8A"/>
+      <stop offset="1" stop-color="#0096C7"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#bg1)"/>
+  <!-- droplet -->
+  <path d="M256 110 C 320 200, 372 250, 372 318 a116 116 0 0 1 -232 0 C 140 250, 192 200, 256 110 Z"
+        fill="#ffffff"/>
+  <!-- trend line inside droplet -->
+  <polyline points="178,332 224,300 262,322 312,250"
+            fill="none" stroke="#0096C7" stroke-width="20"
+            stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="312" cy="250" r="15" fill="#023E8A"/>
+</svg>

@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g25" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#023E8A"/><stop offset="1" stop-color="#0096C7"/></linearGradient>
+    <mask id="m25">
+      <rect width="512" height="512" fill="black"/>
+      <!-- solid hexagon -->
+      <polygon points="256,104 380,178 380,326 256,400 132,326 132,178" fill="white"/>
+      <!-- carved droplet inside -->
+      <path d="M256 178 C 300 240, 332 272, 332 312 a76 76 0 0 1 -152 0 C 180 272, 212 240, 256 178 Z" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#g25)"/>
+  <rect width="512" height="512" fill="#ffffff" mask="url(#m25)"/>
+</svg>

@@ -1,4 +1,4 @@
-package com.labliop.app.lablio
+package com.lablio.app
 
 import androidx.activity.OnBackPressedCallback
 import io.flutter.embedding.android.FlutterFragmentActivity

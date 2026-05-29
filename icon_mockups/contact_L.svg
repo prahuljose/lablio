@@ -1,0 +1,28 @@
+<svg width="1320" height="700" viewBox="0 0 1320 700" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect width="1320" height="700" fill="#F4F7FB"/>
+  <text x="40" y="54" font-family="sans-serif" font-size="32" font-weight="700" fill="#1A1D23">Lablio — L + Dot, modern variations</text>
+
+  <image x="40"   y="90"  width="220" height="220" xlink:href="L1_clean.png"/>
+  <text x="150" y="334" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">A · Clean</text>
+
+  <image x="296"  y="90"  width="220" height="220" xlink:href="L2_glow.png"/>
+  <text x="406" y="334" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">B · Glow dot</text>
+
+  <image x="552"  y="90"  width="220" height="220" xlink:href="L3_duotone.png"/>
+  <text x="662" y="334" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">C · Duotone foot</text>
+
+  <image x="808"  y="90"  width="220" height="220" xlink:href="L4_glass.png"/>
+  <text x="918" y="334" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">D · Glass cut</text>
+
+  <image x="1064" y="90"  width="220" height="220" xlink:href="L5_gradfill.png"/>
+  <text x="1174" y="334" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">E · Gradient on light</text>
+
+  <image x="40"   y="380" width="220" height="220" xlink:href="L6_longshadow.png"/>
+  <text x="150" y="624" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">F · Long shadow</text>
+
+  <image x="296"  y="380" width="220" height="220" xlink:href="L7_outline.png"/>
+  <text x="406" y="624" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">G · Outline + ring</text>
+
+  <image x="552"  y="380" width="220" height="220" xlink:href="L8_bold_terminal.png"/>
+  <text x="662" y="624" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">H · Bold + cap dot</text>
+</svg>

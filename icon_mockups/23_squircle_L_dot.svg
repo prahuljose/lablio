@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g23" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#023E8A"/><stop offset="1" stop-color="#0096C7"/></linearGradient>
+    <mask id="m23">
+      <rect width="512" height="512" fill="black"/>
+      <rect x="116" y="116" width="280" height="280" rx="64" fill="white"/>
+      <!-- carve bold L -->
+      <path d="M196 170 L196 342 L322 342" fill="none" stroke="black" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- carve a separate reading dot -->
+      <circle cx="318" cy="188" r="24" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#g23)"/>
+  <rect width="512" height="512" fill="#ffffff" mask="url(#m23)"/>
+</svg>

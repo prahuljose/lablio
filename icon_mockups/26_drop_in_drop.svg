@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g26" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0096C7"/><stop offset="1" stop-color="#023E8A"/></linearGradient>
+    <mask id="m26">
+      <rect width="512" height="512" fill="black"/>
+      <!-- outer droplet -->
+      <path d="M256 92 C 332 196, 390 254, 390 330 a134 134 0 0 1 -268 0 C 122 254, 180 196, 256 92 Z" fill="white"/>
+      <!-- carved inner droplet (concentric) -->
+      <path d="M256 210 C 292 260, 320 286, 320 314 a64 64 0 0 1 -128 0 C 192 286, 220 260, 256 210 Z" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#g26)"/>
+  <rect width="512" height="512" fill="#ffffff" mask="url(#m26)"/>
+</svg>

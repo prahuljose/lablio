@@ -67,14 +67,25 @@ final biomarkerHistoryProvider =
       ),
 );
 
-// Unique biomarkers the user has logged (latest entry per biomarker).
-// Entries arrive newest-first (date desc) so the first seen per id is latest.
+// Unique biomarkers the user has logged, each represented by its *latest*
+// entry by date. Order-independent: we explicitly keep the entry with the
+// greatest date per biomarker (a backdated add must not become "latest").
 final trackedBiomarkersProvider =
     Provider<AsyncValue<List<BiomarkerEntryModel>>>((ref) {
   final entriesAsync = ref.watch(biomarkerEntriesProvider);
   return entriesAsync.whenData((entries) {
-    final seen = <String>{};
-    return entries.where((e) => seen.add(e.biomarkerId)).toList();
+    final latest = <String, BiomarkerEntryModel>{};
+    for (final e in entries) {
+      final cur = latest[e.biomarkerId];
+      if (cur == null ||
+          e.date.isAfter(cur.date) ||
+          // Tie-break on same date: prefer the more recently created entry.
+          (e.date.isAtSameMomentAs(cur.date) &&
+              e.createdAt.isAfter(cur.createdAt))) {
+        latest[e.biomarkerId] = e;
+      }
+    }
+    return latest.values.toList();
   });
 });
 

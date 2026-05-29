@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0096C7"/><stop offset="1" stop-color="#023E8A"/>
+    </linearGradient>
+    <clipPath id="clip6"><rect width="512" height="512" rx="120"/></clipPath>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg6)"/>
+  <g clip-path="url(#clip6)">
+    <!-- long diagonal shadow of the L -->
+    <g opacity="0.16">
+      <path d="M196 154 L196 336 a8 8 0 0 0 8 8 L330 344 L500 514 L196 514 Z" fill="#000000"/>
+      <path d="M322 184 L492 354 L452 354 L282 184 Z" fill="#000000"/>
+    </g>
+    <!-- the L + dot -->
+    <path d="M196 154 L196 336 a8 8 0 0 0 8 8 L330 344" fill="none" stroke="#ffffff"
+          stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="322" cy="184" r="26" fill="#7CE0FF"/>
+  </g>
+</svg>

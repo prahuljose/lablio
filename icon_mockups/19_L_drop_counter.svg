@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g19" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#023E8A"/><stop offset="1" stop-color="#0096C7"/></linearGradient>
+    <mask id="m19">
+      <rect width="512" height="512" fill="black"/>
+      <!-- white rounded panel -->
+      <rect x="120" y="120" width="272" height="272" rx="60" fill="white"/>
+      <!-- carve the L (reveal gradient) -->
+      <path d="M200 168 L200 344 L312 344" fill="none" stroke="black" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- carve a droplet in the L's open corner -->
+      <path d="M300 196 C 326 230, 344 248, 344 270 a44 44 0 0 1 -88 0 C 256 248, 274 230, 300 196 Z" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#g19)"/>
+  <rect width="512" height="512" fill="#ffffff" mask="url(#m19)"/>
+</svg>

@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g24" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0096C7"/><stop offset="1" stop-color="#023E8A"/></linearGradient>
+    <mask id="m24">
+      <rect width="512" height="512" fill="black"/>
+      <!-- heart -->
+      <path d="M256 372 C 150 300, 132 236, 132 196 a72 72 0 0 1 124 -50 a72 72 0 0 1 124 50 C 380 236, 362 300, 256 372 Z" fill="white"/>
+      <!-- carved pulse across heart -->
+      <polyline points="150,236 204,236 230,188 270,300 296,236 360,236" fill="none" stroke="black" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#g24)"/>
+  <rect width="512" height="512" fill="#ffffff" mask="url(#m24)"/>
+</svg>

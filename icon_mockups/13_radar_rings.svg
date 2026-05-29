@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="g13" cx="0.5" cy="0.5" r="0.75"><stop offset="0" stop-color="#0096C7"/><stop offset="1" stop-color="#023E8A"/></radialGradient></defs>
+  <rect width="512" height="512" rx="114" fill="url(#g13)"/>
+  <!-- concentric rings -->
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#ffffff" stroke-width="10" opacity="0.18"/>
+  <circle cx="256" cy="256" r="98"  fill="none" stroke="#ffffff" stroke-width="10" opacity="0.30"/>
+  <circle cx="256" cy="256" r="56"  fill="none" stroke="#7CE0FF" stroke-width="12" opacity="0.85"/>
+  <!-- centre node + reading dot on outer ring -->
+  <circle cx="256" cy="256" r="22" fill="#ffffff"/>
+  <circle cx="355" cy="180" r="18" fill="#7CE0FF" stroke="#023E8A" stroke-width="5"/>
+</svg>

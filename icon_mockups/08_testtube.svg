@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0096C7"/><stop offset="1" stop-color="#023E8A"/></linearGradient></defs>
+  <rect width="512" height="512" rx="114" fill="url(#g8)"/>
+  <!-- test tube body -->
+  <path d="M226 120 L226 348 a30 30 0 0 0 60 0 L286 120" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round"/>
+  <line x1="212" y1="120" x2="300" y2="120" stroke="#ffffff" stroke-width="22" stroke-linecap="round"/>
+  <!-- liquid fill -->
+  <path d="M226 270 L226 348 a30 30 0 0 0 60 0 L286 270 Z" fill="#7CE0FF"/>
+  <!-- bubbles -->
+  <circle cx="248" cy="232" r="9" fill="#7CE0FF" opacity="0.8"/>
+  <circle cx="270" cy="200" r="6" fill="#7CE0FF" opacity="0.6"/>
+</svg>

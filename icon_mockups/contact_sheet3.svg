@@ -1,0 +1,34 @@
+<svg width="1320" height="820" viewBox="0 0 1320 820" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect width="1320" height="820" fill="#F4F7FB"/>
+  <text x="40" y="56" font-family="sans-serif" font-size="34" font-weight="700" fill="#1A1D23">Lablio — Negative-Space Concepts (Batch 3)</text>
+
+  <image x="40"   y="96"  width="220" height="220" xlink:href="17_drop_pulse_cut.png"/>
+  <text x="150" y="340" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">17 · Drop / Pulse cut</text>
+
+  <image x="296"  y="96"  width="220" height="220" xlink:href="18_drop_arrow_cut.png"/>
+  <text x="406" y="340" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">18 · Drop / Trend cut</text>
+
+  <image x="552"  y="96"  width="220" height="220" xlink:href="19_L_drop_counter.png"/>
+  <text x="662" y="340" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">19 · L + Drop counter</text>
+
+  <image x="808"  y="96"  width="220" height="220" xlink:href="20_circle_pulse_notch.png"/>
+  <text x="918" y="340" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">20 · Disc / Pulse cut</text>
+
+  <image x="1064" y="96"  width="220" height="220" xlink:href="21_bars_arrow_gap.png"/>
+  <text x="1174" y="340" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">21 · Bars cut</text>
+
+  <image x="40"   y="430" width="220" height="220" xlink:href="22_drop_check_cut.png"/>
+  <text x="150" y="674" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">22 · Drop / Check cut</text>
+
+  <image x="296"  y="430" width="220" height="220" xlink:href="23_squircle_L_dot.png"/>
+  <text x="406" y="674" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">23 · L + Dot cut</text>
+
+  <image x="552"  y="430" width="220" height="220" xlink:href="24_heart_pulse_cut.png"/>
+  <text x="662" y="674" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">24 · Heart / Pulse cut</text>
+
+  <image x="808"  y="430" width="220" height="220" xlink:href="25_hex_drop_cut.png"/>
+  <text x="918" y="674" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">25 · Hex / Drop cut</text>
+
+  <image x="1064" y="430" width="220" height="220" xlink:href="26_drop_in_drop.png"/>
+  <text x="1174" y="674" font-family="sans-serif" font-size="17" font-weight="600" fill="#1A1D23" text-anchor="middle">26 · Drop in Drop</text>
+</svg>

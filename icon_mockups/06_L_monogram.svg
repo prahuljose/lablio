@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0096C7"/>
+      <stop offset="1" stop-color="#023E8A"/>
+    </linearGradient>
+    <linearGradient id="drop6" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#7CE0FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="#ffffff"/>
+  <rect x="36" y="36" width="440" height="440" rx="92" fill="url(#bg6)"/>
+  <!-- monogram L formed from a rounded bar -->
+  <path d="M196 138 L196 330 a16 16 0 0 0 16 16 L322 346"
+        fill="none" stroke="#ffffff" stroke-width="46"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- droplet sitting in the L's corner -->
+  <path d="M318 196 C 350 236, 372 258, 372 286 a54 54 0 0 1 -108 0 C 264 258, 286 236, 318 196 Z"
+        fill="url(#drop6)"/>
+</svg>

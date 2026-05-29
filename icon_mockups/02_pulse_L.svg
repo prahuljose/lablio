@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0096C7"/>
+      <stop offset="1" stop-color="#023E8A"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#bg2)"/>
+  <!-- big L -->
+  <path d="M170 130 L170 360 L330 360" fill="none" stroke="#ffffff"
+        stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- heartbeat pulse cutting across -->
+  <polyline points="120,300 190,300 220,232 262,360 300,268 330,300 400,300"
+            fill="none" stroke="#7CE0FF" stroke-width="20"
+            stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

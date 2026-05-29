@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#023E8A"/><stop offset="1" stop-color="#0096C7"/></linearGradient>
+    <clipPath id="dropclip"><path d="M256 110 C 322 200, 374 252, 374 320 a118 118 0 0 1 -236 0 C 138 252, 190 200, 256 110 Z"/></clipPath>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#g14)"/>
+  <!-- white droplet -->
+  <path d="M256 110 C 322 200, 374 252, 374 320 a118 118 0 0 1 -236 0 C 138 252, 190 200, 256 110 Z" fill="#ffffff"/>
+  <!-- bars carved inside the droplet via clip -->
+  <g clip-path="url(#dropclip)">
+    <rect x="186" y="300" width="34" height="120" fill="#0096C7"/>
+    <rect x="238" y="262" width="34" height="160" fill="#0077B6"/>
+    <rect x="290" y="224" width="34" height="200" fill="#023E8A"/>
+  </g>
+</svg>
