@@ -281,25 +281,50 @@ class _AppShell extends StatefulWidget {
   State<_AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<_AppShell> {
+class _AppShellState extends State<_AppShell> with WidgetsBindingObserver {
   DateTime? _lastBackPress;
+  String _path = AppRoutes.home;
 
-  int _selectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).uri.path;
-    if (location.startsWith(AppRoutes.reports)) return 1;
-    if (location.startsWith(AppRoutes.biomarkers)) return 2;
-    if (location.startsWith(AppRoutes.profile)) return 3;
+  // ── WidgetsBindingObserver ────────────────────────────────────────────────
+  // Called by Flutter BEFORE GoRouter's Router widget sees the back press.
+  // We're added after the Router (child mounts after parent) so we appear
+  // later in WidgetsBinding._observers and are therefore called FIRST (reverse
+  // order iteration). Returning true consumes the event; false lets GoRouter
+  // handle it (pop nested screens, etc.).
+  @override
+  Future<bool> didPopRoute() async {
+    if (!mounted) return false;
+    // If the root navigator has something above the shell (a nested screen),
+    // don't intercept — let GoRouter pop it normally.
+    if (Navigator.of(context, rootNavigator: true).canPop()) return false;
+    // We're on a bare root tab — show snackbar / exit.
+    _handleExit();
+    return true; // consumed
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+
+  int _selectedIndex() {
+    if (_path.startsWith(AppRoutes.reports)) return 1;
+    if (_path.startsWith(AppRoutes.biomarkers)) return 2;
+    if (_path.startsWith(AppRoutes.profile)) return 3;
     return 0;
   }
 
-  void _onBack(BuildContext context) {
-    final idx = _selectedIndex(context);
-    if (idx != 0) {
-      // Any non-home tab → go home.
-      context.go(AppRoutes.home);
-      return;
-    }
-    // On Home: double-press within 2 s to exit.
+  void _handleExit() {
+    if (!mounted) return;
     final now = DateTime.now();
     if (_lastBackPress != null &&
         now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
@@ -312,8 +337,7 @@ class _AppShellState extends State<_AppShell> {
       duration: const Duration(seconds: 2),
       behavior: SnackBarBehavior.floating,
       backgroundColor: AppColors.textPrimary,
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
       content: const Text(
         'Press back again to exit Lablio',
@@ -328,17 +352,12 @@ class _AppShellState extends State<_AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    // BackButtonListener hooks into the Router's backButtonDispatcher —
-    // unlike PopScope it reliably intercepts GoRouter's system back handling.
-    return BackButtonListener(
-      onBackButtonPressed: () async {
-        _onBack(context);
-        return true; // always handled
-      },
-      child: Scaffold(
+    _path = GoRouterState.of(context).uri.path;
+
+    return Scaffold(
       body: widget.child,
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex(context),
+        currentIndex: _selectedIndex(),
         onTap: (index) {
           switch (index) {
             case 0:
@@ -374,8 +393,7 @@ class _AppShellState extends State<_AppShell> {
           ),
         ],
       ),
-    ),
-    );  // BackButtonListener
+    );
   }
 }
 

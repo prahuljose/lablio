@@ -1,3 +1,4 @@
+import 'dart:ui' show lerpDouble;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -55,84 +56,28 @@ class BiomarkerDetailScreen extends ConsumerWidget {
           ),
         ).valueOrNull;
 
+    final topPad = MediaQuery.of(context).padding.top;
+    final isPinned =
+        ref.watch(pinnedBiomarkersProvider).contains(biomarkerId);
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
+          SliverPersistentHeader(
             pinned: true,
-            expandedHeight: 110,
-            backgroundColor: AppColors.primaryDark,
-            foregroundColor: Colors.white,
-            iconTheme: const IconThemeData(color: Colors.white),
-            flexibleSpace: FlexibleSpaceBar(
-              centerTitle: false,
-              // start:72 = 56 (back-button icon area) + 16 (standard padding)
-              // so the title always sits just right of the back button.
-              titlePadding: const EdgeInsetsDirectional.only(
-                  start: 72, bottom: 14, end: 16),
-              title: Text(
-                biomarkerName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 17),
-              ),
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primaryDark,
-                      AppColors.primary,
-                      AppColors.primaryLight,
-                    ],
-                  ),
-                ),
-                // Category only visible when expanded.
-                child: biomarker != null
-                    ? Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                              left: 72, bottom: 42, right: 16),
-                          child: Text(
-                            biomarker.category.toUpperCase(),
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 10,
-                              letterSpacing: 1.2,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      )
-                    : null,
-              ),
+            delegate: _BiomarkerHeaderDelegate(
+              name: biomarkerName,
+              category: biomarker?.category,
+              topPadding: topPad,
+              isPinned: isPinned,
+              onPin: () => ref
+                  .read(pinnedBiomarkersProvider.notifier)
+                  .toggle(biomarkerId),
+              canAdd: biomarker != null,
+              onAdd: () {
+                if (biomarker != null) _goToAddEntry(context, biomarker);
+              },
             ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  ref.watch(pinnedBiomarkersProvider).contains(biomarkerId)
-                      ? Icons.push_pin
-                      : Icons.push_pin_outlined,
-                  color: Colors.white,
-                ),
-                tooltip: 'Pin to home',
-                onPressed: () => ref
-                    .read(pinnedBiomarkersProvider.notifier)
-                    .toggle(biomarkerId),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline,
-                    color: Colors.white),
-                onPressed: biomarker == null
-                    ? null
-                    : () => _goToAddEntry(context, biomarker),
-              ),
-            ],
           ),
           historyAsync.when(
             loading: () => const SliverToBoxAdapter(
@@ -802,9 +747,11 @@ class _ExplainerCard extends StatelessWidget {
               children: [
                 Icon(icon, size: 18, color: color),
                 const SizedBox(width: 8),
-                Text(heading!,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700, color: color)),
+                Expanded(
+                  child: Text(heading!,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700, color: color)),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -929,6 +876,160 @@ class _NotesCardState extends ConsumerState<_NotesCard> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A [SliverPersistentHeaderDelegate] that animates the biomarker name and
+/// category label from no left-padding (fully expanded) to just-right-of-the-
+/// back-button padding (fully collapsed). Uses [shrinkOffset] directly so the
+/// transition tracks the user's scroll with no separate animation controller.
+class _BiomarkerHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final String name;
+  final String? category;
+  final double topPadding;
+  final bool isPinned;
+  final VoidCallback onPin;
+  final bool canAdd;
+  final VoidCallback onAdd;
+
+  const _BiomarkerHeaderDelegate({
+    required this.name,
+    this.category,
+    required this.topPadding,
+    required this.isPinned,
+    required this.onPin,
+    required this.canAdd,
+    required this.onAdd,
+  });
+
+  static const double _expandedExtra = 54.0; // extra height beyond the toolbar
+
+  @override
+  double get minExtent => kToolbarHeight + topPadding;
+
+  @override
+  double get maxExtent => kToolbarHeight + topPadding + _expandedExtra;
+
+  @override
+  bool shouldRebuild(covariant _BiomarkerHeaderDelegate old) =>
+      old.name != name ||
+      old.category != category ||
+      old.isPinned != isPinned ||
+      old.canAdd != canAdd ||
+      old.topPadding != topPadding;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final totalDelta = maxExtent - minExtent; // == _expandedExtra
+    // t = 0 fully expanded, t = 1 fully collapsed.
+    final t = totalDelta > 0
+        ? (shrinkOffset / totalDelta).clamp(0.0, 1.0)
+        : 1.0;
+
+    // Left padding: 16 when expanded → 72 when collapsed (clears 56px back btn).
+    final titleLeft = lerpDouble(15.0, 45.0, t)!;
+    // Category fades out quickly in the first 40% of collapse.
+    final categoryOpacity = ((1.0 - t / 0.4)).clamp(0.0, 1.0);
+
+    // maxLines: 2 when expanded, 1 when mostly collapsed.
+    final titleMaxLines = t > 0.6 ? 1 : 2;
+    // Bottom offset: 10 when expanded (breathing room), 18 when collapsed
+    // (vertically centred in kToolbarHeight ≈ 56px for a ~20px line).
+    final titleBottom = lerpDouble(10.0, 18.0, t)!;
+
+    return ClipRect(
+      child: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryDark,
+            AppColors.primary,
+            AppColors.primaryLight,
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // ── Toolbar row: always fixed below status bar ─────────
+          Positioned(
+            top: topPadding,
+            left: 0,
+            right: 0,
+            height: kToolbarHeight,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(
+                    isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                    color: Colors.white,
+                  ),
+                  tooltip: 'Pin to home',
+                  onPressed: onPin,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline,
+                      color: Colors.white),
+                  onPressed: canAdd ? onAdd : null,
+                ),
+              ],
+            ),
+          ),
+
+          // ── Animated title + category ──────────────────────────
+          // No fixed height — content grows upward from the bottom.
+          // ClipRect on the parent prevents overflow outside the header.
+          // Switch to 1 line at 60% collapse so it fits when nearly collapsed.
+          Positioned(
+            bottom: titleBottom,
+            left: 0,
+            right: 0,
+            child: Padding(
+              // right: 96 = 2 action buttons (pin + add) × 48px each
+              padding: EdgeInsets.only(left: titleLeft, right: 96),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (category != null && categoryOpacity > 0)
+                    Opacity(
+                      opacity: categoryOpacity,
+                      child: Text(
+                        category!.toUpperCase(),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          fontSize: 10,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  Text(
+                    name,
+                    maxLines: titleMaxLines,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
       ),
     );
   }
