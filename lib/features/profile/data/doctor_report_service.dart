@@ -141,7 +141,7 @@ class DoctorReportService {
                 pw.SizedBox(height: 3),
                 pw.Text('lablio.us.kg',
                     style: pw.TextStyle(
-                        color: PdfColor(1, 1, 1, 0.85), fontSize: 11)),
+                        color: PdfColor(1, 1, 1, 0.85), fontSize: 13)),
               ],
             ),
             pw.Column(
@@ -149,7 +149,7 @@ class DoctorReportService {
               children: [
                 pw.Text('Get it on Google Play',
                     style: pw.TextStyle(
-                        color: PdfColor(1, 1, 1, 0.75), fontSize: 9)),
+                        color: PdfColor(1, 1, 1, 0.75), fontSize: 11)),
                 pw.SizedBox(height: 2),
                 pw.Text('Lablio: Biomarker Tracking',
                     style: pw.TextStyle(
