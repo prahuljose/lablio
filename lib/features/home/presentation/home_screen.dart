@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../biomarkers/data/biomarker_entry_model.dart';
 import '../../biomarkers/presentation/quick_log_sheet.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
@@ -92,7 +93,7 @@ class HomeScreen extends ConsumerWidget {
               entries:
                   entriesAsync.valueOrNull ?? const <BiomarkerEntryModel>[],
             ),
-            Text('Recent Results',
+            Text(AppLocalizations.of(context).homeRecentResults,
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             entriesAsync.when(
@@ -209,7 +210,7 @@ class _InsightsCard extends StatelessWidget {
               Row(
                 children: [
                   if (data.improving > 0) ...[
-                    const Icon(Icons.trending_down,
+                    const Icon(Icons.trending_up,
                         size: 14, color: AppColors.normal),
                     const SizedBox(width: 4),
                     Text('${data.improving} improving',
@@ -218,7 +219,7 @@ class _InsightsCard extends StatelessWidget {
                     const SizedBox(width: 12),
                   ],
                   if (data.worsening > 0) ...[
-                    const Icon(Icons.trending_up,
+                    const Icon(Icons.trending_down,
                         size: 14, color: AppColors.high),
                     const SizedBox(width: 4),
                     Text('${data.worsening} worsening',
@@ -257,18 +258,15 @@ class _InsightRow extends StatelessWidget {
                 ? AppColors.low
                 : AppColors.textTertiary;
 
-    final (arrow, arrowColor) = switch (insight.direction) {
-      TrendDirection.up => (
-          Icons.north_east,
-          insight.improving ? AppColors.normal : AppColors.high
-        ),
-      TrendDirection.down => (
-          Icons.south_east,
-          insight.improving ? AppColors.normal : AppColors.high
-        ),
-      TrendDirection.flat => (Icons.east, AppColors.textTertiary),
-      TrendDirection.none => (Icons.fiber_manual_record, AppColors.textTertiary),
-    };
+    // Arrow reflects health trend, not raw value direction:
+    // green trending_up = improving, red trending_down = worsening.
+    final (arrow, arrowColor) = insight.improving
+        ? (Icons.trending_up, AppColors.normal)
+        : insight.worsening
+            ? (Icons.trending_down, AppColors.high)
+            : insight.direction == TrendDirection.none
+                ? (Icons.remove, AppColors.textTertiary)
+                : (Icons.east, AppColors.textTertiary);
 
     return InkWell(
       onTap: onTap,
@@ -420,7 +418,7 @@ class _QuickActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Quick Actions',
+        Text(AppLocalizations.of(context).homeQuickActions,
             style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         Row(
@@ -428,7 +426,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: _ActionCard(
                 icon: Icons.add_circle_outline,
-                label: 'Log Result',
+                label: AppLocalizations.of(context).homeLogResult,
                 color: AppColors.primary,
                 onTap: () => showQuickLogSheet(context),
               ),
@@ -437,7 +435,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: _ActionCard(
                 icon: Icons.upload_file_outlined,
-                label: 'Upload Report',
+                label: AppLocalizations.of(context).homeUploadReport,
                 color: AppColors.primaryLight,
                 onTap: () => context.push(AppRoutes.addReport),
               ),

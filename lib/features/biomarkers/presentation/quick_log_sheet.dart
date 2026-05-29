@@ -34,13 +34,12 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
         const <BiomarkerModel>[];
     final q = _q.trim().toLowerCase();
     final results = q.isEmpty
-        ? all.take(40).toList()
+        ? all
         : all
             .where((b) =>
                 b.name.toLowerCase().contains(q) ||
                 b.shortName.toLowerCase().contains(q) ||
                 b.category.toLowerCase().contains(q))
-            .take(40)
             .toList();
 
     final mq = MediaQuery.of(context);
@@ -88,7 +87,9 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextField(
-                  autofocus: true,
+                  // Keyboard opens only when the user taps the field —
+                  // lets them scroll the list first.
+                  autofocus: false,
                   onChanged: (v) => setState(() => _q = v),
                   decoration: const InputDecoration(
                     hintText: 'Search biomarkers…',

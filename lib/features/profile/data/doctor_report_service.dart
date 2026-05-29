@@ -1,167 +1,108 @@
 import 'dart:io';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import '../../biomarkers/data/biomarker_entry_model.dart';
+import '../data/medical_record_model.dart';
 import '../data/profile_model.dart';
 
-/// Builds and shares a PDF summary suitable for taking to a doctor visit.
+/// Generates and shares a polished doctor-visit PDF summary.
 class DoctorReportService {
+  // ── Brand palette ─────────────────────────────────────────
+  static final _brand     = PdfColor.fromHex('#0077B6');
+  static final _brandDark = PdfColor.fromHex('#023E8A');
+  static final _brandMid  = PdfColor.fromHex('#0096C7');
+  static final _bg        = PdfColor.fromHex('#F4F7FB');
+  static final _divider   = PdfColors.grey300;
+  static final _muted     = PdfColors.grey600;
+
+  // Status colours — solid, high-contrast
+  static final _cHigh     = PdfColor.fromHex('#DC2626');
+  static final _cHighBg   = PdfColor.fromHex('#FEE2E2');
+  static final _cLow      = PdfColor.fromHex('#D97706');
+  static final _cLowBg    = PdfColor.fromHex('#FEF3C7');
+  static final _cNorm     = PdfColor.fromHex('#059669');
+  static final _cNormBg   = PdfColor.fromHex('#D1FAE5');
+  static final _cNone     = PdfColors.grey500;
+  static final _cNoneBg   = PdfColors.grey200;
+
+  // ── Public API ────────────────────────────────────────────
+
+  Future<void> share({
+    required ProfileModel? profile,
+    required List<BiomarkerEntryModel> entries,
+    required List<MedicalRecordEntry> medical,
+  }) async {
+    final file = await generate(profile: profile, entries: entries, medical: medical);
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path, mimeType: 'application/pdf')],
+      subject: 'Lablio Health Summary',
+      text: 'My health summary from Lablio.',
+    ));
+  }
+
   Future<File> generate({
     required ProfileModel? profile,
     required List<BiomarkerEntryModel> entries,
+    required List<MedicalRecordEntry> medical,
   }) async {
-    // Latest reading per biomarker, oldest→newest order.
-    final byMarker = <String, BiomarkerEntryModel>{};
-    for (final e in entries) {
-      final cur = byMarker[e.biomarkerId];
-      if (cur == null || cur.date.isBefore(e.date)) byMarker[e.biomarkerId] = e;
-    }
-    final latest = byMarker.values.toList()
-      ..sort((a, b) {
-        // Out of range first, then by category, then by name.
-        int rank(BiomarkerEntryModel x) {
-          if (x.isHigh || x.isLow) return 0;
-          if (x.isNormal) return 1;
-          return 2;
-        }
-        final r = rank(a).compareTo(rank(b));
-        if (r != 0) return r;
-        final c = a.biomarkerCategory.compareTo(b.biomarkerCategory);
-        if (c != 0) return c;
-        return a.biomarkerName.compareTo(b.biomarkerName);
-      });
+    final font = pw.Font.ttf(
+        await rootBundle.load('assets/fonts/Outfit.ttf'));
+    final theme = pw.ThemeData.withFont(
+      base: font, bold: font, italic: font, boldItalic: font,
+    );
 
-    final doc = pw.Document();
+    // Latest reading per biomarker, grouped by category.
+    final latest = <String, BiomarkerEntryModel>{};
+    for (final e in entries) {
+      final cur = latest[e.biomarkerId];
+      if (cur == null || cur.date.isBefore(e.date)) latest[e.biomarkerId] = e;
+    }
+    final byCategory = <String, List<BiomarkerEntryModel>>{};
+    for (final e in latest.values) {
+      byCategory.putIfAbsent(
+          e.biomarkerCategory.isEmpty ? 'Other' : e.biomarkerCategory,
+          () => []).add(e);
+    }
+    final categories = byCategory.keys.toList()..sort();
+
+    final outOfRange = latest.values.where((e) => e.isHigh || e.isLow).length;
     final now = DateTime.now();
 
-    String statusText(BiomarkerEntryModel e) {
-      if (e.isNormal) return 'Normal';
-      if (e.isHigh) return 'HIGH';
-      if (e.isLow) return 'LOW';
-      return '—';
-    }
-
-    PdfColor statusColor(BiomarkerEntryModel e) {
-      if (e.isHigh) return PdfColor.fromHex('#EF4444');
-      if (e.isLow) return PdfColor.fromHex('#F59E0B');
-      if (e.isNormal) return PdfColor.fromHex('#10B981');
-      return PdfColors.grey700;
-    }
-
+    final doc = pw.Document(theme: theme);
     doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.fromLTRB(28, 32, 28, 28),
-      header: (ctx) => pw.Container(
-        padding: const pw.EdgeInsets.only(bottom: 12),
-        decoration: const pw.BoxDecoration(
-          border: pw.Border(
-              bottom: pw.BorderSide(width: 0.5, color: PdfColors.grey400)),
+      margin: const pw.EdgeInsets.fromLTRB(28, 28, 28, 32),
+      footer: (ctx) => pw.Container(
+        margin: const pw.EdgeInsets.only(top: 12),
+        decoration: pw.BoxDecoration(
+          border: pw.Border(top: pw.BorderSide(color: _divider, width: 0.5)),
         ),
+        padding: const pw.EdgeInsets.only(top: 6),
         child: pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text('Lablio — Health Summary',
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColor.fromHex('#0077B6'),
-                )),
-            pw.Text(DateFormat('MMM d, yyyy').format(now),
-                style: const pw.TextStyle(color: PdfColors.grey700)),
+            pw.Text('Generated by Lablio — informational only, not a medical diagnosis.',
+                style: pw.TextStyle(fontSize: 8, color: _muted)),
+            pw.Text('Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                style: pw.TextStyle(fontSize: 8, color: _muted)),
           ],
         ),
       ),
-      footer: (ctx) => pw.Container(
-        alignment: pw.Alignment.centerRight,
-        margin: const pw.EdgeInsets.only(top: 12),
-        child: pw.Text('Page ${ctx.pageNumber} of ${ctx.pagesCount}',
-            style: const pw.TextStyle(
-                color: PdfColors.grey600, fontSize: 9)),
-      ),
-      build: (ctx) {
-        final name = profile?.fullName ?? '—';
-        final dob = profile?.dateOfBirth == null
-            ? '—'
-            : DateFormat('MMM d, yyyy').format(profile!.dateOfBirth!);
-        final age = profile?.age?.toString() ?? '—';
-        final sex = (profile?.sex ?? '—');
-        final blood = profile?.bloodType ?? '—';
-
-        return [
-          pw.SizedBox(height: 12),
-          // Patient block
-          pw.Container(
-            padding: const pw.EdgeInsets.all(12),
-            decoration: pw.BoxDecoration(
-              color: PdfColor.fromHex('#F4F7FB'),
-              borderRadius: pw.BorderRadius.circular(8),
-            ),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                _patientCol('Patient', name),
-                _patientCol('Date of birth', dob),
-                _patientCol('Age', age),
-                _patientCol('Sex', sex.isEmpty ? '—' : sex),
-                _patientCol('Blood', blood),
-              ],
-            ),
-          ),
+      build: (ctx) => [
+        _header(profile, now, latest.length, outOfRange),
+        pw.SizedBox(height: 20),
+        for (final cat in categories) ...[
+          _categorySection(cat, byCategory[cat]!),
           pw.SizedBox(height: 16),
-          pw.Text(
-              'Latest result per biomarker (out-of-range listed first). '
-              'Reference ranges shown are those captured at the time of each result.',
-              style: const pw.TextStyle(
-                  fontSize: 10, color: PdfColors.grey700)),
-          pw.SizedBox(height: 10),
-
-          // Table
-          pw.Table(
-            border: pw.TableBorder.symmetric(
-                inside: const pw.BorderSide(
-                    color: PdfColors.grey300, width: 0.4)),
-            columnWidths: const {
-              0: pw.FlexColumnWidth(3),
-              1: pw.FlexColumnWidth(2),
-              2: pw.FlexColumnWidth(2.4),
-              3: pw.FlexColumnWidth(1.4),
-              4: pw.FlexColumnWidth(1.6),
-            },
-            children: [
-              pw.TableRow(
-                decoration:
-                    const pw.BoxDecoration(color: PdfColors.grey200),
-                children: [
-                  _th('Biomarker'),
-                  _th('Value'),
-                  _th('Reference'),
-                  _th('Status'),
-                  _th('Date'),
-                ],
-              ),
-              for (final e in latest)
-                pw.TableRow(children: [
-                  _td('${e.biomarkerName}\n${e.biomarkerCategory}',
-                      bold: true),
-                  _td('${e.value} ${e.unit}'),
-                  _td(e.refRangeLow != null && e.refRangeHigh != null
-                      ? '${e.refRangeLow} – ${e.refRangeHigh} ${e.unit}'
-                      : '—'),
-                  _tdColored(statusText(e), statusColor(e)),
-                  _td(DateFormat('MMM d, yyyy').format(e.date)),
-                ]),
-            ],
-          ),
-          pw.SizedBox(height: 16),
-          pw.Text(
-              'Generated by Lablio. For informational purposes only — not a medical diagnosis.',
-              style: const pw.TextStyle(
-                  fontSize: 9, color: PdfColors.grey600)),
-        ];
-      },
+        ],
+        if (medical.isNotEmpty) ...[
+          _medicalSection(medical),
+        ],
+      ],
     ));
 
     final dir = await getTemporaryDirectory();
@@ -171,59 +112,325 @@ class DoctorReportService {
     return file;
   }
 
-  Future<void> share({
-    required ProfileModel? profile,
-    required List<BiomarkerEntryModel> entries,
-  }) async {
-    final file = await generate(profile: profile, entries: entries);
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path, mimeType: 'application/pdf')],
-        subject: 'Lablio Health Summary',
-        text: 'My biomarker summary from Lablio.',
+  // ── Header ────────────────────────────────────────────────
+
+  pw.Widget _header(ProfileModel? p, DateTime now, int tracked, int oor) {
+    final name  = p?.fullName ?? '—';
+    final dob   = p?.dateOfBirth == null ? '—' : DateFormat('MMM d, yyyy').format(p!.dateOfBirth!);
+    final age   = p?.age?.toString() ?? '—';
+    final sex   = switch (p?.sex) { 'male' => 'Male', 'female' => 'Female', _ => '—' };
+    final blood = p?.bloodType ?? '—';
+
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+        gradient: pw.LinearGradient(
+          colors: [_brandDark, _brandMid],
+          begin: pw.Alignment.centerLeft,
+          end: pw.Alignment.centerRight,
+        ),
+        borderRadius: pw.BorderRadius.circular(12),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Top row: title + KPI chips
+          pw.Padding(
+            padding: const pw.EdgeInsets.fromLTRB(18, 16, 18, 12),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('Lablio Health Summary',
+                          style: pw.TextStyle(
+                              color: PdfColors.white,
+                              fontSize: 20,
+                              fontWeight: pw.FontWeight.bold)),
+                      pw.SizedBox(height: 3),
+                      pw.Text(DateFormat('MMMM d, yyyy').format(now),
+                          style: pw.TextStyle(
+                              color: PdfColor(1, 1, 1, 0.7), fontSize: 11)),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(width: 10),
+                _kpiChip(tracked.toString(), 'TRACKED', _brandDark, PdfColors.white),
+                pw.SizedBox(width: 8),
+                _kpiChip(oor.toString(), 'OUT OF RANGE',
+                    oor > 0 ? _cHigh : PdfColor(1, 1, 1, 0.25), PdfColors.white),
+              ],
+            ),
+          ),
+          // Patient details bar
+          pw.Container(
+            margin: const pw.EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: pw.BoxDecoration(
+              color: PdfColor(1, 1, 1, 0.12),
+              borderRadius: pw.BorderRadius.circular(8),
+              border: pw.Border.all(color: PdfColor(1, 1, 1, 0.20), width: 0.5),
+            ),
+            child: pw.Row(children: [
+              _patientCol('Patient', name),
+              _patientCol('Date of birth', dob),
+              _patientCol('Age', age),
+              _patientCol('Sex', sex),
+              _patientCol('Blood type', blood),
+            ]),
+          ),
+        ],
       ),
     );
   }
 
-  // ── PDF helpers ─────────────────────────────────────────
-  static pw.Widget _th(String t) => pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: pw.Text(t,
-            style: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold,
-                fontSize: 10,
-                color: PdfColors.grey800)),
+  pw.Widget _kpiChip(String value, String label, PdfColor bg, PdfColor fg) =>
+      pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: pw.BoxDecoration(color: bg, borderRadius: pw.BorderRadius.circular(8)),
+        child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.center, children: [
+          pw.Text(value,
+              style: pw.TextStyle(color: fg, fontSize: 20, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 1),
+          pw.Text(label,
+              style: pw.TextStyle(color: PdfColor(fg.red, fg.green, fg.blue, 0.8),
+                  fontSize: 7, letterSpacing: 0.6)),
+        ]),
       );
 
-  static pw.Widget _td(String t, {bool bold = false}) => pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: pw.Text(t,
-            style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal)),
+  pw.Widget _patientCol(String label, String value) => pw.Expanded(
+        child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+          pw.Text(label.toUpperCase(),
+              style: pw.TextStyle(
+                  fontSize: 7,
+                  color: _brandDark,
+                  letterSpacing: 0.7)),
+          pw.SizedBox(height: 2),
+          pw.Text(value,
+              style: pw.TextStyle(
+                  color: PdfColors.black,
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold)),
+        ]),
       );
 
-  static pw.Widget _tdColored(String t, PdfColor color) => pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: pw.Text(t,
-            style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: pw.FontWeight.bold,
-                color: color)),
+  // ── Category section ──────────────────────────────────────
+
+  pw.Widget _categorySection(String category, List<BiomarkerEntryModel> rows) {
+    rows.sort((a, b) {
+      int rank(BiomarkerEntryModel x) =>
+          (x.isHigh || x.isLow) ? 0 : x.isNormal ? 1 : 2;
+      final r = rank(a).compareTo(rank(b));
+      return r != 0 ? r : a.biomarkerName.compareTo(b.biomarkerName);
+    });
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // Category header: accent bar + label (Row avoids borderRadius+non-uniform-border crash)
+        pw.Container(
+          color: _bg,
+          child: pw.Row(children: [
+            pw.Container(width: 4, height: 34, color: _brand),
+            pw.Expanded(
+              child: pw.Padding(
+                padding: const pw.EdgeInsets.fromLTRB(10, 9, 12, 9),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(category.toUpperCase(),
+                        style: pw.TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 1.0,
+                            fontWeight: pw.FontWeight.bold,
+                            color: _brandDark)),
+                    pw.Text('${rows.length} marker${rows.length == 1 ? '' : 's'}',
+                        style: pw.TextStyle(fontSize: 9, color: _muted)),
+                  ],
+                ),
+              ),
+            ),
+          ]),
+        ),
+        pw.SizedBox(height: 4),
+        // Column header row
+        _tableHeaderRow(),
+        // Data rows
+        for (final row in rows) _dataRow(row),
+      ],
+    );
+  }
+
+  pw.Widget _tableHeaderRow() => pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        decoration: pw.BoxDecoration(
+          border: pw.Border(bottom: pw.BorderSide(color: _divider, width: 1)),
+        ),
+        child: pw.Row(children: [
+          pw.Expanded(flex: 30, child: _th('Biomarker')),
+          pw.Expanded(flex: 18, child: _th('Result')),
+          pw.Expanded(flex: 25, child: _th('Reference range')),
+          pw.Expanded(flex: 14, child: _th('Status')),
+          pw.Expanded(flex: 16, child: _th('Date')),
+        ]),
       );
 
-  static pw.Widget _patientCol(String label, String value) => pw.Expanded(
+  pw.Widget _th(String t) => pw.Text(t.toUpperCase(),
+      style: pw.TextStyle(fontSize: 9, color: _muted, letterSpacing: 0.6,
+          fontWeight: pw.FontWeight.bold));
+
+  pw.Widget _dataRow(BiomarkerEntryModel e) {
+    final (fg, bg, label) = e.isHigh
+        ? (_cHigh, _cHighBg, 'HIGH')
+        : e.isLow
+            ? (_cLow, _cLowBg, 'LOW')
+            : e.isNormal
+                ? (_cNorm, _cNormBg, 'Normal')
+                : (_cNone, _cNoneBg, '—');
+
+    final valueStr = _fmt(e.value);
+    final refStr = e.refRangeLow != null && e.refRangeHigh != null
+        ? '${_fmt(e.refRangeLow!)} – ${_fmt(e.refRangeHigh!)} ${e.unit}'
+        : '—';
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+      decoration: pw.BoxDecoration(
+        border: pw.Border(bottom: pw.BorderSide(color: _divider, width: 0.4)),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Expanded(flex: 30,
+              child: pw.Text(e.biomarkerName,
+                  style: pw.TextStyle(
+                      fontSize: 10.5, fontWeight: pw.FontWeight.bold))),
+          pw.Expanded(flex: 18,
+              child: pw.Text('$valueStr ${e.unit}',
+                  style: const pw.TextStyle(fontSize: 10.5))),
+          pw.Expanded(flex: 25,
+              child: pw.Text(refStr,
+                  style: pw.TextStyle(fontSize: 9.5, color: _muted))),
+          // Align shrinks the badge to its content instead of filling the cell.
+          pw.Expanded(flex: 14,
+              child: pw.Align(
+                alignment: pw.Alignment.centerLeft,
+                child: _statusBadge(label, fg, bg),
+              )),
+          pw.Expanded(flex: 16,
+              child: pw.Text(DateFormat('MMM d, yyyy').format(e.date),
+                  style: pw.TextStyle(fontSize: 9.5, color: _muted))),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _statusBadge(String label, PdfColor fg, PdfColor bg) =>
+      pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: pw.BoxDecoration(color: bg),
+        child: pw.Text(label,
+            style: pw.TextStyle(
+                color: fg, fontSize: 9, fontWeight: pw.FontWeight.bold)),
+      );
+
+  // ── Medical record ────────────────────────────────────────
+
+  pw.Widget _medicalSection(List<MedicalRecordEntry> entries) {
+    final conds  = entries.where((e) => e.kind == MedicalRecordKind.condition).toList();
+    final allerg = entries.where((e) => e.kind == MedicalRecordKind.allergy).toList();
+    final vaccs  = entries.where((e) => e.kind == MedicalRecordKind.vaccination).toList();
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // Section header — same accent-bar style as category headers.
+        pw.Container(
+          color: _bg,
+          child: pw.Row(children: [
+            pw.Container(width: 4, height: 34, color: _brand),
+            pw.Padding(
+              padding: const pw.EdgeInsets.fromLTRB(10, 9, 12, 9),
+              child: pw.Text('MEDICAL RECORD',
+                  style: pw.TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 1.0,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _brandDark)),
+            ),
+          ]),
+        ),
+        pw.SizedBox(height: 8),
+        if (conds.isNotEmpty)  _medSubSection('Conditions', conds),
+        if (allerg.isNotEmpty) _medSubSection('Allergies', allerg),
+        if (vaccs.isNotEmpty)  _medSubSection('Vaccinations', vaccs),
+      ],
+    );
+  }
+
+  pw.Widget _medSubSection(String title, List<MedicalRecordEntry> rows) =>
+      pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 10),
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(label.toUpperCase(),
-                style: const pw.TextStyle(
-                    fontSize: 8, color: PdfColors.grey600)),
-            pw.SizedBox(height: 2),
-            pw.Text(value,
-                style: pw.TextStyle(
-                    fontSize: 11, fontWeight: pw.FontWeight.bold)),
+            // Sub-section title — colored row, no borderRadius to avoid crashes.
+            pw.Container(
+              color: PdfColor.fromHex('#EFF6FF'),
+              child: pw.Row(children: [
+                pw.Container(width: 3, height: 26, color: _brandMid),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 5),
+                  child: pw.Text(title,
+                      style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _brand)),
+                ),
+              ]),
+            ),
+            pw.SizedBox(height: 4),
+            for (final r in rows)
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border(
+                      bottom: pw.BorderSide(color: _divider, width: 0.4)),
+                ),
+                child: pw.Row(children: [
+                  pw.Expanded(flex: 25,
+                      child: pw.Text(r.name,
+                          style: pw.TextStyle(
+                              fontSize: 10.5, fontWeight: pw.FontWeight.bold))),
+                  pw.Expanded(flex: 18,
+                      child: pw.Text(
+                          r.occurredOn == null
+                              ? '—'
+                              : DateFormat('MMM d, yyyy').format(r.occurredOn!),
+                          style: pw.TextStyle(fontSize: 9.5, color: _muted))),
+                  pw.Expanded(flex: 15,
+                      child: pw.Text(
+                          r.severity ?? r.status ?? '—',
+                          style: pw.TextStyle(fontSize: 9.5, color: _muted))),
+                  pw.Expanded(flex: 40,
+                      child: pw.Text(r.notes ?? '—',
+                          style: pw.TextStyle(fontSize: 9.5, color: _muted))),
+                ]),
+              ),
           ],
         ),
       );
+
+  // ── Helpers ───────────────────────────────────────────────
+
+  /// Format a double: show as integer if it's a whole number,
+  /// otherwise show up to 2 decimal places (no trailing zeros).
+  static String _fmt(double v) {
+    if (v == v.truncateToDouble()) return v.toInt().toString();
+    // Remove trailing zeros.
+    final s = v.toStringAsFixed(2);
+    return s.replaceAll(RegExp(r'\.?0+$'), '');
+  }
 }

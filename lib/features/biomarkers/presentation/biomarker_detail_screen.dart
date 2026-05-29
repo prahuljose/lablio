@@ -60,15 +60,25 @@ class BiomarkerDetailScreen extends ConsumerWidget {
         slivers: [
           SliverAppBar(
             pinned: true,
-            expandedHeight: 140,
-            // Gradient "ribbon" header. Title fades in as the bar collapses;
-            // the gradient parallaxes behind it.
+            expandedHeight: 110,
+            backgroundColor: AppColors.primaryDark,
+            foregroundColor: Colors.white,
+            iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding:
-                  const EdgeInsets.symmetric(horizontal: 56, vertical: 14),
-              title: Text(biomarkerName,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
+              centerTitle: false,
+              // start:72 = 56 (back-button icon area) + 16 (standard padding)
+              // so the title always sits just right of the back button.
+              titlePadding: const EdgeInsetsDirectional.only(
+                  start: 72, bottom: 14, end: 16),
+              title: Text(
+                biomarkerName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17),
+              ),
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -81,24 +91,27 @@ class BiomarkerDetailScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.only(left: 56, bottom: 36, right: 16),
-                    child: Text(
-                      biomarker?.category ?? '',
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 12,
-                          letterSpacing: 1.0,
-                          fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
+                // Category only visible when expanded.
+                child: biomarker != null
+                    ? Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              left: 72, bottom: 42, right: 16),
+                          child: Text(
+                            biomarker.category.toUpperCase(),
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 10,
+                              letterSpacing: 1.2,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                    : null,
               ),
             ),
-            iconTheme: const IconThemeData(color: Colors.white),
             actions: [
               IconButton(
                 icon: Icon(

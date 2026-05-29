@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../constants/app_colors.dart';
 import '../onboarding/onboarding_state.dart';
+import '../../l10n/app_localizations.dart';
 import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -270,9 +273,16 @@ final appRouter = GoRouter(
   ],
 );
 
-class _AppShell extends StatelessWidget {
+class _AppShell extends StatefulWidget {
   final Widget child;
   const _AppShell({required this.child});
+
+  @override
+  State<_AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<_AppShell> {
+  DateTime? _lastBackPress;
 
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
@@ -282,10 +292,51 @@ class _AppShell extends StatelessWidget {
     return 0;
   }
 
+  void _onBack(BuildContext context) {
+    final idx = _selectedIndex(context);
+    if (idx != 0) {
+      // Any non-home tab → go home.
+      context.go(AppRoutes.home);
+      return;
+    }
+    // On Home: double-press within 2 s to exit.
+    final now = DateTime.now();
+    if (_lastBackPress != null &&
+        now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
+      SystemNavigator.pop();
+      return;
+    }
+    _lastBackPress = now;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      duration: const Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.textPrimary,
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      content: const Text(
+        'Press back again to exit Lablio',
+        style: TextStyle(
+          fontFamily: 'Outfit',
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
+    // BackButtonListener hooks into the Router's backButtonDispatcher —
+    // unlike PopScope it reliably intercepts GoRouter's system back handling.
+    return BackButtonListener(
+      onBackButtonPressed: () async {
+        _onBack(context);
+        return true; // always handled
+      },
+      child: Scaffold(
+      body: widget.child,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex(context),
         onTap: (index) {
@@ -300,30 +351,31 @@ class _AppShell extends StatelessWidget {
               context.go(AppRoutes.profile);
           }
         },
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: AppLocalizations.of(context).navHome,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.folder_outlined),
-            activeIcon: Icon(Icons.folder),
-            label: 'Reports',
+            icon: const Icon(Icons.folder_outlined),
+            activeIcon: const Icon(Icons.folder),
+            label: AppLocalizations.of(context).navReports,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.science_outlined),
-            activeIcon: Icon(Icons.science),
-            label: 'Biomarkers',
+            icon: const Icon(Icons.science_outlined),
+            activeIcon: const Icon(Icons.science),
+            label: AppLocalizations.of(context).navBiomarkers,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outlined),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person_outlined),
+            activeIcon: const Icon(Icons.person),
+            label: AppLocalizations.of(context).navProfile,
           ),
         ],
       ),
-    );
+    ),
+    );  // BackButtonListener
   }
 }
 

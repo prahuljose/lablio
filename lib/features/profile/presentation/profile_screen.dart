@@ -5,11 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../data/account_service.dart';
 import '../data/doctor_report_service.dart';
 import '../data/profile_model.dart';
+import '../providers/medical_record_provider.dart';
 import '../providers/profile_provider.dart';
 
 final _profileAuthRepoProvider = Provider(
@@ -34,13 +36,14 @@ class ProfileScreen extends ConsumerWidget {
         (user?.userMetadata?['full_name'] as String? ?? 'User');
     final email = user?.email ?? '';
 
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(t.profileTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit profile',
+            tooltip: t.profileEditTooltip,
             onPressed: () => context.push(AppRoutes.editProfile),
           ),
         ],
@@ -48,7 +51,8 @@ class ProfileScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildAvatar(context, fullName, profileAsync.valueOrNull?.avatarUrl),
+          _buildAvatar(context, fullName,
+              profileAsync.valueOrNull?.avatarUrl, profileAsync.valueOrNull),
           const SizedBox(height: 24),
           Card(
             child: Column(
@@ -161,8 +165,12 @@ class ProfileScreen extends ConsumerWidget {
       return;
     }
     final profile = ref.read(profileProvider).valueOrNull;
+    // Await the async load — valueOrNull returns [] before data arrives.
+    final medical =
+        await ref.read(medicalRecordProvider.future).catchError((_) => []);
     try {
-      await DoctorReportService().share(profile: profile, entries: entries);
+      await DoctorReportService()
+          .share(profile: profile, entries: entries, medical: medical);
     } catch (e) {
       messenger.showSnackBar(SnackBar(
         content: Text('Could not generate PDF: $e'),
@@ -269,13 +277,26 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildAvatar(
-      BuildContext context, String fullName, String? avatarUrl) {
+      BuildContext context, String fullName, String? avatarUrl,
+      [ProfileModel? profile]) {
     final initials = fullName
         .split(' ')
         .where((w) => w.isNotEmpty)
         .take(2)
         .map((w) => w[0].toUpperCase())
         .join();
+
+    final age = profile?.age;
+    final sex = switch (profile?.sex) {
+      'male' => 'M',
+      'female' => 'F',
+      'other' => 'Other',
+      _ => null,
+    };
+    final subtitleBits = <String>[
+      if (age != null) '$age yrs',
+      if (sex != null) sex,
+    ];
 
     return Center(
       child: Column(
@@ -295,6 +316,11 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(fullName, style: Theme.of(context).textTheme.titleLarge),
+          if (subtitleBits.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(subtitleBits.join('  ·  '),
+                style: Theme.of(context).textTheme.bodyMedium),
+          ],
         ],
       ),
     );

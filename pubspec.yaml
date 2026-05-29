@@ -57,6 +57,7 @@ flutter:
 
   assets:
     - assets/data/biomarkers.json
+    - assets/fonts/Outfit.ttf
 
   fonts:
     - family: Outfit
