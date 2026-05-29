@@ -24,6 +24,8 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
   String _query = '';
   BiomarkerFilter _filter = BiomarkerFilter.all;
   BiomarkerSort _sort = BiomarkerSort.name;
+  String? _categoryFilter;
+  String? _tagFilter;
 
   @override
   void initState() {
@@ -60,6 +62,14 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
 
   List<BiomarkerEntryModel> _process(List<BiomarkerEntryModel> tracked) {
     var list = tracked.where(_matchesFilter).toList();
+    if (_categoryFilter != null) {
+      list = list
+          .where((e) => e.biomarkerCategory == _categoryFilter)
+          .toList();
+    }
+    if (_tagFilter != null) {
+      list = list.where((e) => e.tags.contains(_tagFilter)).toList();
+    }
     if (_query.isNotEmpty) {
       final q = _query.toLowerCase();
       list = list
@@ -119,6 +129,13 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
         data: (tracked) {
           if (tracked.isEmpty) return _buildEmpty(context);
           final list = _process(tracked);
+          // Unique categories from tracked biomarkers, sorted alphabetically.
+          final categories = tracked
+              .map((e) => e.biomarkerCategory)
+              .where((c) => c.isNotEmpty)
+              .toSet()
+              .toList()
+            ..sort();
           return Column(
             children: [
               _SearchBar(onChanged: (v) => setState(() => _query = v)),
@@ -129,6 +146,34 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
                   setState(() => _filter = f);
                 },
               ),
+              if (categories.length > 1)
+                _CategoryChips(
+                  categories: categories,
+                  selected: _categoryFilter,
+                  onSelected: (c) {
+                    HapticFeedback.selectionClick();
+                    setState(() =>
+                        _categoryFilter = _categoryFilter == c ? null : c);
+                  },
+                ),
+              // Tag filter — only shown when at least one entry has a tag.
+              Builder(builder: (context) {
+                final allTags = tracked
+                    .expand((e) => e.tags)
+                    .toSet()
+                    .toList()
+                  ..sort();
+                if (allTags.isEmpty) return const SizedBox.shrink();
+                return _TagChips(
+                  tags: allTags,
+                  selected: _tagFilter,
+                  onSelected: (t) {
+                    HapticFeedback.selectionClick();
+                    setState(() =>
+                        _tagFilter = _tagFilter == t ? null : t);
+                  },
+                );
+              }),
               Expanded(
                 child: list.isEmpty
                     ? _buildNoMatches(context)
@@ -194,10 +239,18 @@ class _SearchBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: TextField(
         onChanged: onChanged,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'Search biomarkers…',
-          prefixIcon: Icon(Icons.search),
+          prefixIcon: const Icon(Icons.search),
           isDense: true,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.divider, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          ),
         ),
       ),
     );
@@ -239,12 +292,116 @@ class _FilterChips extends StatelessWidget {
               ),
               selectedColor: AppColors.primary,
               backgroundColor: AppColors.surface,
+              shape: const StadiumBorder(),
               side: BorderSide(
                   color: isSel ? AppColors.primary : AppColors.divider),
               onSelected: (_) => onSelected(e.key),
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+class _CategoryChips extends StatelessWidget {
+  final List<String> categories;
+  final String? selected;
+  final ValueChanged<String> onSelected;
+
+  const _CategoryChips({
+    required this.categories,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+        itemCount: categories.length,
+        itemBuilder: (_, i) {
+          final cat = categories[i];
+          final isSel = cat == selected;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(cat),
+              selected: isSel,
+              showCheckmark: false,
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSel ? Colors.white : AppColors.textSecondary,
+              ),
+              selectedColor: AppColors.primaryDark,
+              backgroundColor: AppColors.surface,
+              shape: const StadiumBorder(),
+              side: BorderSide(
+                  color: isSel ? AppColors.primaryDark : AppColors.divider),
+              onSelected: (_) => onSelected(cat),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TagChips extends StatelessWidget {
+  final List<String> tags;
+  final String? selected;
+  final ValueChanged<String> onSelected;
+
+  const _TagChips({
+    required this.tags,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+        itemCount: tags.length,
+        itemBuilder: (_, i) {
+          final tag = tags[i];
+          final isSel = tag == selected;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.label_outline,
+                      size: 13,
+                      color: isSel ? Colors.white : AppColors.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(tag),
+                ],
+              ),
+              selected: isSel,
+              showCheckmark: false,
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSel ? Colors.white : AppColors.textSecondary,
+              ),
+              selectedColor: AppColors.primaryLight,
+              backgroundColor: AppColors.surface,
+              shape: const StadiumBorder(),
+              side: BorderSide(
+                  color: isSel ? AppColors.primaryLight : AppColors.divider),
+              onSelected: (_) => onSelected(tag),
+            ),
+          );
+        },
       ),
     );
   }
@@ -320,20 +477,22 @@ class _BiomarkerTile extends ConsumerWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: status.bg,
-                              borderRadius: BorderRadius.circular(20),
+                          // Hide chip entirely when there's no reference range.
+                          if (status.label != '—')
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: status.bg,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(status.label,
+                                  style: TextStyle(
+                                    color: status.color,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  )),
                             ),
-                            child: Text(status.label,
-                                style: TextStyle(
-                                  color: status.color,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                )),
-                          ),
                           const SizedBox(height: 4),
                           Icon(Icons.chevron_right,
                               color: AppColors.textTertiary, size: 18),

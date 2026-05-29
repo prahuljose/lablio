@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/router/app_router.dart';
 import '../data/biomarker_model.dart';
 import '../providers/custom_biomarkers_provider.dart';
 
@@ -63,14 +64,18 @@ class _AddCustomBiomarkerScreenState
             : _description.text.trim(),
       );
       await ref.read(customBiomarkersProvider.notifier).add(model);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Added ${model.name}'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.normal,
-        ));
-        context.pop();
-      }
+      if (!mounted) return;
+      // Go straight to logging the first value — this also makes the biomarker
+      // appear on the Biomarkers page (which only shows tracked/logged markers).
+      context.go(AppRoutes.biomarkers);
+      context.push(
+        AppRoutes.addEntry,
+        extra: {
+          'biomarkerId': model.id,
+          'biomarkerName': model.name,
+          'biomarker': model,
+        },
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

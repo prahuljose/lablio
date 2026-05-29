@@ -339,7 +339,6 @@ class _AppShellState extends State<_AppShell> {
     _path = GoRouterState.of(context).uri.path;
 
     return Scaffold(
-      extendBody: true, // body flows behind the floating nav bar
       body: widget.child,
       bottomNavigationBar: _LabNav(
         currentIndex: _selectedIndex(),
@@ -497,16 +496,18 @@ class _NavItem extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'Outfit',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 )

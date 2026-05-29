@@ -1,3 +1,8 @@
+/// System default tag suggestions — used when the user hasn't configured
+/// their own. Defined here so both the add-entry screen and the settings
+/// editor share a single source of truth.
+const kDefaultTags = ['fasting', 'post-meal', 'morning', 'post-workout'];
+
 class ProfileModel {
   final String id;
   final String? fullName;
@@ -8,6 +13,8 @@ class ProfileModel {
   final String? bloodType;
   final String? avatarUrl;
   final String? avatarPath;
+  /// NULL means use [kDefaultTags]; an empty list means no suggestions.
+  final List<String>? defaultTags;
 
   const ProfileModel({
     required this.id,
@@ -19,7 +26,11 @@ class ProfileModel {
     this.bloodType,
     this.avatarUrl,
     this.avatarPath,
+    this.defaultTags,
   });
+
+  /// The effective tags to show as suggestions.
+  List<String> get effectiveTags => defaultTags ?? kDefaultTags;
 
   factory ProfileModel.fromMap(Map<String, dynamic> map) => ProfileModel(
         id: map['id'] as String,
@@ -33,15 +44,19 @@ class ProfileModel {
         bloodType: map['blood_type'] as String?,
         avatarUrl: map['avatar_url'] as String?,
         avatarPath: map['avatar_path'] as String?,
+        defaultTags: (map['default_tags'] as List?)
+            ?.map((e) => e.toString())
+            .toList(),
       );
 
-  /// Only the user-editable demographic fields (avatar handled separately).
   Map<String, dynamic> toUpdateMap() => {
         'date_of_birth': dateOfBirth?.toIso8601String().split('T').first,
         'sex': sex,
         'height_cm': heightCm,
         'weight_kg': weightKg,
         'blood_type': bloodType,
+        // Persist null as null (use defaults) or an explicit list.
+        'default_tags': defaultTags,
       };
 
   ProfileModel copyWith({
@@ -53,6 +68,8 @@ class ProfileModel {
     String? bloodType,
     String? avatarUrl,
     String? avatarPath,
+    List<String>? defaultTags,
+    bool clearDefaultTags = false,
   }) =>
       ProfileModel(
         id: id,
@@ -64,9 +81,10 @@ class ProfileModel {
         bloodType: bloodType ?? this.bloodType,
         avatarUrl: avatarUrl ?? this.avatarUrl,
         avatarPath: avatarPath ?? this.avatarPath,
+        defaultTags:
+            clearDefaultTags ? null : (defaultTags ?? this.defaultTags),
       );
 
-  /// Age in whole years, or null if no DOB is set.
   int? get age {
     final dob = dateOfBirth;
     if (dob == null) return null;
@@ -79,7 +97,6 @@ class ProfileModel {
     return years;
   }
 
-  /// Body Mass Index, or null if height/weight are missing.
   double? get bmi {
     final h = heightCm;
     final w = weightKg;

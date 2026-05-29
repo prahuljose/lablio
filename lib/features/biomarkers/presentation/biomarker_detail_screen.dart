@@ -222,8 +222,9 @@ class _LatestValueCard extends StatelessWidget {
               Text('Reference: ${conv.low} – ${conv.high} ${conv.unit}',
                   style: Theme.of(context).textTheme.bodyMedium),
             ],
+            // Only show the status banner when there's an actual range result.
+            if (status.label != '—') ...[
             const SizedBox(height: 16),
-            // Full-width status banner.
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -254,6 +255,7 @@ class _LatestValueCard extends StatelessWidget {
                 ],
               ),
             ),
+            ], // end if (status.label != '—')
           ],
         ),
       ),

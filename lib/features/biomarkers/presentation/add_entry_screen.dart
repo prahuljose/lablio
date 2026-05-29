@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../profile/data/profile_model.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../data/biomarker_entry_model.dart';
 import '../data/biomarker_model.dart';
@@ -225,8 +226,9 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(profileProvider).valueOrNull;
+    final sex = profile?.sex;
     final biomarker = widget.biomarker;
-    final sex = ref.watch(profileProvider).valueOrNull?.sex;
     final range = biomarker?.rangeForSex(sex);
     final hasRange = range?.low != null && range?.high != null;
 
@@ -296,6 +298,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   _TagInputField(
                     controller: _tagController,
                     tags: _tags,
+                    suggestions: ref.watch(profileProvider).valueOrNull?.effectiveTags ?? kDefaultTags,
                     onAdd: _addTag,
                     onRemove: (t) => setState(() => _tags.remove(t)),
                   ),
@@ -653,21 +656,17 @@ class _SaveButton extends StatelessWidget {
 class _TagInputField extends StatelessWidget {
   final TextEditingController controller;
   final List<String> tags;
+  final List<String> suggestions;
   final ValueChanged<String> onAdd;
   final ValueChanged<String> onRemove;
   const _TagInputField({
     required this.controller,
     required this.tags,
+    required this.suggestions,
     required this.onAdd,
     required this.onRemove,
   });
 
-  static const _suggestions = [
-    'fasting',
-    'post-meal',
-    'morning',
-    'post-workout',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -706,7 +705,7 @@ class _TagInputField extends StatelessWidget {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: _suggestions
+            children: suggestions
                 .map((t) => ActionChip(
                       label: Text(t),
                       avatar: const Icon(Icons.add, size: 16),

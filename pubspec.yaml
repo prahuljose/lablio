@@ -58,9 +58,11 @@ flutter:
   assets:
     - assets/data/biomarkers.json
     - assets/fonts/Outfit.ttf
+    - assets/fonts/Outfit-Bold.ttf
 
   fonts:
     - family: Outfit
       fonts:
-        # Variable font (wght axis) bundled offline — no runtime download.
         - asset: assets/fonts/Outfit.ttf
+        - asset: assets/fonts/Outfit-Bold.ttf
+          weight: 500
