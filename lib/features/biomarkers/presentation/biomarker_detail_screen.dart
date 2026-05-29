@@ -12,7 +12,9 @@ import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/status_style.dart';
 import '../data/biomarker_entry_model.dart';
 import '../data/biomarker_model.dart';
+import '../providers/biomarker_notes_provider.dart';
 import '../providers/biomarkers_provider.dart';
+import '../providers/pinned_biomarkers_provider.dart';
 
 class BiomarkerDetailScreen extends ConsumerWidget {
   final String biomarkerId;
@@ -54,24 +56,92 @@ class BiomarkerDetailScreen extends ConsumerWidget {
         ).valueOrNull;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(biomarkerName),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            // null while ref biomarkers still loading → button is disabled
-            onPressed: biomarker == null
-                ? null
-                : () => _goToAddEntry(context, biomarker),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 140,
+            // Gradient "ribbon" header. Title fades in as the bar collapses;
+            // the gradient parallaxes behind it.
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding:
+                  const EdgeInsets.symmetric(horizontal: 56, vertical: 14),
+              title: Text(biomarkerName,
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w700)),
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primaryDark,
+                      AppColors.primary,
+                      AppColors.primaryLight,
+                    ],
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.only(left: 56, bottom: 36, right: 16),
+                    child: Text(
+                      biomarker?.category ?? '',
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12,
+                          letterSpacing: 1.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            iconTheme: const IconThemeData(color: Colors.white),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  ref.watch(pinnedBiomarkersProvider).contains(biomarkerId)
+                      ? Icons.push_pin
+                      : Icons.push_pin_outlined,
+                  color: Colors.white,
+                ),
+                tooltip: 'Pin to home',
+                onPressed: () => ref
+                    .read(pinnedBiomarkersProvider.notifier)
+                    .toggle(biomarkerId),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline,
+                    color: Colors.white),
+                onPressed: biomarker == null
+                    ? null
+                    : () => _goToAddEntry(context, biomarker),
+              ),
+            ],
+          ),
+          historyAsync.when(
+            loading: () => const SliverToBoxAdapter(
+                child: SkeletonList(itemCount: 4)),
+            error: (e, _) => SliverFillRemaining(
+                child: Center(child: Text('Error: $e'))),
+            data: (entries) => entries.isEmpty
+                ? SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _buildEmpty(context, biomarker),
+                  )
+                : SliverPadding(
+                    padding: const EdgeInsets.all(16),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate(
+                        _buildContentChildren(context, ref, entries,
+                            ref.watch(unitSystemProvider), biomarker),
+                      ),
+                    ),
+                  ),
           ),
         ],
-      ),
-      body: historyAsync.when(
-        loading: () => const SkeletonList(itemCount: 4),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (entries) => entries.isEmpty
-            ? _buildEmpty(context, biomarker)
-            : _buildContent(context, ref, entries, ref.watch(unitSystemProvider)),
       ),
     );
   }
@@ -99,27 +169,30 @@ class BiomarkerDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref,
-      List<BiomarkerEntryModel> entries, UnitSystem system) {
+  List<Widget> _buildContentChildren(BuildContext context, WidgetRef ref,
+      List<BiomarkerEntryModel> entries, UnitSystem system,
+      BiomarkerModel? biomarker) {
     final latest = entries.last;
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _LatestValueCard(entry: latest, system: system),
+    return [
+      _LatestValueCard(entry: latest, system: system),
+      const SizedBox(height: 16),
+      _TrendSection(entries: entries, system: system),
+      const SizedBox(height: 16),
+      if (biomarker != null) ...[
+        _ExplainerCard(biomarker: biomarker, latest: latest),
         const SizedBox(height: 16),
-        _TrendSection(entries: entries, system: system),
-        const SizedBox(height: 16),
-        Text('History', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        ...entries.reversed.map(
-          (e) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _EntryRow(entry: e, ref: ref, system: system),
-          ),
-        ),
       ],
-    );
+      _NotesCard(biomarkerId: biomarkerId),
+      const SizedBox(height: 16),
+      Text('History', style: Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height: 12),
+      ...entries.reversed.map(
+        (e) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _EntryRow(entry: e, ref: ref, system: system),
+        ),
+      ),
+    ];
   }
 }
 
@@ -515,27 +588,34 @@ class _TrendChart extends StatelessWidget {
                         ),
                     ],
                   ),
+                  // One short LineChartBarData per pair of adjacent points,
+                  // each coloured by the starting point's status — the line
+                  // smoothly shifts green/amber/red across the timeline as
+                  // the value moves in and out of the reference range.
                   lineBarsData: [
+                    // Segmented coloured line (no dots — drawn by the bar below).
+                    for (var i = 0; i < spots.length - 1; i++)
+                      LineChartBarData(
+                        spots: [spots[i], spots[i + 1]],
+                        isCurved: false,
+                        color: _dotColor(spots[i].y, refLow, refHigh),
+                        barWidth: 2.5,
+                        dotData: const FlDotData(show: false),
+                      ),
+                    // All spots with status-coloured dots on top, invisible line.
                     LineChartBarData(
                       spots: spots,
-                      isCurved: true,
-                      curveSmoothness: 0.3,
-                      color: AppColors.primary,
-                      barWidth: 2.5,
+                      barWidth: 0,
+                      color: Colors.transparent,
                       dotData: FlDotData(
                         show: true,
                         getDotPainter: (spot, _, __, ___) =>
                             FlDotCirclePainter(
                           radius: 4,
-                          // Colour each point by its status vs the range.
                           color: _dotColor(spot.y, refLow, refHigh),
                           strokeWidth: 2,
                           strokeColor: AppColors.surface,
                         ),
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: AppColors.primary.withValues(alpha: 0.08),
                       ),
                     ),
                   ],
@@ -598,6 +678,30 @@ class _EntryRow extends StatelessWidget {
                             .textTheme
                             .bodyMedium
                             ?.copyWith(fontSize: 12)),
+                  if (entry.tags.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: entry.tags
+                          .map((t) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(t,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                    )),
+                              ))
+                          .toList(),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -637,6 +741,181 @@ class _EntryRow extends StatelessWidget {
                 style: TextStyle(color: AppColors.high)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+class _ExplainerCard extends StatelessWidget {
+  final BiomarkerModel biomarker;
+  final BiomarkerEntryModel latest;
+  const _ExplainerCard({required this.biomarker, required this.latest});
+
+  @override
+  Widget build(BuildContext context) {
+    final isHigh = latest.isHigh;
+    final isLow = latest.isLow;
+    String? text;
+    String? heading;
+    Color? color;
+    IconData icon = Icons.info_outline;
+    if (isHigh && biomarker.explanationHigh != null) {
+      text = biomarker.explanationHigh;
+      heading = 'What "High" usually means';
+      color = AppColors.high;
+      icon = Icons.warning_amber_outlined;
+    } else if (isLow && biomarker.explanationLow != null) {
+      text = biomarker.explanationLow;
+      heading = 'What "Low" usually means';
+      color = AppColors.low;
+      icon = Icons.warning_amber_outlined;
+    } else if (biomarker.description != null &&
+        biomarker.description!.isNotEmpty) {
+      text = biomarker.description;
+      heading = 'About ${biomarker.name}';
+      color = AppColors.primary;
+      icon = Icons.menu_book_outlined;
+    }
+    if (text == null) return const SizedBox.shrink();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: color),
+                const SizedBox(width: 8),
+                Text(heading!,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700, color: color)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(text, style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 6),
+            Text(
+              'General information only — not medical advice.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontSize: 11, color: AppColors.textTertiary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NotesCard extends ConsumerStatefulWidget {
+  final String biomarkerId;
+  const _NotesCard({required this.biomarkerId});
+
+  @override
+  ConsumerState<_NotesCard> createState() => _NotesCardState();
+}
+
+class _NotesCardState extends ConsumerState<_NotesCard> {
+  final _controller = TextEditingController();
+  String _saved = '';
+  bool _hydrated = false;
+  bool _saving = false;
+
+  void _hydrate(String body) {
+    if (_hydrated) return;
+    _hydrated = true;
+    _saved = body;
+    _controller.text = body;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(biomarkerNotesProvider.notifier)
+          .save(widget.biomarkerId, _controller.text.trim());
+      _saved = _controller.text.trim();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Note saved'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.normal,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Could not save: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.high,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final notesAsync = ref.watch(biomarkerNotesProvider);
+    final body = notesAsync.valueOrNull?[widget.biomarkerId]?.body ?? '';
+    _hydrate(body);
+    final dirty = _controller.text.trim() != _saved;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.edit_note,
+                    size: 20, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Text('Notes',
+                    style: Theme.of(context).textTheme.titleMedium),
+                const Spacer(),
+                if (dirty)
+                  TextButton(
+                    onPressed: _saving ? null : _save,
+                    child: _saving
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Save'),
+                  ),
+              ],
+            ),
+            TextField(
+              controller: _controller,
+              onChanged: (_) => setState(() {}),
+              maxLines: null,
+              minLines: 2,
+              decoration: const InputDecoration(
+                hintText:
+                    'Add notes about this biomarker — context, goals, doctor remarks…',
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

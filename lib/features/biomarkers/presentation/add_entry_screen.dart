@@ -34,7 +34,9 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
   final _notesController = TextEditingController();
+  final _tagController = TextEditingController();
   final _valueFocus = FocusNode();
+  final List<String> _tags = [];
   DateTime _selectedDate = DateTime.now();
   bool _loading = false;
 
@@ -42,8 +44,22 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   void dispose() {
     _valueController.dispose();
     _notesController.dispose();
+    _tagController.dispose();
     _valueFocus.dispose();
     super.dispose();
+  }
+
+  void _addTag(String raw) {
+    final t = raw.trim();
+    if (t.isEmpty) return;
+    if (_tags.contains(t)) {
+      _tagController.clear();
+      return;
+    }
+    setState(() {
+      _tags.add(t);
+      _tagController.clear();
+    });
   }
 
   Future<void> _pickDate() async {
@@ -64,9 +80,75 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     if (picked != null) setState(() => _selectedDate = picked);
   }
 
+  bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Prompts the user to replace an existing entry for this biomarker on the
+  /// same day. Returns true if the user confirmed.
+  Future<bool> _confirmReplace(BiomarkerEntryModel existing) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Replace existing result?'),
+        content: Text(
+          'You already logged ${widget.biomarkerName} for '
+          '${DateFormat('MMM d, yyyy').format(existing.date)} '
+          '(${existing.value} ${existing.unit}). '
+          'Replace it with this new value?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Replace',
+                style: TextStyle(color: AppColors.high)),
+          ),
+        ],
+      ),
+    );
+    return result == true;
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // If there's already an entry for this biomarker on the selected day,
+    // ask before clobbering it.
+    final existingSameDay = (ref.read(biomarkerEntriesProvider).valueOrNull ??
+            const <BiomarkerEntryModel>[])
+        .where((e) =>
+            e.biomarkerId == widget.biomarkerId &&
+            _sameDay(e.date, _selectedDate))
+        .toList();
+    if (existingSameDay.isNotEmpty) {
+      final replace = await _confirmReplace(existingSameDay.first);
+      if (!replace) return;
+      if (!mounted) return;
+    }
+
     setState(() => _loading = true);
+
+    // Remove any same-day duplicates before adding the new entry.
+    try {
+      for (final dup in existingSameDay) {
+        await ref.read(biomarkerEntriesProvider.notifier).remove(dup.id);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not replace existing entry: $e'),
+            backgroundColor: AppColors.high,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
 
     final biomarker = widget.biomarker;
     final sex = ref.read(profileProvider).valueOrNull?.sex;
@@ -85,6 +167,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
           : _notesController.text.trim(),
       refRangeLow: range?.low,
       refRangeHigh: range?.high,
+      tags: List<String>.from(_tags),
       reportId: widget.reportId,
       createdAt: DateTime.now(),
     );
@@ -112,7 +195,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving result: $e'),
+            content: Text("Couldn't save that one — try again? ($e)"),
             backgroundColor: AppColors.high,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -205,6 +288,17 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   _DateTile(
                       selectedDate: _selectedDate, onTap: _pickDate),
 
+                  const SizedBox(height: 24),
+
+                  // ── Tags ────────────────────────────────────────────
+                  _SectionLabel('Tags (optional)'),
+                  const SizedBox(height: 8),
+                  _TagInputField(
+                    controller: _tagController,
+                    tags: _tags,
+                    onAdd: _addTag,
+                    onRemove: (t) => setState(() => _tags.remove(t)),
+                  ),
                   const SizedBox(height: 24),
 
                   // ── Notes ───────────────────────────────────────────
@@ -552,6 +646,77 @@ class _SaveButton extends StatelessWidget {
                     letterSpacing: 0.2),
               ),
       ),
+    );
+  }
+}
+
+class _TagInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final List<String> tags;
+  final ValueChanged<String> onAdd;
+  final ValueChanged<String> onRemove;
+  const _TagInputField({
+    required this.controller,
+    required this.tags,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  static const _suggestions = [
+    'fasting',
+    'post-meal',
+    'morning',
+    'post-workout',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          textInputAction: TextInputAction.done,
+          textCapitalization: TextCapitalization.none,
+          onSubmitted: onAdd,
+          decoration: InputDecoration(
+            hintText: 'Add a tag and press Enter…',
+            prefixIcon: const Icon(Icons.label_outline),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => onAdd(controller.text),
+            ),
+          ),
+        ),
+        if (tags.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: tags
+                .map((t) => Chip(
+                      label: Text(t),
+                      onDeleted: () => onRemove(t),
+                      visualDensity: VisualDensity.compact,
+                    ))
+                .toList(),
+          ),
+        ] else ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _suggestions
+                .map((t) => ActionChip(
+                      label: Text(t),
+                      avatar: const Icon(Icons.add, size: 16),
+                      onPressed: () => onAdd(t),
+                      visualDensity: VisualDensity.compact,
+                    ))
+                .toList(),
+          ),
+        ],
+      ],
     );
   }
 }

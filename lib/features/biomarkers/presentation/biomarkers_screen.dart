@@ -11,6 +11,7 @@ import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/status_style.dart';
 import '../data/biomarker_entry_model.dart';
 import '../providers/biomarkers_provider.dart';
+import 'quick_log_sheet.dart';
 
 class BiomarkersScreen extends ConsumerStatefulWidget {
   const BiomarkersScreen({super.key});
@@ -106,7 +107,7 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(AppRoutes.browseBiomarkers),
+        onPressed: () => showQuickLogSheet(context),
         icon: const Icon(Icons.add),
         label: const Text('Log Result'),
         backgroundColor: AppColors.primary,
@@ -171,10 +172,10 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
         children: [
           Icon(Icons.science_outlined, size: 64, color: AppColors.textTertiary),
           const SizedBox(height: 16),
-          Text('No biomarkers tracked',
+          Text("Nothing here yet",
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text('Log your first lab result to start tracking',
+          Text('Log a lab result to start tracking your biomarkers.',
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center),
         ],

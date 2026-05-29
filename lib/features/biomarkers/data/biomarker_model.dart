@@ -12,6 +12,8 @@ class BiomarkerModel {
   final double? refRangeLowFemale;
   final double? refRangeHighFemale;
   final String? description;
+  final String? explanationHigh;
+  final String? explanationLow;
 
   const BiomarkerModel({
     required this.id,
@@ -26,6 +28,8 @@ class BiomarkerModel {
     this.refRangeLowFemale,
     this.refRangeHighFemale,
     this.description,
+    this.explanationHigh,
+    this.explanationLow,
   });
 
   /// From local JSON asset (camelCase keys)
@@ -58,6 +62,8 @@ class BiomarkerModel {
         refRangeLowFemale: (map['ref_range_low_female'] as num?)?.toDouble(),
         refRangeHighFemale: (map['ref_range_high_female'] as num?)?.toDouble(),
         description: map['description'] as String?,
+        explanationHigh: map['explanation_high'] as String?,
+        explanationLow: map['explanation_low'] as String?,
       );
 
   /// Whether this biomarker has distinct ranges per sex.

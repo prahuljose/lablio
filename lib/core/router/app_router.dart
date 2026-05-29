@@ -9,6 +9,7 @@ import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
 import '../../features/biomarkers/data/biomarker_model.dart';
+import '../../features/biomarkers/presentation/add_custom_biomarker_screen.dart';
 import '../../features/biomarkers/presentation/add_entry_screen.dart';
 import '../../features/biomarkers/presentation/biomarker_detail_screen.dart';
 import '../../features/biomarkers/presentation/biomarkers_screen.dart';
@@ -16,7 +17,10 @@ import '../../features/biomarkers/presentation/browse_biomarkers_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
+import '../../features/profile/presentation/medical_record_screen.dart';
 import '../../features/scan/data/lab_report_parser.dart';
+import '../../features/search/presentation/search_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/scan/presentation/review_extraction_screen.dart';
 import '../../features/scan/presentation/scan_report_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -43,6 +47,10 @@ class AppRoutes {
   static const onboarding = '/onboarding';
   static const scanReport = '/scan';
   static const reviewExtraction = '/scan/review';
+  static const settings = '/settings';
+  static const addCustomBiomarker = '/biomarkers/custom/add';
+  static const search = '/search';
+  static const medicalRecord = '/profile/medical-record';
 }
 
 /// Notifies GoRouter whenever Supabase auth state changes (sign-in / sign-out),
@@ -183,6 +191,26 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.editProfile,
       builder: (_, __) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.settings,
+      pageBuilder: (_, state) =>
+          _fadeRisePage(state, const SettingsScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.addCustomBiomarker,
+      pageBuilder: (_, state) =>
+          _fadeRisePage(state, const AddCustomBiomarkerScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.search,
+      pageBuilder: (_, state) =>
+          _fadeRisePage(state, const SearchScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.medicalRecord,
+      pageBuilder: (_, state) =>
+          _fadeRisePage(state, const MedicalRecordScreen()),
     ),
     GoRoute(
       path: AppRoutes.scanReport,

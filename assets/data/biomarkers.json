@@ -105,6 +105,10 @@
     { "id": "chol_hdl_ratio", "name": "Cholesterol / HDL Ratio", "shortName": "CHOL/HDL", "category": "Lipid Panel", "unit": "ratio", "refRangeLow": 0.0, "refRangeHigh": 5.0, "description": "Ratio of total cholesterol to HDL; lower is better for cardiovascular risk." },
     { "id": "ldl_hdl_ratio", "name": "LDL / HDL Ratio", "shortName": "LDL/HDL", "category": "Lipid Panel", "unit": "ratio", "refRangeLow": 0.0, "refRangeHigh": 3.0, "description": "Ratio of LDL to HDL cholesterol; lower is better." },
     { "id": "ag_ratio", "name": "Albumin / Globulin Ratio", "shortName": "A/G", "category": "Liver Function", "unit": "ratio", "refRangeLow": 1.1, "refRangeHigh": 2.5, "description": "Ratio of albumin to globulin in serum." },
-    { "id": "urea", "name": "Urea", "shortName": "Urea", "category": "Metabolic Panel", "unit": "mg/dL", "refRangeLow": 15.0, "refRangeHigh": 40.0, "description": "Blood urea, a protein-metabolism waste product (distinct from BUN)." }
+    { "id": "urea", "name": "Urea", "shortName": "Urea", "category": "Metabolic Panel", "unit": "mg/dL", "refRangeLow": 15.0, "refRangeHigh": 40.0, "description": "Blood urea, a protein-metabolism waste product (distinct from BUN)." },
+    { "id": "weight", "name": "Weight", "shortName": "Wt", "category": "Body Composition", "unit": "kg", "refRangeLow": null, "refRangeHigh": null, "description": "Body weight. Track over time alongside body fat and waist circumference." },
+    { "id": "body_fat_pct", "name": "Body Fat", "shortName": "BF%", "category": "Body Composition", "unit": "%", "refRangeLow": null, "refRangeHigh": null, "description": "Body fat percentage measured by impedance scale, calipers, or DEXA." },
+    { "id": "waist_circumference", "name": "Waist Circumference", "shortName": "Waist", "category": "Body Composition", "unit": "cm", "refRangeLow": null, "refRangeHigh": null, "description": "Measured at the navel; rising waist size correlates with metabolic risk." },
+    { "id": "hip_circumference", "name": "Hip Circumference", "shortName": "Hip", "category": "Body Composition", "unit": "cm", "refRangeLow": null, "refRangeHigh": null, "description": "Measured at the widest hip. Used with waist for the waist-hip ratio." }
   ]
 }

@@ -5,8 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../biomarkers/data/biomarker_entry_model.dart';
+import '../../biomarkers/presentation/quick_log_sheet.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../../biomarkers/providers/insights_provider.dart';
+import '../../biomarkers/providers/pinned_biomarkers_provider.dart';
 import '../../reports/providers/reports_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -34,6 +37,13 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         toolbarHeight: 64,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'Search',
+            onPressed: () => context.push(AppRoutes.search),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -75,6 +85,12 @@ class HomeScreen extends ConsumerWidget {
                   'biomarkerName': i.name,
                 },
               ),
+            ),
+            // Pinned biomarkers section (only shown if user has pinned any).
+            _PinnedSection(
+              pinnedIds: ref.watch(pinnedBiomarkersProvider),
+              entries:
+                  entriesAsync.valueOrNull ?? const <BiomarkerEntryModel>[],
             ),
             Text('Recent Results',
                 style: Theme.of(context).textTheme.titleLarge),
@@ -414,7 +430,7 @@ class _QuickActions extends StatelessWidget {
                 icon: Icons.add_circle_outline,
                 label: 'Log Result',
                 color: AppColors.primary,
-                onTap: () => context.push(AppRoutes.browseBiomarkers),
+                onTap: () => showQuickLogSheet(context),
               ),
             ),
             const SizedBox(width: 12),
@@ -549,6 +565,131 @@ class _RecentResultTile extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PinnedSection extends StatelessWidget {
+  final Set<String> pinnedIds;
+  final List<BiomarkerEntryModel> entries;
+  const _PinnedSection({required this.pinnedIds, required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    if (pinnedIds.isEmpty) return const SizedBox.shrink();
+    // Latest entry per pinned biomarker.
+    final byId = <String, BiomarkerEntryModel>{};
+    for (final e in entries) {
+      if (!pinnedIds.contains(e.biomarkerId)) continue;
+      final cur = byId[e.biomarkerId];
+      if (cur == null || cur.date.isBefore(e.date)) {
+        byId[e.biomarkerId] = e;
+      }
+    }
+    if (byId.isEmpty) return const SizedBox.shrink();
+    final tiles = byId.values.toList()
+      ..sort((a, b) => a.biomarkerName.compareTo(b.biomarkerName));
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.push_pin, size: 16, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text('Pinned',
+                  style: Theme.of(context).textTheme.titleLarge),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 88,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              itemCount: tiles.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) => _PinnedCard(entry: tiles[i]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PinnedCard extends StatelessWidget {
+  final BiomarkerEntryModel entry;
+  const _PinnedCard({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = entry.isHigh
+        ? AppColors.high
+        : entry.isLow
+            ? AppColors.low
+            : entry.isNormal
+                ? AppColors.normal
+                : AppColors.textTertiary;
+    return SizedBox(
+      width: 160,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push(
+            AppRoutes.biomarkerDetail,
+            extra: {
+              'biomarkerId': entry.biomarkerId,
+              'biomarkerName': entry.biomarkerName,
+            },
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration:
+                          BoxDecoration(color: color, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(entry.biomarkerName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  '${entry.value}',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                Text(entry.unit,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(fontSize: 11)),
+              ],
+            ),
+          ),
         ),
       ),
     );

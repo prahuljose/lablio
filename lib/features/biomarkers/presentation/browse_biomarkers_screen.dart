@@ -6,6 +6,7 @@ import '../../../core/router/app_router.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../data/biomarker_model.dart';
 import '../providers/biomarkers_provider.dart';
+import '../providers/custom_biomarkers_provider.dart';
 
 class BrowseBiomarkersScreen extends ConsumerStatefulWidget {
   /// When launched from a report detail screen, entries will be linked to this report.
@@ -23,10 +24,19 @@ class _BrowseBiomarkersScreenState
 
   @override
   Widget build(BuildContext context) {
-    final biomarkersAsync = ref.watch(referenceBiomarkersProvider);
+    final biomarkersAsync = ref.watch(allBiomarkersProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Select Biomarker')),
+      appBar: AppBar(
+        title: const Text('Select Biomarker'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'Add custom biomarker',
+            onPressed: () => context.push(AppRoutes.addCustomBiomarker),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(

@@ -11,6 +11,7 @@ class BiomarkerEntryModel {
   final String? notes;
   final double? refRangeLow;
   final double? refRangeHigh;
+  final List<String> tags;
   final DateTime createdAt;
 
   const BiomarkerEntryModel({
@@ -26,6 +27,7 @@ class BiomarkerEntryModel {
     this.notes,
     this.refRangeLow,
     this.refRangeHigh,
+    this.tags = const [],
     required this.createdAt,
   });
 
@@ -43,6 +45,8 @@ class BiomarkerEntryModel {
         notes: map['notes'] as String?,
         refRangeLow: (map['ref_range_low'] as num?)?.toDouble(),
         refRangeHigh: (map['ref_range_high'] as num?)?.toDouble(),
+        tags: (map['tags'] as List?)?.map((e) => e.toString()).toList() ??
+            const [],
         createdAt: DateTime.parse(map['created_at'] as String),
       );
 
@@ -58,6 +62,7 @@ class BiomarkerEntryModel {
         if (notes != null) 'notes': notes,
         if (refRangeLow != null) 'ref_range_low': refRangeLow,
         if (refRangeHigh != null) 'ref_range_high': refRangeHigh,
+        if (tags.isNotEmpty) 'tags': tags,
       };
 
   bool get isNormal =>
