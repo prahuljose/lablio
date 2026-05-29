@@ -13,8 +13,8 @@ import '../data/profile_model.dart';
 class DoctorReportService {
   // ── Brand palette ─────────────────────────────────────────
   static final _brand     = PdfColor.fromHex('#0077B6');
-  static final _brandDark = PdfColor.fromHex('#023E8A');
-  static final _brandMid  = PdfColor.fromHex('#0096C7');
+    static final _brandDark = PdfColor.fromHex('#023E8A');
+    static final _brandMid  = PdfColor.fromHex('#0096C7');
   static final _bg        = PdfColor.fromHex('#F4F7FB');
   static final _divider   = PdfColors.grey300;
   static final _muted     = PdfColors.grey600;

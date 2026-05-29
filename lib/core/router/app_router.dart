@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -281,40 +282,50 @@ class _AppShell extends StatefulWidget {
   State<_AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<_AppShell> with WidgetsBindingObserver {
-  DateTime? _lastBackPress;
+class _AppShellState extends State<_AppShell> {
+  static const _navChannel = MethodChannel('com.lablio.app/nav');
   String _path = AppRoutes.home;
-
-  // ── WidgetsBindingObserver ────────────────────────────────────────────────
-  // Called by Flutter BEFORE GoRouter's Router widget sees the back press.
-  // We're added after the Router (child mounts after parent) so we appear
-  // later in WidgetsBinding._observers and are therefore called FIRST (reverse
-  // order iteration). Returning true consumes the event; false lets GoRouter
-  // handle it (pop nested screens, etc.).
-  @override
-  Future<bool> didPopRoute() async {
-    if (!mounted) return false;
-    // If the root navigator has something above the shell (a nested screen),
-    // don't intercept — let GoRouter pop it normally.
-    if (Navigator.of(context, rootNavigator: true).canPop()) return false;
-    // We're on a bare root tab — show snackbar / exit.
-    _handleExit();
-    return true; // consumed
-  }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    // Receive every back press from the native Android OnBackPressedDispatcher.
+    // canPop() on the ROOT navigator tells us if a nested screen is on top.
+    // Kotlin owns the 2-second double-press timer and calls finishAffinity()
+    // on the second press. Flutter only decides: pop a nested screen, or show
+    // the "press again to exit" snackbar for root tabs (first press).
+    _navChannel.setMethodCallHandler((call) async {
+      if (call.method != 'back' || !mounted) return;
+      if (Navigator.of(context, rootNavigator: true).canPop()) {
+        GoRouter.of(context).pop();
+        return;
+      }
+      // Root tab — show snackbar (Kotlin will exit on the next press).
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.primary,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+        content: const Text(
+          'Press back again to exit Lablio',
+          style: TextStyle(
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ));
+    });
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _navChannel.setMethodCallHandler(null);
     super.dispose();
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
 
   int _selectedIndex() {
     if (_path.startsWith(AppRoutes.reports)) return 1;
@@ -323,75 +334,189 @@ class _AppShellState extends State<_AppShell> with WidgetsBindingObserver {
     return 0;
   }
 
-  void _handleExit() {
-    if (!mounted) return;
-    final now = DateTime.now();
-    if (_lastBackPress != null &&
-        now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
-      SystemNavigator.pop();
-      return;
-    }
-    _lastBackPress = now;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      duration: const Duration(seconds: 2),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.textPrimary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-      content: const Text(
-        'Press back again to exit Lablio',
-        style: TextStyle(
-          fontFamily: 'Outfit',
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-    ));
-  }
-
   @override
   Widget build(BuildContext context) {
     _path = GoRouterState.of(context).uri.path;
 
     return Scaffold(
+      extendBody: true, // body flows behind the floating nav bar
       body: widget.child,
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: _LabNav(
         currentIndex: _selectedIndex(),
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              context.go(AppRoutes.home);
-            case 1:
-              context.go(AppRoutes.reports);
-            case 2:
-              context.go(AppRoutes.biomarkers);
-            case 3:
-              context.go(AppRoutes.profile);
+        onTap: (i) {
+          switch (i) {
+            case 0: context.go(AppRoutes.home);
+            case 1: context.go(AppRoutes.reports);
+            case 2: context.go(AppRoutes.biomarkers);
+            case 3: context.go(AppRoutes.profile);
           }
         },
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home_outlined),
-            activeIcon: const Icon(Icons.home),
-            label: AppLocalizations.of(context).navHome,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.folder_outlined),
-            activeIcon: const Icon(Icons.folder),
-            label: AppLocalizations.of(context).navReports,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.science_outlined),
-            activeIcon: const Icon(Icons.science),
-            label: AppLocalizations.of(context).navBiomarkers,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person_outlined),
-            activeIcon: const Icon(Icons.person),
-            label: AppLocalizations.of(context).navProfile,
-          ),
+        labels: [
+          AppLocalizations.of(context).navHome,
+          AppLocalizations.of(context).navReports,
+          AppLocalizations.of(context).navBiomarkers,
+          AppLocalizations.of(context).navProfile,
         ],
+      ),
+    );
+  }
+}
+
+// ── Floating frosted-glass pill nav bar ──────────────────────────────────────
+
+class _LabNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final List<String> labels;
+
+  const _LabNav({
+    required this.currentIndex,
+    required this.onTap,
+    required this.labels,
+  });
+
+  static const _icons = [
+    (Icons.home_rounded,    Icons.home_outlined),
+    (Icons.folder_rounded,  Icons.folder_outlined),
+    (Icons.science_rounded, Icons.science_outlined),
+    (Icons.person_rounded,  Icons.person_outlined),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final pad  = MediaQuery.of(context).padding.bottom;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    // Outer padding makes the pill float above the system nav area.
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 12 + pad),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          child: Container(
+            height: 62,
+            decoration: BoxDecoration(
+              // Translucent surface — white-ish in light, black-ish in dark.
+              color: dark
+                  ? Colors.black.withValues(alpha: 0.55)
+                  : Colors.white.withValues(alpha: 0.82),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: dark
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : const Color(0xFF0096C7).withValues(alpha: 0.35),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: dark ? 0.35 : 0.12),
+                  blurRadius: 28,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              children: [
+                for (int i = 0; i < _icons.length; i++)
+                  Expanded(
+                    child: _NavItem(
+                      activeIcon: _icons[i].$1,
+                      icon:       _icons[i].$2,
+                      label: labels[i],
+                      selected:  i == currentIndex,
+                      onTap: () => onTap(i),
+                      dark: dark,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData activeIcon;
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool dark;
+
+  const _NavItem({
+    required this.activeIcon,
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.dark,
+  });
+
+  static const _gradA = Color(0xFF023E8A);
+  static const _gradB = Color(0xFF0096C7);
+
+  @override
+  Widget build(BuildContext context) {
+    // Inactive icon colour — brand blue in light, soft white in dark.
+    final inactiveColor = dark
+        ? Colors.white.withValues(alpha: 0.40)
+        : const Color(0xFF0077B6).withValues(alpha: 0.50);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
+          child: selected
+              // ── Active: gradient pill with icon + label side by side ──
+              ? Container(
+                  key: const ValueKey(true),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_gradA, _gradB],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    // "More rectangular rounded" — tighter radius than a full pill.
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _gradB.withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              // ── Inactive: centred icon only ───────────────────────────
+              : SizedBox(
+                  key: const ValueKey(false),
+                  width: double.infinity,
+                  child: Icon(icon, color: inactiveColor, size: 22),
+                ),
+        ),
       ),
     );
   }
