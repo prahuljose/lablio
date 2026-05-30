@@ -40,6 +40,7 @@ class ScoresScreen extends ConsumerWidget {
             insulin: v('fasting_insulin'),
             triglycerides: v('triglycerides'),
             hdl: v('hdl'),
+            creatinine: v('creatinine'),
             ast: v('ast'),
             alt: v('alt'),
             plateletsPerCmm: v('platelets'),

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
+import '../../../core/widgets/lablio_refresh.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
@@ -52,8 +53,15 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: ListView(
+      body: LablioRefresh(
+        onRefresh: () async {
+          ref.invalidate(profileProvider);
+          ref.invalidate(medicalRecordProvider);
+          await ref.read(profileProvider.future);
+        },
+        child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
           _buildAvatar(context, fullName,
               profileAsync.valueOrNull?.avatarUrl, profileAsync.valueOrNull),
@@ -154,6 +162,7 @@ class ProfileScreen extends ConsumerWidget {
                 style: TextStyle(color: AppColors.high)),
           ),
         ],
+        ),
       ),
     );
   }

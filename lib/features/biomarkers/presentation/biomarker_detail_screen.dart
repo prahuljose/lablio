@@ -13,6 +13,7 @@ import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/status_style.dart';
 import '../data/biomarker_entry_model.dart';
 import '../data/biomarker_model.dart';
+import '../data/nutrient_nudges.dart';
 import '../providers/biomarker_notes_provider.dart';
 import '../providers/biomarkers_provider.dart';
 import '../providers/pinned_biomarkers_provider.dart';
@@ -140,6 +141,15 @@ class BiomarkerDetailScreen extends ConsumerWidget {
         _ExplainerCard(biomarker: biomarker, latest: latest),
         const SizedBox(height: 16),
       ],
+      ...() {
+        final nudge = nutrientNudgeFor(latest.biomarkerId,
+            isHigh: latest.isHigh, isLow: latest.isLow);
+        if (nudge == null) return const <Widget>[];
+        return [
+          _LeverCard(text: nudge),
+          const SizedBox(height: 16),
+        ];
+      }(),
       _NotesCard(biomarkerId: biomarkerId),
       const SizedBox(height: 16),
       Text('History', style: Theme.of(context).textTheme.titleLarge),
@@ -776,6 +786,46 @@ class _ExplainerCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'General information only — not medical advice.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontSize: 11, color: AppColors.textTertiary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Diet & lifestyle "levers" for a marker that's currently out of range.
+class _LeverCard extends StatelessWidget {
+  final String text;
+  const _LeverCard({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.lightbulb_outline,
+                    size: 18, color: AppColors.normal),
+                const SizedBox(width: 8),
+                Text('What may help',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700, color: AppColors.normal)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(text, style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 6),
+            Text(
+              'General lifestyle guidance only — not medical advice.',
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium

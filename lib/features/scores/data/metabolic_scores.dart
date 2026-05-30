@@ -53,6 +53,7 @@ class ScoreInputs {
   final double? insulin;
   final double? triglycerides;
   final double? hdl;
+  final double? creatinine;
   final double? ast;
   final double? alt;
   final double? plateletsPerCmm;
@@ -67,6 +68,7 @@ class ScoreInputs {
     this.insulin,
     this.triglycerides,
     this.hdl,
+    this.creatinine,
     this.ast,
     this.alt,
     this.plateletsPerCmm,
@@ -95,8 +97,76 @@ List<ScoreResult> computeMetabolicScores(ScoreInputs i) {
     _tgHdl(i),
     _aip(i),
     _fib4(i),
+    _egfr(i),
     _metabolicSyndrome(i),
   ];
+}
+
+// ── eGFR (kidney function, CKD-EPI 2021 race-free) ───────────────────────────
+
+ScoreResult _egfr(ScoreInputs i) {
+  const id = 'egfr';
+  const name = 'eGFR (Kidney)';
+  const formula = 'CKD-EPI 2021 · creatinine, age, sex';
+  const about =
+      'Estimated glomerular filtration rate — how well your kidneys filter, '
+      'in mL/min/1.73m².';
+  final missing = <String>[];
+  if (i.creatinine == null) missing.add('Creatinine');
+  if (i.age == null) missing.add('Age (in Profile)');
+  if (!i.sexKnown) missing.add('Sex (in Profile)');
+  if (missing.isNotEmpty) {
+    return ScoreResult(
+      id: id, name: name, formula: formula, about: about,
+      value: null, valueText: '—', level: ScoreLevel.unknown,
+      bandLabel: 'Not enough data', interpretation: '', missing: missing,
+    );
+  }
+
+  final scr = i.creatinine!;
+  final female = i.isFemale;
+  final k = female ? 0.7 : 0.9;
+  final a = female ? -0.241 : -0.302;
+  final ratio = scr / k;
+  final minR = math.min(ratio, 1.0);
+  final maxR = math.max(ratio, 1.0);
+  var egfr = 142 *
+      math.pow(minR, a) *
+      math.pow(maxR, -1.200) *
+      math.pow(0.9938, i.age!);
+  if (female) egfr *= 1.012;
+
+  final (String stage, ScoreLevel level) = egfr >= 90
+      ? ('G1 · Normal', ScoreLevel.good)
+      : egfr >= 60
+          ? ('G2 · Mildly low', ScoreLevel.good)
+          : egfr >= 45
+              ? ('G3a · Mild–moderate', ScoreLevel.warn)
+              : egfr >= 30
+                  ? ('G3b · Moderate–severe', ScoreLevel.warn)
+                  : egfr >= 15
+                      ? ('G4 · Severe', ScoreLevel.bad)
+                      : ('G5 · Kidney failure', ScoreLevel.bad);
+
+  return ScoreResult(
+    id: id, name: name, formula: formula, about: about,
+    value: egfr.toDouble(),
+    valueText: '${egfr.round()}',
+    level: level,
+    bandLabel: stage,
+    interpretation: level == ScoreLevel.good
+        ? '≥60 mL/min/1.73m² indicates normal kidney filtration.'
+        : level == ScoreLevel.warn
+            ? '30–59 suggests reduced filtration (CKD stage 3) — worth a '
+                'clinician review.'
+            : 'Below 30 indicates severely reduced kidney function — seek '
+                'medical advice.',
+    inputsUsed: [
+      'Creatinine ${scr.toStringAsFixed(2)} mg/dL',
+      'Age ${i.age}',
+      female ? 'Female' : 'Male',
+    ],
+  );
 }
 
 // ── HOMA-IR ──────────────────────────────────────────────────────────────────
