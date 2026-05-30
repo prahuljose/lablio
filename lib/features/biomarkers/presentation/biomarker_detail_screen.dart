@@ -407,7 +407,7 @@ class _TrendChart extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium),
             ),
             SizedBox(
-              height: 180,
+              height: 200,
               child: LineChart(
                 LineChartData(
                   minY: minY,
@@ -548,33 +548,48 @@ class _TrendChart extends StatelessWidget {
                         ),
                     ],
                   ),
-                  // One short LineChartBarData per pair of adjacent points,
-                  // each coloured by the starting point's status — the line
-                  // smoothly shifts green/amber/red across the timeline as
-                  // the value moves in and out of the reference range.
+                  // A single smooth "river" line in the brand gradient with a
+                  // soft gradient fill flowing beneath it. Dots stay status-
+                  // coloured (green/amber/red) so in/out-of-range reads at a
+                  // glance, and out-of-range points get a larger ringed marker.
                   lineBarsData: [
-                    // Segmented coloured line (no dots — drawn by the bar below).
-                    for (var i = 0; i < spots.length - 1; i++)
-                      LineChartBarData(
-                        spots: [spots[i], spots[i + 1]],
-                        isCurved: false,
-                        color: _dotColor(spots[i].y, refLow, refHigh),
-                        barWidth: 2.5,
-                        dotData: const FlDotData(show: false),
-                      ),
-                    // All spots with status-coloured dots on top, invisible line.
                     LineChartBarData(
                       spots: spots,
-                      barWidth: 0,
-                      color: Colors.transparent,
+                      isCurved: true,
+                      curveSmoothness: 0.28,
+                      preventCurveOverShooting: true,
+                      gradient: const LinearGradient(
+                        colors: [
+                          AppColors.primaryDark,
+                          AppColors.primary,
+                          AppColors.primaryLight,
+                        ],
+                      ),
+                      barWidth: 3,
                       dotData: FlDotData(
                         show: true,
-                        getDotPainter: (spot, _, __, ___) =>
-                            FlDotCirclePainter(
-                          radius: 4,
-                          color: _dotColor(spot.y, refLow, refHigh),
-                          strokeWidth: 2,
-                          strokeColor: AppColors.surface,
+                        getDotPainter: (spot, _, __, ___) {
+                          final c = _dotColor(spot.y, refLow, refHigh);
+                          final outOfRange = (refLow != null &&
+                                  spot.y < refLow) ||
+                              (refHigh != null && spot.y > refHigh);
+                          return FlDotCirclePainter(
+                            radius: outOfRange ? 5 : 4,
+                            color: c,
+                            strokeWidth: outOfRange ? 2.5 : 2,
+                            strokeColor: AppColors.surface,
+                          );
+                        },
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.28),
+                            AppColors.primaryLight.withValues(alpha: 0.02),
+                          ],
                         ),
                       ),
                     ),

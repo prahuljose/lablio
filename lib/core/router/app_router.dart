@@ -17,12 +17,14 @@ import '../../features/biomarkers/presentation/add_custom_biomarker_screen.dart'
 import '../../features/biomarkers/presentation/add_entry_screen.dart';
 import '../../features/biomarkers/presentation/biomarker_detail_screen.dart';
 import '../../features/biomarkers/presentation/biomarkers_screen.dart';
+import '../../features/biomarkers/presentation/body_map_screen.dart';
 import '../../features/biomarkers/presentation/browse_biomarkers_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/medical_record_screen.dart';
 import '../../features/scan/data/lab_report_parser.dart';
+import '../../features/scores/presentation/scores_screen.dart';
 import '../../features/search/presentation/search_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/scan/presentation/review_extraction_screen.dart';
@@ -39,6 +41,7 @@ class AppRoutes {
   static const signup = '/signup';
   static const forgotPassword = '/forgot-password';
   static const home = '/home';
+  static const scores = '/scores';
   static const reports = '/reports';
   static const addReport = '/reports/add';
   static const reportDetail = '/reports/detail';
@@ -55,6 +58,7 @@ class AppRoutes {
   static const addCustomBiomarker = '/biomarkers/custom/add';
   static const search = '/search';
   static const medicalRecord = '/profile/medical-record';
+  static const bodyMap = '/biomarkers/body-map';
 }
 
 /// Notifies GoRouter whenever Supabase auth state changes (sign-in / sign-out),
@@ -172,6 +176,10 @@ final appRouter = GoRouter(
           builder: (_, __) => const BiomarkersScreen(),
         ),
         GoRoute(
+          path: AppRoutes.scores,
+          builder: (_, __) => const ScoresScreen(),
+        ),
+        GoRoute(
           path: AppRoutes.profile,
           builder: (_, __) => const ProfileScreen(),
         ),
@@ -210,6 +218,11 @@ final appRouter = GoRouter(
       path: AppRoutes.search,
       pageBuilder: (_, state) =>
           _fadeRisePage(state, const SearchScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.bodyMap,
+      pageBuilder: (_, state) =>
+          _fadeRisePage(state, const BodyMapScreen()),
     ),
     GoRoute(
       path: AppRoutes.medicalRecord,
@@ -330,7 +343,8 @@ class _AppShellState extends State<_AppShell> {
   int _selectedIndex() {
     if (_path.startsWith(AppRoutes.reports)) return 1;
     if (_path.startsWith(AppRoutes.biomarkers)) return 2;
-    if (_path.startsWith(AppRoutes.profile)) return 3;
+    if (_path.startsWith(AppRoutes.scores)) return 3;
+    if (_path.startsWith(AppRoutes.profile)) return 4;
     return 0;
   }
 
@@ -339,7 +353,18 @@ class _AppShellState extends State<_AppShell> {
     _path = GoRouterState.of(context).uri.path;
 
     return Scaffold(
-      body: widget.child,
+      // Subtle fade-in of the new tab. Keyed by the selected tab so it replays
+      // only on a tab change. We fade the incoming page rather than cross-fade
+      // (which would keep two shell subtrees alive at once and duplicate the
+      // route's GlobalKey).
+      body: TweenAnimationBuilder<double>(
+        key: ValueKey(_selectedIndex()),
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        builder: (_, t, child) => Opacity(opacity: t, child: child),
+        child: widget.child,
+      ),
       bottomNavigationBar: _LabNav(
         currentIndex: _selectedIndex(),
         onTap: (i) {
@@ -347,13 +372,15 @@ class _AppShellState extends State<_AppShell> {
             case 0: context.go(AppRoutes.home);
             case 1: context.go(AppRoutes.reports);
             case 2: context.go(AppRoutes.biomarkers);
-            case 3: context.go(AppRoutes.profile);
+            case 3: context.go(AppRoutes.scores);
+            case 4: context.go(AppRoutes.profile);
           }
         },
         labels: [
           AppLocalizations.of(context).navHome,
           AppLocalizations.of(context).navReports,
           AppLocalizations.of(context).navBiomarkers,
+          'Scores',
           AppLocalizations.of(context).navProfile,
         ],
       ),
@@ -366,7 +393,7 @@ class _AppShellState extends State<_AppShell> {
 class _LabNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final List<String> labels;
+  final List<String> labels; // indexed 0..4 (0 = Home, the centre FAB)
 
   const _LabNav({
     required this.currentIndex,
@@ -374,11 +401,15 @@ class _LabNav extends StatelessWidget {
     required this.labels,
   });
 
-  static const _icons = [
-    (Icons.home_rounded,    Icons.home_outlined),
-    (Icons.folder_rounded,  Icons.folder_outlined),
-    (Icons.science_rounded, Icons.science_outlined),
-    (Icons.person_rounded,  Icons.person_outlined),
+  // Side destinations: (activeIcon, icon, destinationIndex). Home (0) is the
+  // centre FAB and sits between the two left and two right items.
+  static const _left = [
+    (Icons.folder_rounded,        Icons.folder_outlined,        1),
+    (Icons.science_rounded,       Icons.science_outlined,       2),
+  ];
+  static const _right = [
+    (Icons.monitor_heart_rounded, Icons.monitor_heart_outlined, 3),
+    (Icons.person_rounded,        Icons.person_outlined,        4),
   ];
 
   @override
@@ -386,7 +417,25 @@ class _LabNav extends StatelessWidget {
     final pad  = MediaQuery.of(context).padding.bottom;
     final dark = Theme.of(context).brightness == Brightness.dark;
 
-    // Outer padding makes the pill float above the system nav area.
+    // The selected item gets extra flex so its label pill has room to show
+    // the full word (e.g. "Biomarkers") instead of being shrunk to fit.
+    Widget item((IconData, IconData, int) d) {
+      final sel = d.$3 == currentIndex;
+      return Expanded(
+        flex: sel ? 8 : 5,
+        child: _NavItem(
+          activeIcon: d.$1,
+          icon: d.$2,
+          label: labels[d.$3],
+          selected: sel,
+          onTap: () => onTap(d.$3),
+          dark: dark,
+        ),
+      );
+    }
+
+    // Outer padding makes the pill float above the system nav area. The Home
+    // button is docked *inside* the bar (no protrusion) so there's no gap.
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 0, 16, 12 + pad),
       child: ClipRRect(
@@ -394,9 +443,8 @@ class _LabNav extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
           child: Container(
-            height: 62,
+            height: 64,
             decoration: BoxDecoration(
-              // Translucent surface — white-ish in light, black-ish in dark.
               color: dark
                   ? Colors.black.withValues(alpha: 0.55)
                   : Colors.white.withValues(alpha: 0.82),
@@ -418,19 +466,68 @@ class _LabNav extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Row(
               children: [
-                for (int i = 0; i < _icons.length; i++)
-                  Expanded(
-                    child: _NavItem(
-                      activeIcon: _icons[i].$1,
-                      icon:       _icons[i].$2,
-                      label: labels[i],
-                      selected:  i == currentIndex,
-                      onTap: () => onTap(i),
-                      dark: dark,
-                    ),
-                  ),
+                // Left group — always exactly half the side space, so the
+                // Home button stays centred no matter which item is selected.
+                Expanded(
+                  child: Row(children: [item(_left[0]), item(_left[1])]),
+                ),
+                _HomeFab(
+                  selected: currentIndex == 0,
+                  onTap: () => onTap(0),
+                ),
+                Expanded(
+                  child: Row(children: [item(_right[0]), item(_right[1])]),
+                ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The raised, gradient Home button docked into the centre of the nav bar.
+class _HomeFab extends StatelessWidget {
+  final bool selected;
+  final VoidCallback onTap;
+  const _HomeFab({
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF023E8A), Color(0xFF0096C7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0096C7)
+                    .withValues(alpha: selected ? 0.50 : 0.32),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            selected ? Icons.home_rounded : Icons.home_outlined,
+            color: Colors.white,
+            size: 24,
           ),
         ),
       ),
@@ -479,7 +576,7 @@ class _NavItem extends StatelessWidget {
               ? Container(
                   key: const ValueKey(true),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [_gradA, _gradB],

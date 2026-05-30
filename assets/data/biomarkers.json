@@ -109,6 +109,8 @@
     { "id": "weight", "name": "Weight", "shortName": "Wt", "category": "Body Composition", "unit": "kg", "refRangeLow": null, "refRangeHigh": null, "description": "Body weight. Track over time alongside body fat and waist circumference." },
     { "id": "body_fat_pct", "name": "Body Fat", "shortName": "BF%", "category": "Body Composition", "unit": "%", "refRangeLow": null, "refRangeHigh": null, "description": "Body fat percentage measured by impedance scale, calipers, or DEXA." },
     { "id": "waist_circumference", "name": "Waist Circumference", "shortName": "Waist", "category": "Body Composition", "unit": "cm", "refRangeLow": null, "refRangeHigh": null, "description": "Measured at the navel; rising waist size correlates with metabolic risk." },
-    { "id": "hip_circumference", "name": "Hip Circumference", "shortName": "Hip", "category": "Body Composition", "unit": "cm", "refRangeLow": null, "refRangeHigh": null, "description": "Measured at the widest hip. Used with waist for the waist-hip ratio." }
+    { "id": "hip_circumference", "name": "Hip Circumference", "shortName": "Hip", "category": "Body Composition", "unit": "cm", "refRangeLow": null, "refRangeHigh": null, "description": "Measured at the widest hip. Used with waist for the waist-hip ratio." },
+    { "id": "systolic_bp", "name": "Systolic Blood Pressure", "shortName": "SBP", "category": "Cardiac", "unit": "mmHg", "refRangeLow": 90.0, "refRangeHigh": 120.0, "description": "The top blood pressure number — pressure when the heart beats. 130+ is elevated." },
+    { "id": "diastolic_bp", "name": "Diastolic Blood Pressure", "shortName": "DBP", "category": "Cardiac", "unit": "mmHg", "refRangeLow": 60.0, "refRangeHigh": 80.0, "description": "The bottom blood pressure number — pressure when the heart rests. 85+ is elevated." }
   ]
 }

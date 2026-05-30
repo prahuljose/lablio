@@ -374,18 +374,42 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            // Subtle translucent brand tint, echoing the frosted nav bar.
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.09),
+                AppColors.primaryLight.withValues(alpha: 0.03),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.15),
+              width: 1,
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(icon, color: AppColors.primary, size: 20),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: AppColors.primary, size: 16),
+                  ),
                   const Spacer(),
                   if (onTap != null)
                     Icon(Icons.chevron_right,
@@ -441,6 +465,13 @@ class _QuickActions extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        _ActionCard(
+          icon: Icons.accessibility_new_outlined,
+          label: 'Body Map (health by system)',
+          color: AppColors.primaryDark,
+          onTap: () => context.push(AppRoutes.bodyMap),
         ),
         const SizedBox(height: 12),
         // Scan Report is not ready yet — disabled with a "Coming soon" badge.

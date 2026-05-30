@@ -446,6 +446,12 @@ class _BiomarkerTile extends ConsumerWidget {
       ..sort((a, b) => a.date.compareTo(b.date));
     final sparkValues = history.map((e) => e.value).toList();
 
+    // Delta vs the previous reading (in display units), tinted by whether the
+    // change moved the value toward (green) or away from (red) its range.
+    final delta = history.length >= 2
+        ? _DeltaInfo.compute(history[history.length - 2], entry, system)
+        : null;
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -480,8 +486,21 @@ class _BiomarkerTile extends ConsumerWidget {
                                     .bodyMedium
                                     ?.copyWith(fontSize: 12)),
                             const SizedBox(height: 4),
-                            Text('Latest: ${conv.value} ${conv.unit}',
-                                style: Theme.of(context).textTheme.bodyMedium),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                      'Latest: ${conv.value} ${conv.unit}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium),
+                                ),
+                                if (delta != null) ...[
+                                  const SizedBox(width: 8),
+                                  _DeltaChip(info: delta),
+                                ],
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -521,6 +540,84 @@ class _BiomarkerTile extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The change between the two most recent readings, with a colour that tells
+/// the user whether the move was *healthy* (toward the range) or not.
+class _DeltaInfo {
+  final double amount; // signed, in display units
+  final Color color;
+  const _DeltaInfo({required this.amount, required this.color});
+
+  static _DeltaInfo? compute(
+      BiomarkerEntryModel prev, BiomarkerEntryModel curr, UnitSystem system) {
+    final id = curr.biomarkerId;
+    final currDisp = UnitConverter.convertValue(id, curr.value, system);
+    final prevDisp = UnitConverter.convertValue(id, prev.value, system);
+    final d = currDisp - prevDisp;
+    if (d.abs() < 1e-9) return null;
+
+    // Distance outside the reference range (0 when inside) — comparing the two
+    // tells us if the value moved toward or away from the healthy band.
+    final low = curr.refRangeLow;
+    final high = curr.refRangeHigh;
+    Color color = AppColors.textTertiary;
+    if (low != null || high != null) {
+      double out(double v) {
+        if (low != null && v < low) return low - v;
+        if (high != null && v > high) return v - high;
+        return 0;
+      }
+
+      final outCurr = out(curr.value);
+      final outPrev = out(prev.value);
+      if (outCurr < outPrev - 1e-9) {
+        color = AppColors.normal; // moved toward range — improving
+      } else if (outCurr > outPrev + 1e-9) {
+        color = AppColors.high; // moved away from range — worsening
+      }
+    }
+    return _DeltaInfo(amount: d, color: color);
+  }
+}
+
+class _DeltaChip extends StatelessWidget {
+  final _DeltaInfo info;
+  const _DeltaChip({required this.info});
+
+  static String _fmt(double v) {
+    if (v == v.roundToDouble() || v.abs() >= 10) return v.toStringAsFixed(0);
+    return v.toStringAsFixed(1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final up = info.amount > 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: info.color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(up ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 11, color: info.color),
+          const SizedBox(width: 2),
+          Text(
+            _fmt(info.amount.abs()),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: info.color,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
       ),
     );
   }
