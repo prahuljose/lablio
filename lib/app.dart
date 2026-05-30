@@ -16,14 +16,14 @@ import 'features/profile/providers/profile_provider.dart';
 import 'features/reports/providers/reports_provider.dart';
 import 'l10n/app_localizations.dart';
 
-class LabioApp extends ConsumerStatefulWidget {
-  const LabioApp({super.key});
+class LablioApp extends ConsumerStatefulWidget {
+  const LablioApp({super.key});
 
   @override
-  ConsumerState<LabioApp> createState() => _LabioAppState();
+  ConsumerState<LablioApp> createState() => _LablioAppState();
 }
 
-class _LabioAppState extends ConsumerState<LabioApp> {
+class _LablioAppState extends ConsumerState<LablioApp> {
   StreamSubscription<AuthState>? _authSub;
   String? _lastUserId;
 

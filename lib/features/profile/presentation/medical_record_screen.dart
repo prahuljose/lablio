@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
 import '../data/medical_record_model.dart';
 import '../providers/medical_record_provider.dart';
 
@@ -57,7 +58,7 @@ class _RecordList extends ConsumerWidget {
         foregroundColor: Colors.white,
       ),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LablioLoader(),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (entries) {
           final filtered =

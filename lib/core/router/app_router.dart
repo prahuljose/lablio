@@ -122,7 +122,10 @@ final appRouter = GoRouter(
     // after a hot restart which resets the location to '/').
     if (loc == AppRoutes.splash) {
       if (!loggedIn) return AppRoutes.login;
-      return gOnboardingSeen ? AppRoutes.home : AppRoutes.onboarding;
+      if (!gOnboardingSeen) return AppRoutes.onboarding;
+      // Logged-in + onboarded: stay on the animated splash. AuthGate plays its
+      // entrance, then routes to /intro (the full-page logo), which goes Home.
+      return null;
     }
 
     // Show first-run onboarding once, after the user is signed in.
@@ -353,6 +356,9 @@ class _AppShellState extends State<_AppShell> {
     _path = GoRouterState.of(context).uri.path;
 
     return Scaffold(
+      // Let the body extend behind the floating nav so its frosted blur shows
+      // the content scrolling underneath (instead of a solid band).
+      extendBody: true,
       // Subtle fade-in of the new tab. Keyed by the selected tab so it replays
       // only on a tab change. We fade the incoming page rather than cross-fade
       // (which would keep two shell subtrees alive at once and duplicate the

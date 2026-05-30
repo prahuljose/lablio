@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../biomarkers/data/biomarker_entry_model.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../data/report_model.dart';
@@ -63,8 +64,7 @@ class ReportDetailScreen extends ConsumerWidget {
           const _SectionLabel('Biomarker Results'),
           const SizedBox(height: 12),
           linkedEntries.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
+            loading: () => const LablioLoader(),
             error: (e, _) => Text('Error: $e'),
             data: (entries) => entries.isEmpty
                 ? _EmptyEntries(report: report)

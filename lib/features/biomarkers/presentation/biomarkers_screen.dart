@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/units/unit_converter.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
+import '../../../core/widgets/lablio_refresh.dart';
 import '../../../core/units/unit_system_provider.dart';
 import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/status_style.dart';
@@ -97,6 +99,9 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: 52,
+        titleSpacing: 8 ,
+        leading: const LablioAppBarLogo(),
         title: const Text('Biomarkers'),
         actions: [
           PopupMenuButton<BiomarkerSort>(
@@ -116,12 +121,16 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showQuickLogSheet(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Log Result'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+      floatingActionButton: Padding(
+        // Lift above the floating nav bar (extendBody is on in the shell).
+        padding: const EdgeInsets.only(bottom: 96),
+        child: FloatingActionButton.extended(
+          onPressed: () => showQuickLogSheet(context),
+          icon: const Icon(Icons.add),
+          label: const Text('Log Result'),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+        ),
       ),
       body: trackedAsync.when(
         loading: () => const SkeletonList(),
@@ -175,8 +184,7 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
                 );
               }),
               Expanded(
-                child: RefreshIndicator(
-                  color: AppColors.primary,
+                child: LablioRefresh(
                   onRefresh: () =>
                       ref.read(biomarkerEntriesProvider.notifier).refresh(),
                   child: list.isEmpty
@@ -245,19 +253,49 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
   }
 }
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends StatefulWidget {
   final ValueChanged<String> onChanged;
   const _SearchBar({required this.onChanged});
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _clear() {
+    _controller.clear();
+    widget.onChanged('');
+    setState(() {}); // keep focus / keyboard open, just reset the text
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: TextField(
-        onChanged: onChanged,
+        controller: _controller,
+        onChanged: (v) {
+          widget.onChanged(v);
+          setState(() {}); // toggle the clear button
+        },
         decoration: InputDecoration(
           hintText: 'Search biomarkers…',
           prefixIcon: const Icon(Icons.search),
+          suffixIcon: _controller.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Clear',
+                  onPressed: _clear,
+                ),
           isDense: true,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),

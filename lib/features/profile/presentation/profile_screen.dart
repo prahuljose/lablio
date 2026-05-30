@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
@@ -39,6 +40,9 @@ class ProfileScreen extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: 52,
+        titleSpacing: 8,
+        leading: const LablioAppBarLogo(),
         title: Text(t.profileTitle),
         actions: [
           IconButton(
@@ -49,7 +53,7 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
         children: [
           _buildAvatar(context, fullName,
               profileAsync.valueOrNull?.avatarUrl, profileAsync.valueOrNull),
@@ -378,7 +382,7 @@ class _HealthDetailsCard extends StatelessWidget {
       loading: () => const Card(
         child: Padding(
           padding: EdgeInsets.all(24),
-          child: Center(child: CircularProgressIndicator()),
+          child: LablioLoader(size: 44),
         ),
       ),
       error: (e, _) => const SizedBox.shrink(),

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../data/lab_report_parser.dart';
 import '../data/ocr_service.dart';
@@ -135,7 +136,7 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator(),
+                  const AnimatedLablioLogo(size: 64, repeat: true),
                   const SizedBox(height: 16),
                   Text(_status,
                       style: Theme.of(context).textTheme.bodyMedium),

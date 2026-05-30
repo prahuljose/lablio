@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../core/widgets/skeletons.dart';
 import '../data/report_model.dart';
 import '../providers/reports_provider.dart';
@@ -17,6 +18,9 @@ class ReportsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: 52,
+        titleSpacing: 8,
+        leading: const LablioAppBarLogo(),
         title: const Text('Reports'),
         actions: [
           IconButton(
@@ -25,12 +29,16 @@ class ReportsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(AppRoutes.addReport),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Report'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+      floatingActionButton: Padding(
+        // Lift above the floating nav bar (extendBody is on in the shell).
+        padding: const EdgeInsets.only(bottom: 96),
+        child: FloatingActionButton.extended(
+          onPressed: () => context.push(AppRoutes.addReport),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Report'),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+        ),
       ),
       body: reportsAsync.when(
         loading: () => const SkeletonList(),
@@ -63,7 +71,7 @@ class ReportsScreen extends ConsumerWidget {
   Widget _buildList(
       BuildContext context, WidgetRef ref, List<ReportModel> reports) {
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       itemCount: reports.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, i) => _ReportCard(report: reports[i]),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
 import '../data/auth_repository.dart';
 
 final _authRepoProvider = Provider(
@@ -69,14 +70,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 48),
-                _buildLogo(),
                 const SizedBox(height: 40),
-                Text('Welcome back',
-                    style: Theme.of(context).textTheme.headlineLarge),
-                const SizedBox(height: 8),
-                Text('Sign in to your Lablio account',
-                    style: Theme.of(context).textTheme.bodyMedium),
+                _buildHero(context),
                 const SizedBox(height: 36),
                 TextFormField(
                   controller: _emailController,
@@ -154,27 +149,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildLogo() {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildHero(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Large, defined logo tile — the hero of the page.
+          Container(
+            width: 132,
+            height: 132,
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: dark ? AppColors.surfaceVariant : Colors.white,
+              borderRadius: BorderRadius.circular(34),
+              border:
+                  Border.all(color: AppColors.primary.withValues(alpha: 0.10)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.20),
+                  blurRadius: 30,
+                  offset: const Offset(0, 14),
+                ),
+              ],
+            ),
+            child: const AnimatedLablioLogo(size: 88),
           ),
-          child: const Icon(Icons.biotech, color: Colors.white, size: 24),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          'Lablio',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w800,
-              ),
-        ),
-      ],
+          const SizedBox(height: 24),
+          Text('Welcome back',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineLarge),
+          const SizedBox(height: 8),
+          Text('Sign in to your Lablio account',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
     );
   }
 }

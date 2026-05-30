@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
+import '../../../core/widgets/lablio_refresh.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../biomarkers/data/biomarker_entry_model.dart';
 import '../../biomarkers/presentation/quick_log_sheet.dart';
@@ -28,6 +30,9 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: 52,
+        titleSpacing: 8,
+        leading: const LablioAppBarLogo(),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -46,13 +51,13 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: LablioRefresh(
         onRefresh: () async {
           ref.read(reportsProvider.notifier).refresh();
           ref.read(biomarkerEntriesProvider.notifier).refresh();
         },
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
           children: [
             _StatsRow(
               reportsAsync: reportsAsync,
@@ -97,7 +102,7 @@ class HomeScreen extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             entriesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const LablioLoader(),
               error: (e, _) => Text('Error: $e'),
               data: (entries) => entries.isEmpty
                   ? _buildEmptyResults(context)

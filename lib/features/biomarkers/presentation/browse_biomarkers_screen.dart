@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../data/biomarker_model.dart';
 import '../providers/biomarkers_provider.dart';
@@ -52,7 +53,7 @@ class _BrowseBiomarkersScreenState
           const SizedBox(height: 8),
           Expanded(
             child: biomarkersAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const LablioLoader(),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (biomarkers) {
                 final filtered = _query.isEmpty
