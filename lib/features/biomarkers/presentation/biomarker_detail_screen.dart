@@ -11,6 +11,7 @@ import '../../../core/units/unit_converter.dart';
 import '../../../core/units/unit_system_provider.dart';
 import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/status_style.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/biomarker_entry_model.dart';
 import '../data/biomarker_model.dart';
 import '../data/nutrient_nudges.dart';
@@ -41,6 +42,7 @@ class BiomarkerDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final historyAsync = ref.watch(biomarkerHistoryProvider(biomarkerId));
 
     // Watch (not read) so the biomarker is guaranteed resolved before use
@@ -84,7 +86,7 @@ class BiomarkerDetailScreen extends ConsumerWidget {
             loading: () => const SliverToBoxAdapter(
                 child: SkeletonList(itemCount: 4)),
             error: (e, _) => SliverFillRemaining(
-                child: Center(child: Text('Error: $e'))),
+                child: Center(child: Text(t.biomarkerDetailError(e.toString())))),
             data: (entries) => entries.isEmpty
                 ? SliverFillRemaining(
                     hasScrollBody: false,
@@ -106,13 +108,14 @@ class BiomarkerDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildEmpty(BuildContext context, BiomarkerModel? biomarker) {
+    final t = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.show_chart, size: 64, color: AppColors.textTertiary),
           const SizedBox(height: 16),
-          Text('No entries yet',
+          Text(t.biomarkerDetailNoEntries,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           ElevatedButton.icon(
@@ -120,7 +123,7 @@ class BiomarkerDetailScreen extends ConsumerWidget {
                 ? null
                 : () => _goToAddEntry(context, biomarker),
             icon: const Icon(Icons.add),
-            label: const Text('Log First Result'),
+            label: Text(t.biomarkerDetailLogFirst),
             style: ElevatedButton.styleFrom(minimumSize: const Size(200, 48)),
           ),
         ],
@@ -131,6 +134,7 @@ class BiomarkerDetailScreen extends ConsumerWidget {
   List<Widget> _buildContentChildren(BuildContext context, WidgetRef ref,
       List<BiomarkerEntryModel> entries, UnitSystem system,
       BiomarkerModel? biomarker) {
+    final t = AppLocalizations.of(context);
     final latest = entries.last;
     return [
       _LatestValueCard(entry: latest, system: system),
@@ -152,7 +156,7 @@ class BiomarkerDetailScreen extends ConsumerWidget {
       }(),
       _NotesCard(biomarkerId: biomarkerId),
       const SizedBox(height: 16),
-      Text('History', style: Theme.of(context).textTheme.titleLarge),
+      Text(t.biomarkerDetailHistory, style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 12),
       ...entries.reversed.map(
         (e) => Padding(
@@ -171,6 +175,7 @@ class _LatestValueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final conv = UnitConverter.display(
       biomarkerId: entry.biomarkerId,
       value: entry.value,
@@ -194,7 +199,7 @@ class _LatestValueCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('LATEST RESULT',
+            Text(t.biomarkerDetailLatestResult,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 11,
                     letterSpacing: 1.2,
@@ -229,7 +234,8 @@ class _LatestValueCard extends StatelessWidget {
             ),
             if (hasRange) ...[
               const SizedBox(height: 4),
-              Text('Reference: ${conv.low} – ${conv.high} ${conv.unit}',
+              Text(t.biomarkerDetailReference(
+                      conv.low.toString(), conv.high.toString(), conv.unit),
                   style: Theme.of(context).textTheme.bodyMedium),
             ],
             // Only show the status banner when there's an actual range result.
@@ -413,7 +419,7 @@ class _TrendChart extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 12, bottom: 12),
-              child: Text('Trend',
+              child: Text(AppLocalizations.of(context).biomarkerDetailTrend,
                   style: Theme.of(context).textTheme.titleMedium),
             ),
             SizedBox(
@@ -707,23 +713,24 @@ class _EntryRow extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
+    final t = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete Entry'),
-        content: const Text('Remove this result? This cannot be undone.'),
+        title: Text(t.biomarkerDetailDeleteTitle),
+        content: Text(t.biomarkerDetailDeleteBody),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+              child: Text(t.commonCancel)),
           TextButton(
             onPressed: () {
               HapticFeedback.mediumImpact();
               Navigator.pop(context);
               ref.read(biomarkerEntriesProvider.notifier).remove(entry.id);
             },
-            child: const Text('Delete',
-                style: TextStyle(color: AppColors.high)),
+            child: Text(t.commonDelete,
+                style: const TextStyle(color: AppColors.high)),
           ),
         ],
       ),
@@ -739,6 +746,7 @@ class _ExplainerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final isHigh = latest.isHigh;
     final isLow = latest.isLow;
     String? text;
@@ -747,18 +755,18 @@ class _ExplainerCard extends StatelessWidget {
     IconData icon = Icons.info_outline;
     if (isHigh && biomarker.explanationHigh != null) {
       text = biomarker.explanationHigh;
-      heading = 'What "High" usually means';
+      heading = t.biomarkerDetailWhatHighMeans;
       color = AppColors.high;
       icon = Icons.warning_amber_outlined;
     } else if (isLow && biomarker.explanationLow != null) {
       text = biomarker.explanationLow;
-      heading = 'What "Low" usually means';
+      heading = t.biomarkerDetailWhatLowMeans;
       color = AppColors.low;
       icon = Icons.warning_amber_outlined;
     } else if (biomarker.description != null &&
         biomarker.description!.isNotEmpty) {
       text = biomarker.description;
-      heading = 'About ${biomarker.name}';
+      heading = t.biomarkerDetailAbout(biomarker.name);
       color = AppColors.primary;
       icon = Icons.menu_book_outlined;
     }
@@ -785,7 +793,7 @@ class _ExplainerCard extends StatelessWidget {
             Text(text, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 6),
             Text(
-              'General information only — not medical advice.',
+              t.biomarkerDetailInfoDisclaimer,
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
@@ -805,6 +813,7 @@ class _LeverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -816,7 +825,7 @@ class _LeverCard extends StatelessWidget {
                 const Icon(Icons.lightbulb_outline,
                     size: 18, color: AppColors.normal),
                 const SizedBox(width: 8),
-                Text('What may help',
+                Text(t.biomarkerDetailWhatMayHelp,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700, color: AppColors.normal)),
               ],
@@ -825,7 +834,7 @@ class _LeverCard extends StatelessWidget {
             Text(text, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 6),
             Text(
-              'General lifestyle guidance only — not medical advice.',
+              t.biomarkerDetailGuidanceDisclaimer,
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
@@ -873,8 +882,8 @@ class _NotesCardState extends ConsumerState<_NotesCard> {
           .save(widget.biomarkerId, _controller.text.trim());
       _saved = _controller.text.trim();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Note saved'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).biomarkerDetailNoteSaved),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.normal,
         ));
@@ -882,7 +891,8 @@ class _NotesCardState extends ConsumerState<_NotesCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not save: $e'),
+          content: Text(
+              AppLocalizations.of(context).commonCouldNotSave(e.toString())),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.high,
         ));
@@ -894,6 +904,7 @@ class _NotesCardState extends ConsumerState<_NotesCard> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final notesAsync = ref.watch(biomarkerNotesProvider);
     final body = notesAsync.valueOrNull?[widget.biomarkerId]?.body ?? '';
     _hydrate(body);
@@ -910,9 +921,11 @@ class _NotesCardState extends ConsumerState<_NotesCard> {
                 Icon(Icons.edit_note,
                     size: 20, color: AppColors.textSecondary),
                 const SizedBox(width: 8),
-                Text('Notes',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const Spacer(),
+                Expanded(
+                  child: Text(t.biomarkerDetailNotes,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
                 if (dirty)
                   TextButton(
                     onPressed: _saving ? null : _save,
@@ -922,7 +935,7 @@ class _NotesCardState extends ConsumerState<_NotesCard> {
                             height: 14,
                             child:
                                 CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Save'),
+                        : Text(t.commonSave),
                   ),
               ],
             ),
@@ -931,9 +944,8 @@ class _NotesCardState extends ConsumerState<_NotesCard> {
               onChanged: (_) => setState(() {}),
               maxLines: null,
               minLines: 2,
-              decoration: const InputDecoration(
-                hintText:
-                    'Add notes about this biomarker — context, goals, doctor remarks…',
+              decoration: InputDecoration(
+                hintText: t.biomarkerDetailNotesHint,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -1041,7 +1053,7 @@ class _BiomarkerHeaderDelegate extends SliverPersistentHeaderDelegate {
                     isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                     color: Colors.white,
                   ),
-                  tooltip: 'Pin to home',
+                  tooltip: AppLocalizations.of(context).biomarkerDetailPinTooltip,
                   onPressed: onPin,
                 ),
                 IconButton(

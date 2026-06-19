@@ -7,6 +7,7 @@ import '../../../core/units/unit_converter.dart';
 import '../../../core/units/unit_system_provider.dart';
 import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/status_style.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/biomarker_entry_model.dart';
 import '../providers/biomarkers_provider.dart';
 
@@ -20,12 +21,13 @@ class BodyMapScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final trackedAsync = ref.watch(trackedBiomarkersProvider);
     final system = ref.watch(unitSystemProvider);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Body Map')),
+      appBar: AppBar(title: Text(t.homeBodyMap)),
       body: trackedAsync.when(
         loading: () => const SkeletonList(),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(t.commonError(e.toString()))),
         data: (tracked) {
           final summaries = _BodySystem.all
               .map((s) => _SystemSummary.from(s, tracked))
@@ -35,8 +37,7 @@ class BodyMapScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
               Text(
-                'Your health at a glance. Each region reflects the markers you '
-                'track for that system.',
+                t.bodyMapIntro,
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
@@ -50,7 +51,7 @@ class BodyMapScreen extends ConsumerWidget {
                 onTap: (s) => _openSystem(context, ref, s, system),
               ),
               const SizedBox(height: 16),
-              Text('Systems',
+              Text(t.bodyMapSystems,
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 12),
               ...summaries.map((s) => Padding(
@@ -214,10 +215,10 @@ class _SystemSummary {
     );
   }
 
-  String get subtitle {
-    if (total == 0) return 'No data yet';
-    if (outOfRange == 0) return 'All $total in range';
-    return '$outOfRange of $total out of range';
+  String subtitle(AppLocalizations t) {
+    if (total == 0) return t.bodyMapNoDataYet;
+    if (outOfRange == 0) return t.bodyMapAllInRange(total);
+    return t.bodyMapOutOfRange(outOfRange, total);
   }
 }
 
@@ -246,10 +247,10 @@ class _Legend extends StatelessWidget {
       spacing: 16,
       runSpacing: 6,
       children: [
-        dot(AppColors.normal, 'In range'),
-        dot(AppColors.low, 'Low'),
-        dot(AppColors.high, 'High'),
-        dot(AppColors.textTertiary, 'No data'),
+        dot(AppColors.normal, AppLocalizations.of(context).bodyMapInRange),
+        dot(AppColors.low, AppLocalizations.of(context).biomarkersStatusLow),
+        dot(AppColors.high, AppLocalizations.of(context).biomarkersStatusHigh),
+        dot(AppColors.textTertiary, AppLocalizations.of(context).bodyMapNoData),
       ],
     );
   }
@@ -442,7 +443,7 @@ class _SystemCard extends StatelessWidget {
                     Text(summary.system.name,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 2),
-                    Text(summary.subtitle,
+                    Text(summary.subtitle(AppLocalizations.of(context)),
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
@@ -501,7 +502,7 @@ class _SystemSheet extends StatelessWidget {
                     children: [
                       Text(summary.system.name,
                           style: Theme.of(context).textTheme.titleLarge),
-                      Text(summary.subtitle,
+                      Text(summary.subtitle(AppLocalizations.of(context)),
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
@@ -517,7 +518,7 @@ class _SystemSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Center(
                   child: Text(
-                    'No data yet — log a result in this category to see it here.',
+                    AppLocalizations.of(context).bodyMapEmptyCategory,
                     textAlign: TextAlign.center,
                     style: Theme.of(context)
                         .textTheme
@@ -586,7 +587,7 @@ class _SheetRow extends StatelessWidget {
               child: Text(entry.biomarkerName,
                   style: Theme.of(context).textTheme.bodyLarge),
             ),
-            Text('${conv.value} ${conv.unit}',
+            Text(AppLocalizations.of(context).biomarkersLatest('${conv.value}', conv.unit),
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(width: 8),
             Icon(Icons.chevron_right,

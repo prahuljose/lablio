@@ -37,6 +37,13 @@ class DoctorReportService {
     required List<MedicalRecordEntry> medical,
   }) async {
     final file = await generate(profile: profile, entries: entries, medical: medical);
+    await shareFile(file);
+  }
+
+  /// Opens the system share sheet for an already-generated PDF. Split out from
+  /// [share] so callers can show a loading indicator during [generate] and
+  /// dismiss it before the share sheet appears.
+  Future<void> shareFile(File file) async {
     await SharePlus.instance.share(ShareParams(
       files: [XFile(file.path, mimeType: 'application/pdf')],
       subject: 'Lablio Health Summary',

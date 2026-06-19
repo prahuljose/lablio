@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../data/lab_report_parser.dart';
 import '../data/ocr_service.dart';
@@ -46,15 +47,16 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
   }
 
   Future<void> _process(Future<String> Function() recognize) async {
+    final t = AppLocalizations.of(context);
     setState(() {
       _busy = true;
-      _status = 'Reading document…';
+      _status = t.scanReadingDocument;
     });
     try {
       final reference =
           await ref.read(referenceBiomarkersProvider.future);
       final text = await recognize();
-      setState(() => _status = 'Finding biomarkers…');
+      setState(() => _status = t.scanFindingBiomarkers);
       final result = LabReportParser.parse(text, reference);
 
       if (!mounted) return;
@@ -74,7 +76,7 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
         _status = '';
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Scan failed: $e'),
+        content: Text(t.scanFailed(e.toString())),
         backgroundColor: AppColors.high,
         behavior: SnackBarBehavior.floating,
       ));
@@ -82,10 +84,11 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
   }
 
   void _showRawText(String text) {
+    final t = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('No values recognized'),
+        title: Text(t.scanNoValuesTitle),
         content: SizedBox(
           width: double.maxFinite,
           child: Column(
@@ -93,8 +96,7 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Couldn\'t match any biomarkers. Here is exactly what the scan '
-                'read — you can copy it to refine the scan or enter values manually.',
+                t.scanNoValuesBody,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 12),
@@ -108,7 +110,7 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
                   ),
                   child: SingleChildScrollView(
                     child: SelectableText(
-                      text.isEmpty ? '(no text detected)' : text,
+                      text.isEmpty ? t.scanNoTextDetected : text,
                       style: const TextStyle(fontSize: 12, height: 1.4),
                     ),
                   ),
@@ -120,7 +122,7 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
+            child: Text(t.scanClose),
           ),
         ],
       ),
@@ -129,8 +131,9 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan a report')),
+      appBar: AppBar(title: Text(t.scanTitle)),
       body: _busy
           ? Center(
               child: Column(
@@ -146,34 +149,32 @@ class _ScanReportScreenState extends ConsumerState<ScanReportScreen> {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                Text('Extract values automatically',
+                Text(t.scanExtractAuto,
                     style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Text(
-                  'Take a photo or pick a PDF of your lab report. Everything is '
-                  'processed on your device — nothing is uploaded for scanning. '
-                  'You\'ll review the results before anything is saved.',
+                  t.scanIntroBody,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 24),
                 _ScanOption(
                   icon: Icons.camera_alt_outlined,
-                  title: 'Take a photo',
-                  subtitle: 'Capture the report with your camera',
+                  title: t.scanOptionPhoto,
+                  subtitle: t.scanOptionPhotoSub,
                   onTap: () => _scanImage(ImageSource.camera),
                 ),
                 const SizedBox(height: 12),
                 _ScanOption(
                   icon: Icons.image_outlined,
-                  title: 'Choose an image',
-                  subtitle: 'Pick a photo from your gallery',
+                  title: t.scanOptionImage,
+                  subtitle: t.scanOptionImageSub,
                   onTap: () => _scanImage(ImageSource.gallery),
                 ),
                 const SizedBox(height: 12),
                 _ScanOption(
                   icon: Icons.picture_as_pdf_outlined,
-                  title: 'Choose a PDF',
-                  subtitle: 'Scan a PDF lab report',
+                  title: t.scanOptionPdf,
+                  subtitle: t.scanOptionPdfSub,
                   onTap: _scanPdf,
                 ),
               ],

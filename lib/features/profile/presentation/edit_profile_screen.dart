@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/profile_model.dart';
 import '../providers/profile_provider.dart';
 import 'widgets/profile_form_fields.dart';
@@ -68,12 +69,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
     if (picked == null) return;
 
+    final t = AppLocalizations.of(context);
     final file = File(picked.path);
     final size = await file.length();
     if (size > _maxAvatarBytes) {
       if (mounted) {
-        _snack('Image is too large. Please pick one under 2 MB.',
-            isError: true);
+        _snack(t.editProfileImageTooLarge, isError: true);
       }
       return;
     }
@@ -81,9 +82,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _uploadingAvatar = true);
     try {
       await ref.read(profileProvider.notifier).uploadAvatar(file);
-      if (mounted) _snack('Profile picture updated');
+      if (mounted) _snack(t.editProfileAvatarUpdated);
     } catch (e) {
-      if (mounted) _snack('Could not upload picture: $e', isError: true);
+      if (mounted) _snack(t.editProfileAvatarError(e.toString()), isError: true);
     } finally {
       if (mounted) setState(() => _uploadingAvatar = false);
     }
@@ -92,6 +93,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _save() async {
     final current = ref.read(profileProvider).valueOrNull;
     if (current == null) return;
+    final t = AppLocalizations.of(context);
     setState(() => _saving = true);
     try {
       await ref.read(profileProvider.notifier).save(
@@ -104,11 +106,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
           );
       if (mounted) {
-        _snack('Profile saved');
+        _snack(t.profileSaved);
         context.pop();
       }
     } catch (e) {
-      if (mounted) _snack('Could not save: $e', isError: true);
+      if (mounted) _snack(t.commonCouldNotSave(e.toString()), isError: true);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -130,11 +132,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _hydrate(profileAsync.valueOrNull);
     final avatarUrl = profileAsync.valueOrNull?.avatarUrl;
     final name = profileAsync.valueOrNull?.fullName ?? 'User';
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: Text(t.editProfileTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -202,7 +205,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
           const SizedBox(height: 8),
           Center(
-            child: Text('Tap to change photo',
+            child: Text(t.editProfileChangePhoto,
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
@@ -211,19 +214,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           const SizedBox(height: 28),
 
           // ── Date of birth ─────────────────────────────────────────
-          const _Label('Date of birth'),
+          _Label(t.authDobLabel),
           const SizedBox(height: 8),
           _PickerTile(
             icon: Icons.cake_outlined,
             text: _dob == null
-                ? 'Select'
+                ? t.commonSelect
                 : DateFormat('MMMM d, yyyy').format(_dob!),
             onTap: _pickDob,
           ),
           const SizedBox(height: 20),
 
           // ── Sex ───────────────────────────────────────────────────
-          const _Label('Sex'),
+          _Label(t.authSexLabel),
           const SizedBox(height: 8),
           SexSelector(
             value: _sex,
@@ -239,7 +242,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _Label('Height'),
+                    _Label(t.formHeight),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _heightController,
@@ -258,7 +261,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _Label('Weight'),
+                    _Label(t.formWeight),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _weightController,
@@ -277,7 +280,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           const SizedBox(height: 20),
 
           // ── Blood type ────────────────────────────────────────────
-          const _Label('Blood type'),
+          _Label(t.authBloodTypeLabel),
           const SizedBox(height: 10),
           BloodTypeSelector(
             value: _bloodType,
@@ -294,7 +297,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : const Text('Save Changes'),
+                : Text(t.editProfileSaveChanges),
           ),
         ],
       ),
@@ -346,10 +349,12 @@ class _PickerTile extends StatelessWidget {
           children: [
             Icon(icon, color: AppColors.textSecondary, size: 20),
             const SizedBox(width: 12),
-            Text(text,
-                style: TextStyle(
-                    fontSize: 16, color: AppColors.textPrimary)),
-            const Spacer(),
+            Expanded(
+              child: Text(text,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 16, color: AppColors.textPrimary)),
+            ),
             Icon(Icons.chevron_right, color: AppColors.textTertiary),
           ],
         ),

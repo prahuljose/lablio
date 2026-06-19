@@ -12,7 +12,11 @@ class ExportLogService {
 
   /// Inserts one export-log row. Best-effort: a failure here must never block
   /// the actual share, so callers should treat thrown errors as non-fatal.
-  Future<void> logPdfExport({required int biomarkerCount}) async {
+  Future<void> logPdfExport({
+    required int biomarkerCount,
+    required bool includedMedical,
+    String exportType = 'doctor_pdf',
+  }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
 
@@ -22,7 +26,9 @@ class ExportLogService {
       'user_id': userId,
       // exported_at defaults to now() server-side; sent explicitly for clarity.
       'exported_at': DateTime.now().toUtc().toIso8601String(),
+      'export_type': exportType,
       'biomarker_count': biomarkerCount,
+      'included_medical': includedMedical,
       'platform': device.platform,
       'device_model': device.model,
       'os_version': device.osVersion,

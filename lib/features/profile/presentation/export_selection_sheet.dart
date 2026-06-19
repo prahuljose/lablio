@@ -1,28 +1,48 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../biomarkers/data/biomarker_entry_model.dart';
 
-/// Bottom sheet that lets the user pick which biomarkers to include in the
-/// "Share with doctor" PDF. Returns the set of selected biomarker IDs, or
-/// `null` if the user dismissed it without generating.
-Future<Set<String>?> showExportSelectionSheet(
+/// What the user chose to include in the doctor PDF.
+class ExportSelection {
+  final Set<String> biomarkerIds;
+  final bool includeMedical;
+  const ExportSelection({
+    required this.biomarkerIds,
+    required this.includeMedical,
+  });
+
+  /// Nothing to generate when no biomarkers and no medical section are chosen.
+  bool get isEmpty => biomarkerIds.isEmpty && !includeMedical;
+}
+
+/// Bottom sheet that lets the user pick which biomarkers (and whether the
+/// medical-record section) to include in the "Share with doctor" PDF.
+/// Returns the selection, or `null` if dismissed without generating.
+Future<ExportSelection?> showExportSelectionSheet(
   BuildContext context,
-  List<BiomarkerEntryModel> tracked,
-) {
-  return showModalBottomSheet<Set<String>>(
+  List<BiomarkerEntryModel> tracked, {
+  int medicalCount = 0,
+}) {
+  return showModalBottomSheet<ExportSelection>(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (_) => _ExportSelectionSheet(tracked: tracked),
+    builder: (_) =>
+        _ExportSelectionSheet(tracked: tracked, medicalCount: medicalCount),
   );
 }
 
 class _ExportSelectionSheet extends StatefulWidget {
   final List<BiomarkerEntryModel> tracked;
-  const _ExportSelectionSheet({required this.tracked});
+  final int medicalCount;
+  const _ExportSelectionSheet({
+    required this.tracked,
+    required this.medicalCount,
+  });
 
   @override
   State<_ExportSelectionSheet> createState() => _ExportSelectionSheetState();
@@ -37,9 +57,12 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
   // Selected biomarker IDs — everything starts selected.
   late final Set<String> _selected;
 
+  late bool _includeMedical;
+
   @override
   void initState() {
     super.initState();
+    _includeMedical = widget.medicalCount > 0;
     final latest = <String, BiomarkerEntryModel>{};
     for (final e in widget.tracked) {
       final cur = latest[e.biomarkerId];
@@ -59,6 +82,32 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
 
   int get _total => _byCategory.values.fold(0, (a, l) => a + l.length);
 
+  bool get _canGenerate => _selected.isNotEmpty || _includeMedical;
+
+  Iterable<String> _idsIn(String cat) =>
+      _byCategory[cat]!.map((e) => e.biomarkerId);
+
+  /// Tri-state for a category header: true = all, false = none, null = some.
+  bool? _categoryState(String cat) {
+    final ids = _idsIn(cat).toList();
+    final sel = ids.where(_selected.contains).length;
+    if (sel == 0) return false;
+    if (sel == ids.length) return true;
+    return null;
+  }
+
+  void _toggleCategory(String cat) {
+    final ids = _idsIn(cat).toSet();
+    final allSelected = ids.every(_selected.contains);
+    setState(() {
+      if (allSelected) {
+        _selected.removeAll(ids);
+      } else {
+        _selected.addAll(ids);
+      }
+    });
+  }
+
   void _toggleAll() {
     setState(() {
       if (_selected.length == _total) {
@@ -71,16 +120,17 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
     });
   }
 
-  (Color, String) _status(BiomarkerEntryModel e) {
-    if (e.isHigh) return (AppColors.high, 'High');
-    if (e.isLow) return (AppColors.low, 'Low');
-    if (e.isNormal) return (AppColors.normal, 'Normal');
+  (Color, String) _status(AppLocalizations t, BiomarkerEntryModel e) {
+    if (e.isHigh) return (AppColors.high, t.biomarkersStatusHigh);
+    if (e.isLow) return (AppColors.low, t.biomarkersStatusLow);
+    if (e.isNormal) return (AppColors.normal, t.biomarkersStatusNormal);
     return (AppColors.textTertiary, '—');
   }
 
   @override
   Widget build(BuildContext context) {
-    final allSelected = _selected.length == _total;
+    final t = AppLocalizations.of(context);
+    final allSelected = _selected.length == _total && _total > 0;
     final mq = MediaQuery.of(context);
 
     return Padding(
@@ -108,13 +158,13 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Select biomarkers',
+                        Text(t.exportSelectTitle,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w700)),
                         const SizedBox(height: 2),
-                        Text('Choose what goes into the PDF summary',
+                        Text(t.exportSelectSubtitle,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -123,8 +173,8 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
                     ),
                   ),
                   TextButton(
-                    onPressed: _toggleAll,
-                    child: Text(allSelected ? 'Clear all' : 'Select all'),
+                    onPressed: _total == 0 ? null : _toggleAll,
+                    child: Text(allSelected ? t.exportClearAll : t.exportSelectAll),
                   ),
                 ],
               ),
@@ -132,45 +182,26 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
             const Divider(height: 1),
             // ── List ────────────────────────────────────────────────
             Flexible(
-              child: ListView.builder(
+              child: ListView(
                 padding: const EdgeInsets.only(bottom: 8),
-                itemCount: _categories.length,
-                itemBuilder: (_, ci) {
-                  final cat = _categories[ci];
-                  final rows = _byCategory[cat]!;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-                        child: Text(
-                          cat.toUpperCase(),
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(
-                                color: AppColors.textTertiary,
-                                letterSpacing: 0.8,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                      ),
-                      for (final e in rows) _row(e),
-                    ],
-                  );
-                },
+                children: [
+                  if (widget.medicalCount > 0) _medicalToggle(t),
+                  for (final cat in _categories) ...[
+                    _categoryHeader(cat),
+                    for (final e in _byCategory[cat]!) _row(t, e),
+                  ],
+                ],
               ),
             ),
             const Divider(height: 1),
             // ── Footer ──────────────────────────────────────────────
             Padding(
-              padding: EdgeInsets.fromLTRB(
-                  16, 12, 16, 12 + mq.padding.bottom),
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + mq.padding.bottom),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      '${_selected.length} of $_total selected',
+                      _summaryLabel(t),
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -178,11 +209,17 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
                     ),
                   ),
                   FilledButton.icon(
-                    onPressed: _selected.isEmpty
-                        ? null
-                        : () => Navigator.pop(context, _selected),
+                    onPressed: _canGenerate
+                        ? () => Navigator.pop(
+                              context,
+                              ExportSelection(
+                                biomarkerIds: _selected,
+                                includeMedical: _includeMedical,
+                              ),
+                            )
+                        : null,
                     icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                    label: Text('Generate PDF (${_selected.length})'),
+                    label: Text(t.exportGeneratePdf),
                   ),
                 ],
               ),
@@ -193,8 +230,81 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
     );
   }
 
-  Widget _row(BiomarkerEntryModel e) {
-    final (color, label) = _status(e);
+  String _summaryLabel(AppLocalizations t) {
+    final parts = <String>[t.exportSummaryMarkers(_selected.length, _total)];
+    if (widget.medicalCount > 0 && _includeMedical) {
+      parts.add(t.exportSummaryMedical);
+    }
+    return parts.join('  ·  ');
+  }
+
+  // ── Medical-record include/exclude toggle ─────────────────────────
+  Widget _medicalToggle(AppLocalizations t) {
+    return Column(
+      children: [
+        SwitchListTile(
+          value: _includeMedical,
+          onChanged: (v) => setState(() => _includeMedical = v),
+          contentPadding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+          secondary: Icon(Icons.medical_information_outlined,
+              color: AppColors.textSecondary),
+          title: Text(t.profileMedicalRecord),
+          subtitle: Text(
+            t.exportMedicalSub(widget.medicalCount),
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: AppColors.textSecondary),
+          ),
+        ),
+        const Divider(height: 1),
+      ],
+    );
+  }
+
+  // ── Category header with tri-state bulk toggle ────────────────────
+  Widget _categoryHeader(String cat) {
+    final ids = _idsIn(cat).toList();
+    final sel = ids.where(_selected.contains).length;
+    return InkWell(
+      onTap: () => _toggleCategory(cat),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 20, 2),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 40,
+              child: Checkbox(
+                tristate: true,
+                value: _categoryState(cat),
+                onChanged: (_) => _toggleCategory(cat),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                cat.toUpperCase(),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      letterSpacing: 0.8,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+            Text(
+              '$sel/${ids.length}',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: AppColors.textTertiary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(AppLocalizations t, BiomarkerEntryModel e) {
+    final (color, label) = _status(t, e);
     final selected = _selected.contains(e.biomarkerId);
     return InkWell(
       onTap: () => setState(() {

@@ -33,5 +33,714 @@
   "commonSave": "Save",
   "commonCancel": "Cancel",
   "commonDelete": "Delete",
-  "commonSearch": "Search"
+  "commonSearch": "Search",
+  "addEntryEnterValidNumber": "Enter a valid number",
+  "addEntryEnterValue": "Enter a value",
+  "addEntryForYourProfile": " (for your profile if sex-specific)",
+  "addEntryNotes": "Notes (optional)",
+  "addEntryNotesHint": "Any context about this result…",
+  "addEntryReplace": "Replace",
+  "addEntryReplaceTitle": "Replace existing result?",
+  "addEntryResult": "Result",
+  "addEntryTags": "Tags (optional)",
+  "addEntryTestDate": "Test date",
+  "addReportTitle": "Add report",
+  "authAgeRequirement": "You must be at least 18 to use Lablio.",
+  "authBackToSignIn": "Back to Sign In",
+  "authBloodTypeLabel": "Blood type",
+  "authCheckInbox": "Check your inbox",
+  "authCreateAccount": "Create Account",
+  "authCreateYourAccount": "Create your account",
+  "authDobLabel": "Date of birth",
+  "authDobRequired": "Date of birth is required",
+  "authEmailLabel": "Email",
+  "authEnterName": "Enter your name",
+  "authForgotLink": "Forgot password?",
+  "authFullNameLabel": "Full name",
+  "authHaveAccount": "Already have an account? Sign In",
+  "authHeightLabel": "Height (cm)",
+  "authInvalidEmail": "Enter a valid email",
+  "authMin6Chars": "At least 6 characters",
+  "authNoAccount": "Don't have an account? Sign Up",
+  "authPasswordLabel": "Password",
+  "authResetSubtitle": "We'll email you a secure link to set a new password.",
+  "authResetTitle": "Reset password",
+  "authSectionAboutYou": "About you",
+  "authSectionAccount": "Account",
+  "authSelectDob": "Select date of birth",
+  "authSendResetLink": "Send Reset Link",
+  "authSexLabel": "Sex",
+  "authSignInButton": "Sign In",
+  "authSignInSubtitle": "Sign in to your Lablio account",
+  "authSignUpButton": "Sign Up",
+  "authSignupSubtitle": "Track your biomarkers and understand your health",
+  "authWeightLabel": "Weight (kg)",
+  "authWelcomeBack": "Welcome back",
+  "biomarkerDetailHistory": "History",
+  "biomarkerDetailLatestResult": "LATEST RESULT",
+  "biomarkerDetailLogFirst": "Log your first result to see trends.",
+  "biomarkerDetailNoEntries": "No entries yet",
+  "biomarkersClear": "Clear",
+  "biomarkersEmptySubtitle": "Start by logging your first lab result.",
+  "biomarkersEmptyTitle": "No biomarkers yet",
+  "biomarkersFilterAll": "All",
+  "biomarkersFilterOutOfRange": "Out of Range",
+  "biomarkersNoMatches": "No matches",
+  "biomarkersSearchHint": "Search biomarkers",
+  "biomarkersSortName": "Name A–Z",
+  "biomarkersSortRecent": "Most Recent",
+  "biomarkersSortStatus": "Status",
+  "biomarkersSortTooltip": "Sort",
+  "biomarkersStatusHigh": "High",
+  "biomarkersStatusLow": "Low",
+  "biomarkersStatusNormal": "Normal",
+  "customBiomarkerCategory": "Category",
+  "customBiomarkerCategoryHint": "e.g. Custom",
+  "customBiomarkerDescription": "Description",
+  "customBiomarkerEnterName": "Enter a name",
+  "customBiomarkerName": "Name",
+  "customBiomarkerNameHint": "e.g. Omega-3 Index",
+  "customBiomarkerRefHigh": "Ref. High",
+  "customBiomarkerRefLow": "Ref. Low",
+  "customBiomarkerShortName": "Short name",
+  "customBiomarkerShortNameHint": "e.g. O3I",
+  "customBiomarkerTitle": "Add custom biomarker",
+  "customBiomarkerUnit": "Unit",
+  "customBiomarkerUnitHint": "e.g. %",
+  "formEmail": "Email",
+  "formName": "Name",
+  "formSexFemale": "Female",
+  "formSexMale": "Male",
+  "formSexOther": "Other",
+  "formSexShortFemale": "F",
+  "formSexShortMale": "M",
+  "homeBodyMap": "Body Map",
+  "homeComingSoonBadge": "SOON",
+  "homeHealthInsights": "Health Insights",
+  "homeNoResults": "No results yet",
+  "homeNoResultsSub": "Start by logging your first lab result.",
+  "homeOutOfRange": "Out of Range",
+  "homeReportsStat": "Reports",
+  "homeResultsStat": "Results",
+  "homeScanReportAction": "Scan Report",
+  "homeScanReportComingSoon": "Scanning is coming soon",
+  "homeViewAll": "View all",
+  "onboardingBody1": "Log lab results and keep every value in one place, organized and searchable.",
+  "onboardingBody2": "Watch how each marker changes over time with clear, colorful charts.",
+  "onboardingBody3": "Attach lab PDFs to reports so your full history is always at hand.",
+  "onboardingGetStarted": "Get Started",
+  "onboardingNext": "Next",
+  "onboardingSkip": "Skip",
+  "onboardingTitle1": "Track your biomarkers",
+  "onboardingTitle2": "See your trends",
+  "onboardingTitle3": "Keep your reports",
+  "profileDeleteConfirmBody": "This permanently deletes your account, all reports, biomarker results, and uploaded files. This cannot be undone.",
+  "profileDeleteForever": "Delete forever",
+  "profileDeleteTypeToConfirm": "Type DELETE to confirm",
+  "profileExportDataSub": "Download all results as CSV",
+  "profileMedicalRecord": "Medical record",
+  "profileMedicalRecordSub": "Vaccinations, allergies, conditions",
+  "profileNoResultsToExport": "No results to export yet.",
+  "profileNoResultsToSummarize": "No results to summarize yet.",
+  "profileSettings": "Settings",
+  "profileSettingsSub": "Theme, units, biometric lock, language",
+  "profileShareWithDoctorSub": "PDF summary of your results",
+  "profileSignOutConfirm": "You can sign back in anytime.",
+  "profileSignOutTitle": "Sign out of Lablio?",
+  "reportDetailAddResult": "Add Result",
+  "reportDetailLogResult": "Log a result",
+  "reportDetailNoResults": "No results linked yet",
+  "reportDetailPdfError": "Couldn't open the PDF.",
+  "reportDetailResults": "Biomarker Results",
+  "reportDetailTitle": "Report",
+  "reportDetailViewPdf": "View PDF",
+  "reportStatusHigh": "HIGH",
+  "reportStatusLow": "LOW",
+  "reportStatusNormal": "Normal",
+  "reportsAddButton": "Add Report",
+  "reportsDeleteTitle": "Delete report",
+  "reportsEmptyBody": "Upload your first lab report to keep everything in one place.",
+  "reportsEmptyTitle": "No reports yet",
+  "reportsPdfAttached": "PDF attached",
+  "scanClose": "Close",
+  "scanFindingBiomarkers": "Finding biomarkers…",
+  "scanNoTextDetected": "No text detected. Try a clearer photo.",
+  "scanNoValuesBody": "We couldn't find any biomarker values. Here's the raw text we read:",
+  "scanNoValuesTitle": "No values found",
+  "scanReadingDocument": "Reading document…",
+  "scanTitle": "Scan a report",
+  "settingsAddTagHint": "Add a tag…",
+  "settingsChangePassword": "Change password",
+  "settingsChangePasswordSub": "Update your account password",
+  "settingsDefaultTags": "Default tags",
+  "settingsDefaultTagsHelp": "Appear as quick suggestions when logging a result.",
+  "settingsLanguageSystem": "System default",
+  "settingsNoBiometrics": "No biometrics or device lock set up on this device.",
+  "settingsResetDefaults": "Reset to defaults",
+  "settingsSave": "Save",
+  "homeGreeting": "Hello, {name} 👋",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeAllInRange": "All {count} markers in range 🎉",
+  "@homeAllInRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeOutOfRangeSummary": "{out} of {total} markers out of range",
+  "@homeOutOfRangeSummary": {
+    "placeholders": {
+      "out": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "homeImproving": "{count} improving",
+  "@homeImproving": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeWorsening": "{count} worsening",
+  "@homeWorsening": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "authResetSentTo": "We've sent a password reset link to {email}",
+  "@authResetSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authYearsSuffix": "{age} yrs",
+  "@authYearsSuffix": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "profileAgeYears": "{age} yrs",
+  "@profileAgeYears": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "profileDeleteAccountError": "Could not delete account: {error}",
+  "@profileDeleteAccountError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "profileExportFailed": "Export failed: {error}",
+  "@profileExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "profilePdfGenerateError": "Could not generate PDF: {error}",
+  "@profilePdfGenerateError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "biomarkerDetailError": "Something went wrong: {error}",
+  "@biomarkerDetailError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "biomarkerDetailReference": "Reference: {low} – {high} {unit}",
+  "@biomarkerDetailReference": {
+    "placeholders": {
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "biomarkersError": "Something went wrong: {error}",
+  "@biomarkersError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "biomarkersLatest": "{value} {unit}",
+  "@biomarkersLatest": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "addEntryReferenceRange": "Reference range: {low} – {high} {unit}",
+  "@addEntryReferenceRange": {
+    "placeholders": {
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "addEntryReplaceBody": "A {name} result from {date} already exists ({value}). Replace it?",
+  "@addEntryReplaceBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "addEntryTitle": "Log {name}",
+  "@addEntryTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDetailRefRange": "{low} – {high} {unit}",
+  "@reportDetailRefRange": {
+    "placeholders": {
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "reportsDeleteConfirm": "Delete “{title}”? This can’t be undone.",
+  "@reportsDeleteConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "reportsError": "Something went wrong: {error}",
+  "@reportsError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "scanFailed": "Scan failed: {error}",
+  "@scanFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authAccountCreated": "Account created! Check your email to confirm.",
+  "addEntryDateOfTest": "Test date",
+  "addEntrySaveResult": "Save result",
+  "addEntryTagHint": "Add a tag…",
+  "biomarkerDetailTrend": "Trend",
+  "homePinned": "Pinned",
+  "exportPreparingPdf": "Preparing your PDF…",
+  "settingsTagsSaved": "Default tags saved",
+  "customBiomarkerSaveError": "Could not save: {error}",
+  "@customBiomarkerSaveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addEntryReplaceError": "Could not replace result: {error}",
+  "@addEntryReplaceError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addEntrySaveError": "Could not save result: {error}",
+  "@addEntrySaveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authChangeButton": "Change Password",
+  "authCurrentPassword": "Current password",
+  "authNewPassword": "New password",
+  "authConfirmPassword": "Confirm new password",
+  "authEnterCurrentPassword": "Enter your current password",
+  "authNewMustDiffer": "New password must differ from the current one",
+  "authPasswordsDontMatch": "Passwords do not match",
+  "authCurrentPasswordWrong": "Current password is incorrect.",
+  "authPasswordChanged": "Password changed.",
+  "authChangePasswordError": "Could not change password: {error}",
+  "@authChangePasswordError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalTabVaccinations": "Vaccinations",
+  "medicalTabAllergies": "Allergies",
+  "medicalTabConditions": "Conditions",
+  "medicalSingularVaccination": "vaccination",
+  "medicalSingularAllergy": "allergy",
+  "medicalSingularCondition": "condition",
+  "medicalSeverity": "Severity",
+  "medicalSeverityMild": "Mild",
+  "medicalSeverityModerate": "Moderate",
+  "medicalSeveritySevere": "Severe",
+  "medicalStatus": "Status",
+  "medicalStatusActive": "Active",
+  "medicalStatusResolved": "Resolved",
+  "medicalDateGiven": "Date given",
+  "medicalDiagnosedOn": "Diagnosed on",
+  "medicalFirstNoticed": "First noticed",
+  "medicalSelectDate": "Select date (optional)",
+  "medicalNameVaccine": "Vaccine (e.g. Tdap, Covishield)",
+  "medicalNameAllergen": "Allergen (e.g. Penicillin, Peanuts)",
+  "medicalNameCondition": "Condition (e.g. Asthma, Hypertension)",
+  "biomarkerDetailDeleteTitle": "Delete Entry",
+  "biomarkerDetailDeleteBody": "Remove this result? This cannot be undone.",
+  "biomarkerDetailWhatHighMeans": "What \"High\" usually means",
+  "biomarkerDetailWhatLowMeans": "What \"Low\" usually means",
+  "biomarkerDetailInfoDisclaimer": "General information only — not medical advice.",
+  "biomarkerDetailWhatMayHelp": "What may help",
+  "biomarkerDetailGuidanceDisclaimer": "General lifestyle guidance only — not medical advice.",
+  "biomarkerDetailNoteSaved": "Note saved",
+  "biomarkerDetailNotes": "Notes",
+  "biomarkerDetailPinTooltip": "Pin to home",
+  "addReportTitleLabel": "Report title",
+  "addReportTitleHint": "e.g. Annual Blood Work",
+  "addReportDate": "Report date",
+  "addReportNotesHint": "Add any notes about this report...",
+  "addReportPickPdf": "Tap to select a PDF lab report",
+  "reviewTitle": "Review results",
+  "reviewShowText": "Show scanned text",
+  "browseTitle": "Select Biomarker",
+  "browseSearchHint": "Search biomarkers...",
+  "biomarkersNoneFound": "No biomarkers found",
+  "bodyMapSystems": "Systems",
+  "editProfileTitle": "Edit Profile",
+  "editProfileChangePhoto": "Tap to change photo",
+  "editProfileSaveChanges": "Save Changes",
+  "exportSelectTitle": "Select biomarkers",
+  "exportSelectSubtitle": "Choose what goes into the PDF summary",
+  "exportGeneratePdf": "Generate PDF",
+  "authPasswordUpdated": "Password updated. You’re all set.",
+  "commonError": "Error: {error}",
+  "@commonError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonCouldNotSave": "Could not save: {error}",
+  "@commonCouldNotSave": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalAddItem": "Add {item}",
+  "@medicalAddItem": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalNoneLogged": "No {item} logged yet.",
+  "@medicalNoneLogged": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalSeverityValue": "Severity: {value}",
+  "@medicalSeverityValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalStatusValue": "Status: {value}",
+  "@medicalStatusValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "biomarkerDetailAbout": "About {name}",
+  "@biomarkerDetailAbout": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewSaved": "Saved {count} result(s)",
+  "@reviewSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewSaveCount": "Save {count} result(s)",
+  "@reviewSaveCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewTestDate": "Test date: {date}",
+  "@reviewTestDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "authUpdatePasswordError": "Could not update password: {error}",
+  "@authUpdatePasswordError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonSelect": "Select",
+  "formHeight": "Height",
+  "formWeight": "Weight",
+  "editProfileAvatarUpdated": "Profile picture updated",
+  "editProfileImageTooLarge": "Image is too large. Please pick one under 2 MB.",
+  "profileSaved": "Profile saved",
+  "resetNewPasswordTitle": "Set a new password",
+  "resetNewPasswordSubtitle": "Choose a new password for your Lablio account.",
+  "resetUpdateButton": "Update Password",
+  "resetVerifying": "Verifying reset link…",
+  "editProfileAvatarError": "Could not upload picture: {error}",
+  "@editProfileAvatarError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "biomarkersRefShort": "Ref: {low} – {high} {unit}",
+  "@biomarkersRefShort": {
+    "placeholders": {
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "exportSelectAll": "Select all",
+  "exportClearAll": "Clear all",
+  "exportSummaryMedical": "medical record",
+  "addReportEnterTitle": "Enter a title",
+  "addReportAttachPdf": "Attach PDF (optional)",
+  "exportSummaryMarkers": "{selected} of {total} markers",
+  "@exportSummaryMarkers": {
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "exportMedicalSub": "Conditions, allergies & vaccinations ({count} items)",
+  "@exportMedicalSub": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewHeader": "We found {count} value(s). Check, edit, and confirm before saving.",
+  "@reviewHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bodyMapIntro": "Your health at a glance. Each region reflects the markers you track for that system.",
+  "bodyMapInRange": "In range",
+  "bodyMapNoData": "No data",
+  "bodyMapNoDataYet": "No data yet",
+  "bodyMapEmptyCategory": "No data yet — log a result in this category to see it here.",
+  "bodyMapAllInRange": "All {total} in range",
+  "@bodyMapAllInRange": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bodyMapOutOfRange": "{out} of {total} out of range",
+  "@bodyMapOutOfRange": {
+    "placeholders": {
+      "out": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "biomarkerDetailRangeAll": "All",
+  "biomarkerDetailNotesHint": "Add notes about this biomarker — context, goals, doctor remarks…",
+  "scoresTitle": "Metabolic Scores",
+  "scoresBiologicalAge": "Biological Age",
+  "scoresBiologicalAgeCaps": "BIOLOGICAL AGE",
+  "scoresYears": "years",
+  "scoresPhenoCaption": "Estimated from 9 blood markers (Levine PhenoAge). Informational only.",
+  "scoresValuesUsed": "Values used",
+  "scoresUnusualWarning": "⚠ Highlighted values look unusual — likely the cause.",
+  "scoresPhenoLockedBody": "Estimate your biological age from a standard blood panel (Levine PhenoAge).",
+  "scoresUnlockHint": "Log glucose, lipids & insulin to unlock your scores",
+  "scoresMetabolicHealth": "Metabolic Health",
+  "scoresDisclaimer": "Scores are informational only — not medical advice. They assume fasting samples and standard adult reference cutoffs. Discuss results with a clinician.",
+  "scoresLevelGood": "good",
+  "scoresLevelWatch": "watch",
+  "scoresLevelFlagged": "flagged",
+  "scoresActualAge": "Your actual age is {age}",
+  "@scoresActualAge": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "scoresNeeds": "Needs: {items}",
+  "@scoresNeeds": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "scoresAllGood": "All {count} scores looking good 🎉",
+  "@scoresAllGood": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scoresCountLabel": "{count} {label}",
+  "@scoresCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "scoresHeadlineFlagged": "{flags} flagged · {total} computed",
+  "@scoresHeadlineFlagged": {
+    "placeholders": {
+      "flags": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "scoresHeadlineWatch": "{watch} to watch · {total} computed",
+  "@scoresHeadlineWatch": {
+    "placeholders": {
+      "watch": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "searchHint": "Search biomarkers, reports, notes, tags…",
+  "searchNoMatches": "No matches",
+  "profileHealthDetails": "Health Details",
+  "scanExtractAuto": "Extract values automatically",
+  "scanIntroBody": "Take a photo or pick a PDF of your lab report. Everything is processed on your device — nothing is uploaded for scanning. You'll review the results before anything is saved.",
+  "scanOptionPhoto": "Take a photo",
+  "scanOptionPhotoSub": "Capture the report with your camera",
+  "scanOptionImage": "Choose an image",
+  "scanOptionImageSub": "Pick a photo from your gallery",
+  "scanOptionPdf": "Choose a PDF",
+  "scanOptionPdfSub": "Scan a PDF lab report",
+  "searchPrompt": "Start typing to search across your biomarkers, reports, and result notes / tags.",
+  "searchSectionEntries": "Results matching notes / tags"
 }

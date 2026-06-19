@@ -10,6 +10,7 @@ import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../../biomarkers/providers/custom_biomarkers_provider.dart';
 import '../../reports/data/report_model.dart';
 import '../../reports/providers/reports_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -23,6 +24,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final q = _query.trim().toLowerCase();
     final biomarkers =
         ref.watch(allBiomarkersProvider).valueOrNull ?? const <BiomarkerModel>[];
@@ -63,8 +65,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       appBar: AppBar(
         title: TextField(
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Search biomarkers, reports, notes, tags…',
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context).searchHint,
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
@@ -87,19 +89,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     entryHits.isEmpty)
                   _empty(),
                 if (bmHits.isNotEmpty) ...[
-                  _header('Biomarkers'),
+                  _header(AppLocalizations.of(context).navBiomarkers),
                   ...bmHits
                       .map((b) => _BiomarkerHit(biomarker: b, query: q)),
                   const SizedBox(height: 12),
                 ],
                 if (reportHits.isNotEmpty) ...[
-                  _header('Reports'),
+                  _header(AppLocalizations.of(context).navReports),
                   ...reportHits
                       .map((r) => _ReportHit(report: r, query: q)),
                   const SizedBox(height: 12),
                 ],
                 if (entryHits.isNotEmpty) ...[
-                  _header('Results matching notes / tags'),
+                  _header(AppLocalizations.of(context).searchSectionEntries),
                   ...entryHits.map((e) => _EntryHit(entry: e, query: q)),
                 ],
               ],
@@ -111,7 +113,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'Start typing to search across your biomarkers, reports, and result notes / tags.',
+            AppLocalizations.of(context).searchPrompt,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -121,7 +123,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget _empty() => Padding(
         padding: const EdgeInsets.symmetric(vertical: 48),
         child: Center(
-          child: Text('No matches',
+          child: Text(AppLocalizations.of(context).searchNoMatches,
               style: Theme.of(context).textTheme.bodyMedium),
         ),
       );

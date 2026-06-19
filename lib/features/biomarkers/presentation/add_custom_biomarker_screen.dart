@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/biomarker_model.dart';
 import '../providers/custom_biomarkers_provider.dart';
 
@@ -79,7 +80,8 @@ class _AddCustomBiomarkerScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not save: $e'),
+          content:
+              Text(AppLocalizations.of(context).customBiomarkerSaveError('$e')),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.high,
         ));
@@ -91,9 +93,10 @@ class _AddCustomBiomarkerScreenState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add custom biomarker'),
+        title: Text(t.customBiomarkerTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -107,36 +110,37 @@ class _AddCustomBiomarkerScreenState
             TextFormField(
               controller: _name,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                hintText: 'e.g. Vitamin K2',
-                prefixIcon: Icon(Icons.biotech_outlined),
+              decoration: InputDecoration(
+                labelText: t.customBiomarkerName,
+                hintText: t.customBiomarkerNameHint,
+                prefixIcon: const Icon(Icons.biotech_outlined),
               ),
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Enter a name' : null,
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? t.customBiomarkerEnterName
+                  : null,
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _shortName,
-              decoration: const InputDecoration(
-                labelText: 'Short name (optional)',
-                hintText: 'e.g. Vit K2',
+              decoration: InputDecoration(
+                labelText: t.customBiomarkerShortName,
+                hintText: t.customBiomarkerShortNameHint,
               ),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _category,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                hintText: 'Custom',
+              decoration: InputDecoration(
+                labelText: t.customBiomarkerCategory,
+                hintText: t.customBiomarkerCategoryHint,
               ),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _unit,
-              decoration: const InputDecoration(
-                labelText: 'Unit',
-                hintText: 'e.g. ng/mL',
+              decoration: InputDecoration(
+                labelText: t.customBiomarkerUnit,
+                hintText: t.customBiomarkerUnitHint,
               ),
             ),
             const SizedBox(height: 14),
@@ -148,7 +152,7 @@ class _AddCustomBiomarkerScreenState
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true),
                     decoration:
-                        const InputDecoration(labelText: 'Ref. low'),
+                        InputDecoration(labelText: t.customBiomarkerRefLow),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -158,7 +162,7 @@ class _AddCustomBiomarkerScreenState
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true),
                     decoration:
-                        const InputDecoration(labelText: 'Ref. high'),
+                        InputDecoration(labelText: t.customBiomarkerRefHigh),
                   ),
                 ),
               ],
@@ -167,8 +171,8 @@ class _AddCustomBiomarkerScreenState
             TextFormField(
               controller: _description,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Description (optional)',
+              decoration: InputDecoration(
+                labelText: t.customBiomarkerDescription,
               ),
             ),
             const SizedBox(height: 28),
@@ -181,7 +185,7 @@ class _AddCustomBiomarkerScreenState
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Save'),
+                  : Text(t.commonSave),
             ),
           ],
         ),

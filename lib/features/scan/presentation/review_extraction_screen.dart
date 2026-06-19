@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../biomarkers/data/biomarker_entry_model.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../../profile/providers/profile_provider.dart';
@@ -62,6 +63,7 @@ class _ReviewExtractionScreenState
   int get _selectedCount => _selected.where((s) => s).length;
 
   Future<void> _save() async {
+    final t = AppLocalizations.of(context);
     setState(() => _saving = true);
     final sex = ref.read(profileProvider).valueOrNull?.sex;
     final userId = Supabase.instance.client.auth.currentUser!.id;
@@ -94,7 +96,7 @@ class _ReviewExtractionScreenState
       if (mounted) {
         HapticFeedback.lightImpact();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Saved $saved result${saved == 1 ? '' : 's'}'),
+          content: Text(t.reviewSaved(saved)),
           backgroundColor: AppColors.normal,
           behavior: SnackBarBehavior.floating,
         ));
@@ -104,7 +106,7 @@ class _ReviewExtractionScreenState
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not save: $e'),
+          content: Text(t.commonCouldNotSave(e.toString())),
           backgroundColor: AppColors.high,
           behavior: SnackBarBehavior.floating,
         ));
@@ -114,8 +116,9 @@ class _ReviewExtractionScreenState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Review results')),
+      appBar: AppBar(title: Text(t.reviewTitle)),
       body: Column(
         children: [
           Padding(
@@ -124,9 +127,7 @@ class _ReviewExtractionScreenState
               children: [
                 Expanded(
                   child: Text(
-                    'We found ${widget.candidates.length} value'
-                    '${widget.candidates.length == 1 ? '' : 's'}. '
-                    'Check, edit, and confirm before saving.',
+                    t.reviewHeader(widget.candidates.length),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -151,8 +152,12 @@ class _ReviewExtractionScreenState
                     Icon(Icons.calendar_today_outlined,
                         size: 18, color: AppColors.textSecondary),
                     const SizedBox(width: 12),
-                    Text('Test date: ${DateFormat('MMM d, yyyy').format(_date)}'),
-                    const Spacer(),
+                    Expanded(
+                      child: Text(
+                          t.reviewTestDate(
+                              DateFormat('MMM d, yyyy').format(_date)),
+                          overflow: TextOverflow.ellipsis),
+                    ),
                     Icon(Icons.chevron_right,
                         color: AppColors.textTertiary),
                   ],
@@ -230,8 +235,8 @@ class _ReviewExtractionScreenState
               child: ExpansionTile(
                 tilePadding: const EdgeInsets.symmetric(horizontal: 16),
                 leading: const Icon(Icons.text_snippet_outlined, size: 20),
-                title: const Text('Show scanned text',
-                    style: TextStyle(fontSize: 14)),
+                title: Text(t.reviewShowText,
+                    style: const TextStyle(fontSize: 14)),
                 childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 children: [
                   Container(
@@ -268,8 +273,7 @@ class _ReviewExtractionScreenState
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white),
                     )
-                  : Text('Save $_selectedCount result'
-                      '${_selectedCount == 1 ? '' : 's'}'),
+                  : Text(t.reviewSaveCount(_selectedCount)),
             ),
           ),
         ],

@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../core/widgets/lablio_refresh.dart';
 import '../../../core/widgets/skeletons.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../biomarkers/data/biomarker_entry_model.dart';
 import '../../biomarkers/presentation/quick_log_sheet.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
@@ -18,17 +19,18 @@ class ScoresScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final trackedAsync = ref.watch(trackedBiomarkersProvider);
     final profile = ref.watch(profileProvider).valueOrNull;
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 52,
         titleSpacing: 8,
         leading: const LablioAppBarLogo(),
-        title: const Text('Metabolic Scores'),
+        title: Text(t.scoresTitle),
       ),
       body: trackedAsync.when(
         loading: () => const SkeletonList(),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(t.commonError(e.toString()))),
         data: (tracked) {
           final byId = <String, BiomarkerEntryModel>{
             for (final e in tracked) e.biomarkerId: e,
@@ -83,9 +85,7 @@ class ScoresScreen extends ConsumerWidget {
                     )),
                 const SizedBox(height: 8),
                 Text(
-                  'Scores are informational only — not medical advice. They '
-                  'assume fasting samples and standard adult reference cutoffs. '
-                  'Discuss results with a clinician.',
+                  t.scoresDisclaimer,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 11, color: AppColors.textTertiary),
                 ),
@@ -346,14 +346,16 @@ class _PhenoAgeCard extends StatelessWidget {
             children: [
               const Icon(Icons.cake_outlined, color: Colors.white, size: 16),
               const SizedBox(width: 8),
-              Text('BIOLOGICAL AGE',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 11,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w700,
-                  )),
-              const Spacer(),
+              Expanded(
+                child: Text(AppLocalizations.of(context).scoresBiologicalAgeCaps,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 11,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w700,
+                    )),
+              ),
               GestureDetector(
                 onTap: () => _showPhenoAgeInfo(context),
                 behavior: HitTestBehavior.opaque,
@@ -383,10 +385,10 @@ class _PhenoAgeCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 6),
-                child: Text('years',
-                    style: TextStyle(color: Colors.white70, fontSize: 16)),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(AppLocalizations.of(context).scoresYears,
+                    style: const TextStyle(color: Colors.white70, fontSize: 16)),
               ),
               const Spacer(),
               if (deltaText != null)
@@ -422,13 +424,13 @@ class _PhenoAgeCard extends StatelessWidget {
           ),
           if (result.chronoAge != null) ...[
             const SizedBox(height: 6),
-            Text('Your actual age is ${result.chronoAge}',
+            Text(AppLocalizations.of(context).scoresActualAge(result.chronoAge!),
                 style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85), fontSize: 13)),
           ],
           const SizedBox(height: 10),
           Text(
-            'Estimated from 9 blood markers (Levine PhenoAge). Informational only.',
+            AppLocalizations.of(context).scoresPhenoCaption,
             style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
           ),
@@ -449,12 +451,14 @@ class _PhenoAgeCard extends StatelessWidget {
                 const Icon(Icons.cake_outlined,
                     size: 18, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text('Biological Age',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                const Spacer(),
+                Expanded(
+                  child: Text(AppLocalizations.of(context).scoresBiologicalAge,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
                 GestureDetector(
                   onTap: () => _showPhenoAgeInfo(context),
                   behavior: HitTestBehavior.opaque,
@@ -480,7 +484,7 @@ class _PhenoAgeCard extends StatelessWidget {
               ),
               if (result.metrics.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text('Values used',
+                Text(AppLocalizations.of(context).scoresValuesUsed,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 11,
                         letterSpacing: 0.8,
@@ -496,15 +500,14 @@ class _PhenoAgeCard extends StatelessWidget {
                 ),
                 if (result.metrics.any((m) => m.flagged)) ...[
                   const SizedBox(height: 8),
-                  Text('⚠ Highlighted values look unusual — likely the cause.',
+                  Text(AppLocalizations.of(context).scoresUnusualWarning,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 11, color: AppColors.high)),
                 ],
               ],
             ] else ...[
               Text(
-                'Estimate your biological age from a standard blood panel '
-                '(Levine PhenoAge).',
+                AppLocalizations.of(context).scoresPhenoLockedBody,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 10),
@@ -514,7 +517,9 @@ class _PhenoAgeCard extends StatelessWidget {
                       size: 14, color: AppColors.textTertiary),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text('Needs: ${result.missing.join(', ')}',
+                    child: Text(
+                        AppLocalizations.of(context)
+                            .scoresNeeds(result.missing.join(', ')),
                         style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -532,7 +537,7 @@ class _PhenoAgeCard extends StatelessWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Log a result'),
+                  label: Text(AppLocalizations.of(context).reportDetailLogResult),
                 ),
               ),
             ],
@@ -557,16 +562,16 @@ class _SummaryHeader extends StatelessWidget {
     final watch =
         computed.where((r) => r.level == ScoreLevel.warn).length;
 
+    final t = AppLocalizations.of(context);
     final String headline;
     if (computed.isEmpty) {
-      headline = 'Log glucose, lipids & insulin to unlock your scores';
+      headline = t.scoresUnlockHint;
     } else if (flags > 0) {
-      headline = '$flags score${flags == 1 ? '' : 's'} flagged · '
-          '${computed.length} computed';
+      headline = t.scoresHeadlineFlagged(flags, computed.length);
     } else if (watch > 0) {
-      headline = '$watch to watch · ${computed.length} computed';
+      headline = t.scoresHeadlineWatch(watch, computed.length);
     } else {
-      headline = 'All ${computed.length} scores looking good 🎉';
+      headline = t.scoresAllGood(computed.length);
     }
 
     return Container(
@@ -588,7 +593,7 @@ class _SummaryHeader extends StatelessWidget {
               const Icon(Icons.monitor_heart_outlined,
                   color: Colors.white, size: 18),
               const SizedBox(width: 8),
-              Text('Metabolic Health',
+              Text(t.scoresMetabolicHealth,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Colors.white, fontWeight: FontWeight.w700)),
             ],
@@ -603,11 +608,11 @@ class _SummaryHeader extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                _Pip(count: computed.where((r) => r.level == ScoreLevel.good).length, color: AppColors.normal, label: 'good'),
+                _Pip(count: computed.where((r) => r.level == ScoreLevel.good).length, color: AppColors.normal, label: t.scoresLevelGood),
                 const SizedBox(width: 14),
-                _Pip(count: watch, color: AppColors.low, label: 'watch'),
+                _Pip(count: watch, color: AppColors.low, label: t.scoresLevelWatch),
                 const SizedBox(width: 14),
-                _Pip(count: flags, color: AppColors.high, label: 'flagged'),
+                _Pip(count: flags, color: AppColors.high, label: t.scoresLevelFlagged),
               ],
             ),
           ],
@@ -757,7 +762,9 @@ class _ScoreCard extends StatelessWidget {
                       size: 14, color: AppColors.textTertiary),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text('Needs: ${result.missing.join(', ')}',
+                    child: Text(
+                        AppLocalizations.of(context)
+                            .scoresNeeds(result.missing.join(', ')),
                         style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -776,7 +783,7 @@ class _ScoreCard extends StatelessWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Log a result'),
+                  label: Text(AppLocalizations.of(context).reportDetailLogResult),
                 ),
               ),
             ],

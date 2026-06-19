@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../data/biomarker_model.dart';
 import '../providers/biomarkers_provider.dart';
@@ -26,14 +27,15 @@ class _BrowseBiomarkersScreenState
   @override
   Widget build(BuildContext context) {
     final biomarkersAsync = ref.watch(allBiomarkersProvider);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Biomarker'),
+        title: Text(t.browseTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Add custom biomarker',
+            tooltip: t.customBiomarkerTitle,
             onPressed: () => context.push(AppRoutes.addCustomBiomarker),
           ),
         ],
@@ -43,9 +45,9 @@ class _BrowseBiomarkersScreenState
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search biomarkers...',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: t.browseSearchHint,
+                prefixIcon: const Icon(Icons.search),
               ),
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
             ),
@@ -54,7 +56,7 @@ class _BrowseBiomarkersScreenState
           Expanded(
             child: biomarkersAsync.when(
               loading: () => const LablioLoader(),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(t.commonError(e.toString()))),
               data: (biomarkers) {
                 final filtered = _query.isEmpty
                     ? biomarkers
@@ -72,7 +74,7 @@ class _BrowseBiomarkersScreenState
 
                 if (filtered.isEmpty) {
                   return Center(
-                    child: Text('No biomarkers found',
+                    child: Text(t.biomarkersNoneFound,
                         style: Theme.of(context).textTheme.bodyMedium),
                   );
                 }
@@ -134,7 +136,8 @@ class _BiomarkerListTile extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium),
             if (range.low != null && range.high != null)
               Text(
-                'Ref: ${range.low} – ${range.high} ${biomarker.unit}',
+                AppLocalizations.of(context).biomarkersRefShort(
+                    '${range.low}', '${range.high}', biomarker.unit),
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium

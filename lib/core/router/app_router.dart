@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../auth/password_recovery.dart';
 import '../constants/app_colors.dart';
 import '../onboarding/onboarding_state.dart';
 import '../../l10n/app_localizations.dart';
 import '../../features/auth/presentation/auth_gate.dart';
+import '../../features/auth/presentation/change_password_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
 import '../../features/biomarkers/data/biomarker_model.dart';
 import '../../features/biomarkers/presentation/add_custom_biomarker_screen.dart';
@@ -40,6 +43,7 @@ class AppRoutes {
   static const login = '/login';
   static const signup = '/signup';
   static const forgotPassword = '/forgot-password';
+  static const resetPassword = '/reset-password';
   static const home = '/home';
   static const scores = '/scores';
   static const reports = '/reports';
@@ -55,6 +59,7 @@ class AppRoutes {
   static const scanReport = '/scan';
   static const reviewExtraction = '/scan/review';
   static const settings = '/settings';
+  static const changePassword = '/settings/change-password';
   static const addCustomBiomarker = '/biomarkers/custom/add';
   static const search = '/search';
   static const medicalRecord = '/profile/medical-record';
@@ -111,11 +116,19 @@ CustomTransitionPage<void> _fadeRisePage(
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
-  refreshListenable:
-      _AuthChangeNotifier(Supabase.instance.client.auth.onAuthStateChange),
+  refreshListenable: Listenable.merge([
+    _AuthChangeNotifier(Supabase.instance.client.auth.onAuthStateChange),
+    passwordRecoveryNotifier,
+  ]),
   redirect: (context, state) {
     final loggedIn = Supabase.instance.client.auth.currentSession != null;
     final loc = state.matchedLocation;
+
+    // Password recovery takes priority over everything: the user followed a
+    // reset link and must set a new password before going anywhere else.
+    if (passwordRecoveryNotifier.value) {
+      return loc == AppRoutes.resetPassword ? null : AppRoutes.resetPassword;
+    }
 
     // Splash is just a launch point — always resolve it to a real screen
     // based on session state (otherwise we get stuck on the spinner, e.g.
@@ -162,6 +175,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.forgotPassword,
       builder: (_, __) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.resetPassword,
+      builder: (_, __) => const ResetPasswordScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) => _AppShell(child: child),
@@ -211,6 +228,11 @@ final appRouter = GoRouter(
       path: AppRoutes.settings,
       pageBuilder: (_, state) =>
           _fadeRisePage(state, const SettingsScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.changePassword,
+      pageBuilder: (_, state) =>
+          _fadeRisePage(state, const ChangePasswordScreen()),
     ),
     GoRoute(
       path: AppRoutes.addCustomBiomarker,

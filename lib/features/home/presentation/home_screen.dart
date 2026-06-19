@@ -20,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final user = Supabase.instance.client.auth.currentUser;
     final firstName = (user?.userMetadata?['full_name'] as String? ?? 'there')
         .split(' ')
@@ -36,7 +37,7 @@ class HomeScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hello, $firstName 👋',
+            Text(t.homeGreeting(firstName),
                 style: Theme.of(context).textTheme.titleLarge),
             Text(DateFormat('EEEE, MMM d').format(DateTime.now()),
                 style: Theme.of(context).textTheme.bodyMedium),
@@ -46,7 +47,7 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            tooltip: 'Search',
+            tooltip: t.commonSearch,
             onPressed: () => context.push(AppRoutes.search),
           ),
         ],
@@ -98,12 +99,13 @@ class HomeScreen extends ConsumerWidget {
               entries:
                   entriesAsync.valueOrNull ?? const <BiomarkerEntryModel>[],
             ),
-            Text(AppLocalizations.of(context).homeRecentResults,
+            Text(t.homeRecentResults,
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             entriesAsync.when(
               loading: () => const LablioLoader(),
-              error: (e, _) => Text('Error: $e'),
+              error: (e, _) =>
+                  Text(AppLocalizations.of(context).commonError(e.toString())),
               data: (entries) => entries.isEmpty
                   ? _buildEmptyResults(context)
                   : Column(
@@ -124,6 +126,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyResults(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -135,10 +138,10 @@ class HomeScreen extends ConsumerWidget {
           Icon(Icons.science_outlined,
               size: 40, color: AppColors.textTertiary),
           const SizedBox(height: 8),
-          Text('No results yet',
+          Text(t.homeNoResults,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
-          Text('Start by logging your first lab result',
+          Text(t.homeNoResultsSub,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center),
         ],
@@ -160,6 +163,7 @@ class _InsightsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final data = insightsAsync.valueOrNull;
     if (data == null || data.tracked == 0) return const SizedBox.shrink();
 
@@ -179,17 +183,19 @@ class _InsightsCard extends StatelessWidget {
                 const Icon(Icons.insights_outlined,
                     size: 18, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text('Health Insights',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                const Spacer(),
+                Expanded(
+                  child: Text(t.homeHealthInsights,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
                 if (data.outOfRange > 0)
                   GestureDetector(
                     onTap: onViewAll,
-                    child: const Text('View all',
-                        style: TextStyle(
+                    child: Text(t.homeViewAll,
+                        style: const TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
                             fontSize: 13)),
@@ -200,8 +206,8 @@ class _InsightsCard extends StatelessWidget {
             // Headline summary
             Text(
               data.outOfRange == 0
-                  ? 'All ${data.tracked} markers in range 🎉'
-                  : '${data.outOfRange} of ${data.tracked} markers out of range',
+                  ? t.homeAllInRange(data.tracked)
+                  : t.homeOutOfRangeSummary(data.outOfRange, data.tracked),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -218,7 +224,7 @@ class _InsightsCard extends StatelessWidget {
                     const Icon(Icons.trending_up,
                         size: 14, color: AppColors.normal),
                     const SizedBox(width: 4),
-                    Text('${data.improving} improving',
+                    Text(t.homeImproving(data.improving),
                         style: const TextStyle(
                             fontSize: 12, color: AppColors.normal)),
                     const SizedBox(width: 12),
@@ -227,7 +233,7 @@ class _InsightsCard extends StatelessWidget {
                     const Icon(Icons.trending_down,
                         size: 14, color: AppColors.high),
                     const SizedBox(width: 4),
-                    Text('${data.worsening} worsening',
+                    Text(t.homeWorsening(data.worsening),
                         style: const TextStyle(
                             fontSize: 12, color: AppColors.high)),
                   ],
@@ -333,26 +339,27 @@ class _StatsRow extends StatelessWidget {
     // Count out-of-range entries (latest per biomarker)
     final entries = entriesAsync.valueOrNull ?? [];
     final outOfRange = entries.where((e) => e.isHigh || e.isLow).length;
+    final t = AppLocalizations.of(context);
 
     return Row(
       children: [
         Expanded(
             child: _StatCard(
-                label: 'Reports',
+                label: t.homeReportsStat,
                 value: '$reportCount',
                 icon: Icons.folder_outlined,
                 onTap: onReports)),
         const SizedBox(width: 12),
         Expanded(
             child: _StatCard(
-                label: 'Results',
+                label: t.homeResultsStat,
                 value: '$entryCount',
                 icon: Icons.science_outlined,
                 onTap: onResults)),
         const SizedBox(width: 12),
         Expanded(
             child: _StatCard(
-                label: 'Out of Range',
+                label: t.homeOutOfRange,
                 value: '$outOfRange',
                 icon: Icons.warning_amber_outlined,
                 valueColor: outOfRange > 0 ? AppColors.high : null,
@@ -444,10 +451,11 @@ class _StatCard extends StatelessWidget {
 class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppLocalizations.of(context).homeQuickActions,
+        Text(t.homeQuickActions,
             style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         Row(
@@ -455,7 +463,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: _ActionCard(
                 icon: Icons.add_circle_outline,
-                label: AppLocalizations.of(context).homeLogResult,
+                label: t.homeLogResult,
                 color: AppColors.primary,
                 onTap: () => showQuickLogSheet(context),
               ),
@@ -464,7 +472,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: _ActionCard(
                 icon: Icons.upload_file_outlined,
-                label: AppLocalizations.of(context).homeUploadReport,
+                label: t.homeUploadReport,
                 color: AppColors.primaryLight,
                 onTap: () => context.push(AppRoutes.addReport),
               ),
@@ -474,15 +482,15 @@ class _QuickActions extends StatelessWidget {
         const SizedBox(height: 12),
         _ActionCard(
           icon: Icons.accessibility_new_outlined,
-          label: 'Body Map (health by system)',
+          label: t.homeBodyMap,
           color: AppColors.primaryDark,
           onTap: () => context.push(AppRoutes.bodyMap),
         ),
         const SizedBox(height: 12),
         // Scan Report is not ready yet — disabled with a "Coming soon" badge.
-        const _ActionCard(
+        _ActionCard(
           icon: Icons.document_scanner_outlined,
-          label: 'Scan Report (auto-extract values)',
+          label: t.homeScanReportAction,
           color: AppColors.primaryDark,
           comingSoon: true,
         ),
@@ -508,11 +516,12 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final tint = comingSoon ? AppColors.textTertiary : color;
     return InkWell(
       onTap: comingSoon
-          ? () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Scan Report is coming soon'),
+          ? () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(t.homeScanReportComingSoon),
                 behavior: SnackBarBehavior.floating,
               ))
           : onTap,
@@ -545,7 +554,7 @@ class _ActionCard extends StatelessWidget {
                     color: AppColors.textTertiary.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text('SOON',
+                  child: Text(t.homeComingSoonBadge,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -635,7 +644,7 @@ class _PinnedSection extends StatelessWidget {
             children: [
               const Icon(Icons.push_pin, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
-              Text('Pinned',
+              Text(AppLocalizations.of(context).homePinned,
                   style: Theme.of(context).textTheme.titleLarge),
             ],
           ),

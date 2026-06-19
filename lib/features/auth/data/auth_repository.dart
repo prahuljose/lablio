@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/auth/password_recovery.dart';
 
 class AuthRepository {
   final SupabaseClient _client;
@@ -43,5 +44,11 @@ class AuthRepository {
   Future<void> signOut() => _client.auth.signOut();
 
   Future<void> resetPassword(String email) =>
-      _client.auth.resetPasswordForEmail(email);
+      _client.auth.resetPasswordForEmail(email,
+          redirectTo: kPasswordResetRedirect);
+
+  /// Sets a new password for the currently-authenticated session (used after
+  /// the recovery deep link establishes a session).
+  Future<void> updatePassword(String newPassword) =>
+      _client.auth.updateUser(UserAttributes(password: newPassword));
 }

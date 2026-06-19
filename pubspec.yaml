@@ -17,6 +17,9 @@ dependencies:
   # Backend
   supabase_flutter: ^2.8.4
 
+  # Deep links (password-reset recovery handling)
+  app_links: ^7.0.0
+
   # State management
   flutter_riverpod: ^2.6.1
 

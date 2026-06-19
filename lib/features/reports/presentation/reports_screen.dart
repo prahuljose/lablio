@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../core/widgets/skeletons.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/report_model.dart';
 import '../providers/reports_provider.dart';
 
@@ -15,13 +16,14 @@ class ReportsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reportsAsync = ref.watch(reportsProvider);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 52,
         titleSpacing: 8,
         leading: const LablioAppBarLogo(),
-        title: const Text('Reports'),
+        title: Text(t.navReports),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -35,14 +37,14 @@ class ReportsScreen extends ConsumerWidget {
         child: FloatingActionButton.extended(
           onPressed: () => context.push(AppRoutes.addReport),
           icon: const Icon(Icons.add),
-          label: const Text('Add Report'),
+          label: Text(t.reportsAddButton),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
         ),
       ),
       body: reportsAsync.when(
         loading: () => const SkeletonList(),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(t.reportsError(e.toString()))),
         data: (reports) => reports.isEmpty
             ? _buildEmpty(context)
             : _buildList(context, ref, reports),
@@ -51,6 +53,7 @@ class ReportsScreen extends ConsumerWidget {
   }
 
   Widget _buildEmpty(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -58,10 +61,10 @@ class ReportsScreen extends ConsumerWidget {
           Icon(Icons.folder_open_outlined,
               size: 64, color: AppColors.textTertiary),
           const SizedBox(height: 16),
-          Text('No reports yet',
+          Text(t.reportsEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text('Upload your first lab report to get started',
+          Text(t.reportsEmptyBody,
               style: Theme.of(context).textTheme.bodyMedium),
         ],
       ),
@@ -85,6 +88,7 @@ class _ReportCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final dateStr = DateFormat('MMM d, yyyy').format(report.date);
 
     return Card(
@@ -131,7 +135,7 @@ class _ReportCard extends ConsumerWidget {
                               size: 12, color: AppColors.primary),
                           const SizedBox(width: 4),
                           Flexible(
-                            child: Text('PDF attached',
+                            child: Text(t.reportsPdfAttached,
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -158,13 +162,14 @@ class _ReportCard extends ConsumerWidget {
                   }
                 },
                 itemBuilder: (_) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline, color: AppColors.high),
-                        SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: AppColors.high)),
+                        const Icon(Icons.delete_outline, color: AppColors.high),
+                        const SizedBox(width: 8),
+                        Text(t.commonDelete,
+                            style: const TextStyle(color: AppColors.high)),
                       ],
                     ),
                   ),
@@ -178,15 +183,16 @@ class _ReportCard extends ConsumerWidget {
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete Report'),
-        content: Text('Delete "${report.title}"? This cannot be undone.'),
+        title: Text(t.reportsDeleteTitle),
+        content: Text(t.reportsDeleteConfirm(report.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(t.commonCancel),
           ),
           TextButton(
             onPressed: () {
@@ -195,8 +201,8 @@ class _ReportCard extends ConsumerWidget {
                   .read(reportsProvider.notifier)
                   .remove(report.id, pdfPath: report.pdfPath);
             },
-            child: const Text('Delete',
-                style: TextStyle(color: AppColors.high)),
+            child: Text(t.commonDelete,
+                style: const TextStyle(color: AppColors.high)),
           ),
         ],
       ),

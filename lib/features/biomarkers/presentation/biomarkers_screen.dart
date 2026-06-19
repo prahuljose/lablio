@@ -11,6 +11,7 @@ import '../../../core/widgets/lablio_refresh.dart';
 import '../../../core/units/unit_system_provider.dart';
 import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/status_style.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/biomarker_entry_model.dart';
 import '../providers/biomarkers_provider.dart';
 import 'quick_log_sheet.dart';
@@ -95,6 +96,7 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final trackedAsync = ref.watch(trackedBiomarkersProvider);
 
     return Scaffold(
@@ -102,21 +104,21 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
         leadingWidth: 52,
         titleSpacing: 8 ,
         leading: const LablioAppBarLogo(),
-        title: const Text('Biomarkers'),
+        title: Text(t.navBiomarkers),
         actions: [
           PopupMenuButton<BiomarkerSort>(
             icon: const Icon(Icons.sort),
-            tooltip: 'Sort',
+            tooltip: t.biomarkersSortTooltip,
             initialValue: _sort,
             onSelected: (s) => setState(() => _sort = s),
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(
-                  value: BiomarkerSort.name, child: Text('Sort: Name (A–Z)')),
+                  value: BiomarkerSort.name, child: Text(t.biomarkersSortName)),
               PopupMenuItem(
                   value: BiomarkerSort.recent,
-                  child: Text('Sort: Most recent')),
+                  child: Text(t.biomarkersSortRecent)),
               PopupMenuItem(
-                  value: BiomarkerSort.status, child: Text('Sort: Status')),
+                  value: BiomarkerSort.status, child: Text(t.biomarkersSortStatus)),
             ],
           ),
         ],
@@ -127,14 +129,14 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
         child: FloatingActionButton.extended(
           onPressed: () => showQuickLogSheet(context),
           icon: const Icon(Icons.add),
-          label: const Text('Log Result'),
+          label: Text(t.homeLogResult),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
         ),
       ),
       body: trackedAsync.when(
         loading: () => const SkeletonList(),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(t.biomarkersError(e.toString()))),
         data: (tracked) {
           if (tracked.isEmpty) return _buildEmpty(context);
           final list = _process(tracked);
@@ -220,6 +222,7 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
   }
 
   Widget _buildNoMatches(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -227,7 +230,7 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
           Icon(Icons.filter_alt_off_outlined,
               size: 48, color: AppColors.textTertiary),
           const SizedBox(height: 12),
-          Text('No biomarkers match your filters',
+          Text(t.biomarkersNoMatches,
               style: Theme.of(context).textTheme.bodyMedium),
         ],
       ),
@@ -235,16 +238,17 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
   }
 
   Widget _buildEmpty(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.science_outlined, size: 64, color: AppColors.textTertiary),
           const SizedBox(height: 16),
-          Text("Nothing here yet",
+          Text(t.biomarkersEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text('Log a lab result to start tracking your biomarkers.',
+          Text(t.biomarkersEmptySubtitle,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center),
         ],
@@ -278,6 +282,7 @@ class _SearchBarState extends State<_SearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: TextField(
@@ -287,13 +292,13 @@ class _SearchBarState extends State<_SearchBar> {
           setState(() {}); // toggle the clear button
         },
         decoration: InputDecoration(
-          hintText: 'Search biomarkers…',
+          hintText: t.biomarkersSearchHint,
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _controller.text.isEmpty
               ? null
               : IconButton(
                   icon: const Icon(Icons.close),
-                  tooltip: 'Clear',
+                  tooltip: t.biomarkersClear,
                   onPressed: _clear,
                 ),
           isDense: true,
@@ -316,22 +321,22 @@ class _FilterChips extends StatelessWidget {
   final ValueChanged<BiomarkerFilter> onSelected;
   const _FilterChips({required this.selected, required this.onSelected});
 
-  static const _labels = {
-    BiomarkerFilter.all: 'All',
-    BiomarkerFilter.outOfRange: 'Out of Range',
-    BiomarkerFilter.high: 'High',
-    BiomarkerFilter.low: 'Low',
-    BiomarkerFilter.normal: 'Normal',
-  };
-
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final labels = {
+      BiomarkerFilter.all: t.biomarkersFilterAll,
+      BiomarkerFilter.outOfRange: t.biomarkersFilterOutOfRange,
+      BiomarkerFilter.high: t.biomarkersStatusHigh,
+      BiomarkerFilter.low: t.biomarkersStatusLow,
+      BiomarkerFilter.normal: t.biomarkersStatusNormal,
+    };
     return SizedBox(
       height: 44,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: _labels.entries.map((e) {
+        children: labels.entries.map((e) {
           final isSel = e.key == selected;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -468,6 +473,7 @@ class _BiomarkerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final conv = UnitConverter.display(
       biomarkerId: entry.biomarkerId,
       value: entry.value,
@@ -528,7 +534,8 @@ class _BiomarkerTile extends ConsumerWidget {
                               children: [
                                 Flexible(
                                   child: Text(
-                                      'Latest: ${conv.value} ${conv.unit}',
+                                      t.biomarkersLatest(
+                                          conv.value.toString(), conv.unit),
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium),

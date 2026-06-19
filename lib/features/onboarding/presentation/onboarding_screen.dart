@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/onboarding/onboarding_state.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/app_localizations.dart';
 
 class _Slide {
   final IconData icon;
@@ -11,14 +12,13 @@ class _Slide {
   const _Slide(this.icon, this.title, this.body);
 }
 
-const _slides = [
-  _Slide(Icons.science_outlined, 'Track your biomarkers',
-      'Log lab results and keep every value in one place — from cholesterol to vitamin D.'),
-  _Slide(Icons.show_chart, 'See your trends',
-      'Watch how each marker changes over time, with reference ranges tailored to your profile.'),
-  _Slide(Icons.folder_outlined, 'Keep your reports',
-      'Attach lab PDFs to reports so your full history is always a tap away.'),
-];
+List<_Slide> _buildSlides(AppLocalizations t) => [
+      _Slide(Icons.science_outlined, t.onboardingTitle1, t.onboardingBody1),
+      _Slide(Icons.show_chart, t.onboardingTitle2, t.onboardingBody2),
+      _Slide(Icons.folder_outlined, t.onboardingTitle3, t.onboardingBody3),
+    ];
+
+const _slideCount = 3;
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -43,7 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _next() {
-    if (_page < _slides.length - 1) {
+    if (_page < _slideCount - 1) {
       _controller.nextPage(
           duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
     } else {
@@ -53,7 +53,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLast = _page == _slides.length - 1;
+    final t = AppLocalizations.of(context);
+    final slides = _buildSlides(t);
+    final isLast = _page == slides.length - 1;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -74,17 +76,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _finish,
-                  child: const Text('Skip',
-                      style: TextStyle(color: Colors.white70)),
+                  child: Text(t.onboardingSkip,
+                      style: const TextStyle(color: Colors.white70)),
                 ),
               ),
               Expanded(
                 child: PageView.builder(
                   controller: _controller,
                   onPageChanged: (i) => setState(() => _page = i),
-                  itemCount: _slides.length,
+                  itemCount: slides.length,
                   itemBuilder: (_, i) {
-                    final s = _slides[i];
+                    final s = slides[i];
                     return Padding(
                       padding: const EdgeInsets.all(32),
                       child: Column(
@@ -128,7 +130,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  _slides.length,
+                  slides.length,
                   (i) => AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -152,7 +154,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.primary,
                     ),
-                    child: Text(isLast ? 'Get Started' : 'Next'),
+                    child: Text(
+                        isLast ? t.onboardingGetStarted : t.onboardingNext),
                   ),
                 ),
               ),

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/auth_repository.dart';
 
 final _authRepoProvider = Provider(
@@ -59,6 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -78,12 +80,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: const [AutofillHints.username, AutofillHints.email],
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: t.authEmailLabel,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                   validator: (v) =>
-                      v == null || !v.contains('@') ? 'Enter a valid email' : null,
+                      v == null || !v.contains('@') ? t.authInvalidEmail : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -93,7 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _signIn(),
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: t.authPasswordLabel,
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword
@@ -104,14 +106,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   validator: (v) =>
-                      v == null || v.length < 6 ? 'Minimum 6 characters' : null,
+                      v == null || v.length < 6 ? t.authMin6Chars : null,
                 ),
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.push(AppRoutes.forgotPassword),
-                    child: const Text('Forgot password?'),
+                    child: Text(t.authForgotLink),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -126,17 +128,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Sign In'),
+                      : Text(t.authSignInButton),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Don't have an account?",
+                    Text(t.authNoAccount,
                         style: Theme.of(context).textTheme.bodyMedium),
                     TextButton(
                       onPressed: () => context.push(AppRoutes.signup),
-                      child: const Text('Sign Up'),
+                      child: Text(t.authSignUpButton),
                     ),
                   ],
                 ),
@@ -150,6 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildHero(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Column(
@@ -176,11 +179,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: const AnimatedLablioLogo(size: 88),
           ),
           const SizedBox(height: 24),
-          Text('Welcome back',
+          Text(t.authWelcomeBack,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
-          Text('Sign in to your Lablio account',
+          Text(t.authSignInSubtitle,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium),
         ],

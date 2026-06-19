@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../biomarkers/data/biomarker_entry_model.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../data/report_model.dart';
@@ -24,12 +25,13 @@ class ReportDetailScreen extends ConsumerWidget {
               .toList()
             ..sort((a, b) => a.biomarkerName.compareTo(b.biomarkerName)),
         );
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        title: const Text('Report'),
+        title: Text(t.reportDetailTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.high),
@@ -43,7 +45,7 @@ class ReportDetailScreen extends ConsumerWidget {
           extra: {'reportId': report.id},
         ),
         icon: const Icon(Icons.add),
-        label: const Text('Add Result'),
+        label: Text(t.reportDetailAddResult),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -61,11 +63,11 @@ class ReportDetailScreen extends ConsumerWidget {
 
           // ── Biomarker entries ──────────────────────────────────────
           const SizedBox(height: 28),
-          const _SectionLabel('Biomarker Results'),
+          _SectionLabel(t.reportDetailResults),
           const SizedBox(height: 12),
           linkedEntries.when(
             loading: () => const LablioLoader(),
-            error: (e, _) => Text('Error: $e'),
+            error: (e, _) => Text(t.reportsError(e.toString())),
             data: (entries) => entries.isEmpty
                 ? _EmptyEntries(report: report)
                 : Column(
@@ -83,15 +85,16 @@ class ReportDetailScreen extends ConsumerWidget {
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete Report'),
-        content: Text('Delete "${report.title}"? This cannot be undone.'),
+        title: Text(t.reportsDeleteTitle),
+        content: Text(t.reportsDeleteConfirm(report.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(t.commonCancel),
           ),
           TextButton(
             onPressed: () {
@@ -102,8 +105,8 @@ class ReportDetailScreen extends ConsumerWidget {
                   );
               context.pop();
             },
-            child: const Text('Delete',
-                style: TextStyle(color: AppColors.high)),
+            child: Text(t.commonDelete,
+                style: const TextStyle(color: AppColors.high)),
           ),
         ],
       ),
@@ -213,6 +216,7 @@ class _PdfButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return OutlinedButton.icon(
       onPressed: () async {
         final uri = Uri.parse(url);
@@ -240,8 +244,8 @@ class _PdfButton extends StatelessWidget {
         }
         if (!launched && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open PDF'),
+            SnackBar(
+              content: Text(t.reportDetailPdfError),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -254,8 +258,8 @@ class _PdfButton extends StatelessWidget {
         foregroundColor: AppColors.primary,
       ),
       icon: const Icon(Icons.picture_as_pdf_outlined),
-      label: const Text('View PDF',
-          style: TextStyle(fontWeight: FontWeight.w600)),
+      label: Text(t.reportDetailViewPdf,
+          style: const TextStyle(fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -266,6 +270,7 @@ class _EmptyEntries extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32),
       decoration: BoxDecoration(
@@ -278,7 +283,7 @@ class _EmptyEntries extends StatelessWidget {
           Icon(Icons.science_outlined,
               size: 40, color: AppColors.textTertiary),
           const SizedBox(height: 12),
-          Text('No results logged for this report',
+          Text(t.reportDetailNoResults,
               style: TextStyle(
                   fontSize: 14, color: AppColors.textSecondary)),
           const SizedBox(height: 16),
@@ -288,7 +293,7 @@ class _EmptyEntries extends StatelessWidget {
               extra: {'reportId': report.id},
             ),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('Log a biomarker result'),
+            label: Text(t.reportDetailLogResult),
           ),
         ],
       ),
@@ -302,6 +307,7 @@ class _EntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final statusColor = entry.isNormal
         ? AppColors.normal
         : entry.isHigh
@@ -319,11 +325,11 @@ class _EntryRow extends StatelessWidget {
                 : AppColors.surfaceVariant;
 
     final statusLabel = entry.isNormal
-        ? 'Normal'
+        ? t.reportStatusNormal
         : entry.isHigh
-            ? 'High'
+            ? t.reportStatusHigh
             : entry.isLow
-                ? 'Low'
+                ? t.reportStatusLow
                 : '—';
 
     return Container(
@@ -352,7 +358,10 @@ class _EntryRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   entry.refRangeLow != null && entry.refRangeHigh != null
-                      ? 'Ref: ${entry.refRangeLow} – ${entry.refRangeHigh} ${entry.unit}'
+                      ? t.reportDetailRefRange(
+                          entry.refRangeLow.toString(),
+                          entry.refRangeHigh.toString(),
+                          entry.unit)
                       : entry.unit,
                   style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary),

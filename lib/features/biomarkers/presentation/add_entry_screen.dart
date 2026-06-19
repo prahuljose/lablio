@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../profile/data/profile_model.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../data/biomarker_entry_model.dart';
@@ -87,25 +88,27 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   /// Prompts the user to replace an existing entry for this biomarker on the
   /// same day. Returns true if the user confirmed.
   Future<bool> _confirmReplace(BiomarkerEntryModel existing) async {
+    final t = AppLocalizations.of(context);
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Replace existing result?'),
+        title: Text(t.addEntryReplaceTitle),
         content: Text(
-          'You already logged ${widget.biomarkerName} for '
-          '${DateFormat('MMM d, yyyy').format(existing.date)} '
-          '(${existing.value} ${existing.unit}). '
-          'Replace it with this new value?',
+          t.addEntryReplaceBody(
+            widget.biomarkerName,
+            DateFormat('MMM d, yyyy').format(existing.date),
+            '${existing.value} ${existing.unit}',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(t.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Replace',
-                style: TextStyle(color: AppColors.high)),
+            child: Text(t.addEntryReplace,
+                style: const TextStyle(color: AppColors.high)),
           ),
         ],
       ),
@@ -142,7 +145,8 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not replace existing entry: $e'),
+            content:
+                Text(AppLocalizations.of(context).addEntryReplaceError('$e')),
             backgroundColor: AppColors.high,
             behavior: SnackBarBehavior.floating,
           ),
@@ -196,7 +200,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Couldn't save that one — try again? ($e)"),
+            content: Text(AppLocalizations.of(context).addEntrySaveError('$e')),
             backgroundColor: AppColors.high,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -226,6 +230,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final profile = ref.watch(profileProvider).valueOrNull;
     final sex = profile?.sex;
     final biomarker = widget.biomarker;
@@ -241,7 +246,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Log ${widget.biomarkerName}',
+          t.addEntryTitle(widget.biomarkerName),
           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
@@ -261,7 +266,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   ],
 
                   // ── Value input ──────────────────────────────────────
-                  _SectionLabel('Result'),
+                  _SectionLabel(t.addEntryResult),
                   const SizedBox(height: 8),
                   _ValueField(
                     controller: _valueController,
@@ -285,7 +290,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   const SizedBox(height: 24),
 
                   // ── Date ────────────────────────────────────────────
-                  _SectionLabel('Test date'),
+                  _SectionLabel(t.addEntryTestDate),
                   const SizedBox(height: 8),
                   _DateTile(
                       selectedDate: _selectedDate, onTap: _pickDate),
@@ -293,7 +298,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   const SizedBox(height: 24),
 
                   // ── Tags ────────────────────────────────────────────
-                  _SectionLabel('Tags (optional)'),
+                  _SectionLabel(t.addEntryTags),
                   const SizedBox(height: 8),
                   _TagInputField(
                     controller: _tagController,
@@ -305,14 +310,14 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   const SizedBox(height: 24),
 
                   // ── Notes ───────────────────────────────────────────
-                  _SectionLabel('Notes (optional)'),
+                  _SectionLabel(t.addEntryNotes),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _notesController,
                     maxLines: 3,
                     textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
-                      hintText: 'Any context about this result…',
+                      hintText: t.addEntryNotesHint,
                       filled: true,
                       fillColor: AppColors.surface,
                       border: OutlineInputBorder(
@@ -446,6 +451,7 @@ class _ValueField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final color = statusColor();
     final activeBorderColor = color ?? AppColors.primary;
 
@@ -515,8 +521,8 @@ class _ValueField extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       ),
       validator: (v) {
-        if (v == null || v.trim().isEmpty) return 'Enter a value';
-        if (double.tryParse(v) == null) return 'Enter a valid number';
+        if (v == null || v.trim().isEmpty) return t.addEntryEnterValue;
+        if (double.tryParse(v) == null) return t.addEntryEnterValidNumber;
         return null;
       },
     );
@@ -537,14 +543,15 @@ class _RangeHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final base = t.addEntryReferenceRange('$low', '$high', unit);
     return Row(
       children: [
         Icon(Icons.info_outline, size: 13, color: AppColors.textTertiary),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
-            'Reference range: $low – $high $unit'
-            '${sexSpecific ? ' (for your profile)' : ''}',
+            sexSpecific ? '$base ${t.addEntryForYourProfile}' : base,
             style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
           ),
         ),
@@ -586,7 +593,7 @@ class _DateTile extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Date of test',
+                Text(AppLocalizations.of(context).addEntryDateOfTest,
                     style: TextStyle(
                         fontSize: 12, color: AppColors.textSecondary)),
                 const SizedBox(height: 2),
@@ -641,9 +648,9 @@ class _SaveButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                     strokeWidth: 2.5, color: Colors.white),
               )
-            : const Text(
-                'Save Result',
-                style: TextStyle(
+            : Text(
+                AppLocalizations.of(context).addEntrySaveResult,
+                style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.2),
@@ -679,7 +686,7 @@ class _TagInputField extends StatelessWidget {
           textCapitalization: TextCapitalization.none,
           onSubmitted: onAdd,
           decoration: InputDecoration(
-            hintText: 'Add a tag and press Enter…',
+            hintText: AppLocalizations.of(context).addEntryTagHint,
             prefixIcon: const Icon(Icons.label_outline),
             suffixIcon: IconButton(
               icon: const Icon(Icons.add),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../providers/reports_provider.dart';
 
 class AddReportScreen extends ConsumerStatefulWidget {
@@ -55,6 +56,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final t = AppLocalizations.of(context);
     setState(() => _loading = true);
     try {
       await ref.read(reportsProvider.notifier).add(
@@ -69,7 +71,9 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.high),
+          SnackBar(
+              content: Text(t.reportsError(e.toString())),
+              backgroundColor: AppColors.high),
         );
       }
     } finally {
@@ -79,9 +83,10 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Report'),
+        title: Text(t.addReportTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -95,8 +100,8 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Save',
-                    style: TextStyle(
+                : Text(t.commonSave,
+                    style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600)),
           ),
@@ -109,13 +114,13 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
           children: [
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Report title',
-                hintText: 'e.g. Annual Blood Work',
-                prefixIcon: Icon(Icons.title),
+              decoration: InputDecoration(
+                labelText: t.addReportTitleLabel,
+                hintText: t.addReportTitleHint,
+                prefixIcon: const Icon(Icons.title),
               ),
               validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Enter a title' : null,
+                  v == null || v.trim().isEmpty ? t.addReportEnterTitle : null,
             ),
             const SizedBox(height: 16),
             InkWell(
@@ -135,7 +140,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Report date',
+                        Text(t.addReportDate,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -157,10 +162,10 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
             TextFormField(
               controller: _notesController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optional)',
-                hintText: 'Add any notes about this report...',
-                prefixIcon: Icon(Icons.notes),
+              decoration: InputDecoration(
+                labelText: t.addEntryNotes,
+                hintText: t.addReportNotesHint,
+                prefixIcon: const Icon(Icons.notes),
                 alignLabelWithHint: true,
               ),
             ),
@@ -173,6 +178,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
   }
 
   Widget _buildPdfPicker() {
+    final t = AppLocalizations.of(context);
     return InkWell(
       onTap: _pickPdf,
       borderRadius: BorderRadius.circular(12),
@@ -201,7 +207,9 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _pdfFile != null ? 'PDF attached' : 'Attach PDF (optional)',
+                    _pdfFile != null
+                        ? t.reportsPdfAttached
+                        : t.addReportAttachPdf,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: _pdfFile != null
                               ? AppColors.primary
@@ -214,7 +222,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis)
                   else
-                    Text('Tap to select a PDF lab report',
+                    Text(t.addReportPickPdf,
                         style: Theme.of(context).textTheme.bodyMedium),
                 ],
               ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/biomarker_model.dart';
 import '../providers/custom_biomarkers_provider.dart';
 
@@ -32,6 +33,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final all = ref.watch(allBiomarkersProvider).valueOrNull ??
         const <BiomarkerModel>[];
 
@@ -86,12 +88,14 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: Row(
                   children: [
-                    Text('Log a result',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const Spacer(),
+                    Expanded(
+                      child: Text(t.reportDetailLogResult,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.add),
-                      tooltip: 'Add custom biomarker',
+                      tooltip: t.customBiomarkerTitle,
                       onPressed: () {
                         Navigator.pop(context);
                         context.push(AppRoutes.addCustomBiomarker);
@@ -107,7 +111,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
                   autofocus: false,
                   onChanged: (v) => setState(() => _q = v),
                   decoration: InputDecoration(
-                    hintText: 'Search biomarkers…',
+                    hintText: t.biomarkersSearchHint,
                     prefixIcon: const Icon(Icons.search),
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -169,7 +173,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
               Expanded(
                 child: results.isEmpty
                     ? Center(
-                        child: Text('No biomarkers found',
+                        child: Text(t.biomarkersNoneFound,
                             style:
                                 Theme.of(context).textTheme.bodyMedium),
                       )

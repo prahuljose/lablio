@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/auth/password_recovery.dart';
 import 'core/constants/app_colors.dart';
 import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
@@ -26,14 +27,22 @@ class LablioApp extends ConsumerStatefulWidget {
 class _LablioAppState extends ConsumerState<LablioApp> {
   StreamSubscription<AuthState>? _authSub;
   String? _lastUserId;
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
     _lastUserId = Supabase.instance.client.auth.currentUser?.id;
+    // Surface invalid/expired reset-link errors as a SnackBar.
+    passwordRecoveryError.addListener(_onRecoveryError);
     // When the signed-in user changes (login as a different user, or sign out),
     // drop all cached user-scoped data so the next read fetches fresh.
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      // A reset-link deep link establishes a session and emits this event —
+      // gate the app on setting a new password (router watches the notifier).
+      if (state.event == AuthChangeEvent.passwordRecovery) {
+        passwordRecoveryNotifier.value = true;
+      }
       final newId = state.session?.user.id;
       if (newId != _lastUserId) {
         _lastUserId = newId;
@@ -51,8 +60,22 @@ class _LablioAppState extends ConsumerState<LablioApp> {
     ref.invalidate(medicalRecordProvider);
   }
 
+  void _onRecoveryError() {
+    final msg = passwordRecoveryError.value;
+    if (msg == null) return;
+    _messengerKey.currentState
+      ?..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(msg),
+        backgroundColor: AppColors.high,
+        behavior: SnackBarBehavior.floating,
+      ));
+    passwordRecoveryError.value = null;
+  }
+
   @override
   void dispose() {
+    passwordRecoveryError.removeListener(_onRecoveryError);
     _authSub?.cancel();
     super.dispose();
   }
@@ -64,6 +87,7 @@ class _LablioAppState extends ConsumerState<LablioApp> {
 
     return MaterialApp.router(
       title: 'Lablio',
+      scaffoldMessengerKey: _messengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

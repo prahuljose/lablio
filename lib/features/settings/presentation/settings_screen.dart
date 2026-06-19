@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/i18n/locale_provider.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/security/app_lock.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../core/units/unit_converter.dart';
@@ -45,19 +46,19 @@ class SettingsScreen extends ConsumerWidget {
                       style: const ButtonStyle(
                         visualDensity: VisualDensity.compact,
                       ),
-                      segments: const [
+                      segments: [
                         ButtonSegment(
                             value: ThemeMode.system,
-                            icon: Icon(Icons.brightness_auto, size: 18),
-                            tooltip: 'System'),
+                            icon: const Icon(Icons.brightness_auto, size: 18),
+                            tooltip: t.settingsThemeSystem),
                         ButtonSegment(
                             value: ThemeMode.light,
-                            icon: Icon(Icons.light_mode, size: 18),
-                            tooltip: 'Light'),
+                            icon: const Icon(Icons.light_mode, size: 18),
+                            tooltip: t.settingsThemeLight),
                         ButtonSegment(
                             value: ThemeMode.dark,
-                            icon: Icon(Icons.dark_mode, size: 18),
-                            tooltip: 'Dark'),
+                            icon: const Icon(Icons.dark_mode, size: 18),
+                            tooltip: t.settingsThemeDark),
                       ],
                       selected: {ref.watch(themeModeProvider)},
                       onSelectionChanged: (s) => ref
@@ -97,17 +98,29 @@ class SettingsScreen extends ConsumerWidget {
                 activeThumbColor: AppColors.primary,
               ),
             ),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: Icon(Icons.lock_reset_outlined,
+                    color: AppColors.textSecondary),
+                title: Text(t.settingsChangePassword),
+                subtitle: Text(t.settingsChangePasswordSub),
+                trailing:
+                    Icon(Icons.chevron_right, color: AppColors.textTertiary),
+                onTap: () => context.push(AppRoutes.changePassword),
+              ),
+            ),
           ]),
           const SizedBox(height: 12),
           _Section(title: t.settingsLanguage, children: [
             Card(
               child: Column(
                 children: [
-                  for (final entry in const [
-                    (null, 'System default'),
-                    (Locale('en'), 'English'),
-                    (Locale('hi'), 'हिन्दी'),
-                    (Locale('ml'), 'മലയാളം'),
+                  for (final entry in [
+                    (null, t.settingsLanguageSystem),
+                    (const Locale('en'), 'English'),
+                    (const Locale('hi'), 'हिन्दी'),
+                    (const Locale('ml'), 'മലയാളം'),
                   ])
                     RadioListTile<Locale?>(
                       value: entry.$1,
@@ -122,7 +135,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ]),
           const SizedBox(height: 12),
-          _Section(title: 'Default tags', children: [
+          _Section(title: t.settingsDefaultTags, children: [
             _TagsEditor(),
           ]),
         ],
@@ -133,14 +146,15 @@ class SettingsScreen extends ConsumerWidget {
   Future<void> _toggleAppLock(
       BuildContext context, WidgetRef ref, bool enable) async {
     final messenger = ScaffoldMessenger.of(context);
+    final t = AppLocalizations.of(context);
     if (!enable) {
       await ref.read(appLockEnabledProvider.notifier).set(false);
       return;
     }
     final service = ref.read(biometricServiceProvider);
     if (!await service.isAvailable()) {
-      messenger.showSnackBar(const SnackBar(
-        content: Text('No biometrics or device lock set up on this device.'),
+      messenger.showSnackBar(SnackBar(
+        content: Text(t.settingsNoBiometrics),
         backgroundColor: AppColors.high,
         behavior: SnackBarBehavior.floating,
       ));
@@ -214,8 +228,8 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
             current.copyWith(defaultTags: List<String>.from(_tags!)),
           );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Default tags saved'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).settingsTagsSaved),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.normal,
         ));
@@ -223,7 +237,7 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not save: $e'),
+          content: Text(AppLocalizations.of(context).commonCouldNotSave(e.toString())),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.high,
         ));
@@ -247,6 +261,7 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
   Widget build(BuildContext context) {
     _hydrate(ref.watch(profileProvider).valueOrNull);
     final tags = _tags ?? kDefaultTags;
+    final t = AppLocalizations.of(context);
 
     return Card(
       child: Padding(
@@ -257,18 +272,18 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
             Row(children: [
               Icon(Icons.label_outline, size: 18, color: AppColors.textSecondary),
               const SizedBox(width: 8),
-              const Expanded(child: Text('Appear as quick suggestions when logging a result.',
-                  style: TextStyle(fontSize: 13))),
+              Expanded(child: Text(t.settingsDefaultTagsHelp,
+                  style: const TextStyle(fontSize: 13))),
             ]),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8, runSpacing: 8,
               children: [
-                for (final t in tags)
+                for (final tag in tags)
                   Chip(
-                    label: Text(t),
+                    label: Text(tag),
                     deleteIcon: const Icon(Icons.close, size: 16),
-                    onDeleted: () => _remove(t),
+                    onDeleted: () => _remove(tag),
                     visualDensity: VisualDensity.compact,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.10),
                     side: BorderSide(color: AppColors.primary.withValues(alpha: 0.30)),
@@ -285,7 +300,7 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
                   textInputAction: TextInputAction.done,
                   onSubmitted: _addTag,
                   decoration: InputDecoration(
-                    hintText: 'Add a tag…',
+                    hintText: t.settingsAddTagHint,
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -306,21 +321,27 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
               ),
             ]),
             const SizedBox(height: 12),
-            Row(children: [
+            // Wrap (not Row) so long translated labels push the Save button to
+            // a second line instead of overflowing horizontally.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
+              children: [
               TextButton.icon(
                 onPressed: _reset,
                 icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Reset to defaults'),
+                label: Text(t.settingsResetDefaults),
                 style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
               ),
-              const Spacer(),
               ElevatedButton(
                 onPressed: _saving ? null : _save,
                 style: ElevatedButton.styleFrom(minimumSize: const Size(80, 38)),
                 child: _saving
                     ? const SizedBox(width: 16, height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Save'),
+                    : Text(t.settingsSave),
               ),
             ]),
           ],

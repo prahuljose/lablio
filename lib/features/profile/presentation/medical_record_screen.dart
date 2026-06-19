@@ -5,28 +5,42 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/medical_record_model.dart';
 import '../providers/medical_record_provider.dart';
+
+String _singularL(AppLocalizations t, MedicalRecordKind k) => switch (k) {
+      MedicalRecordKind.vaccination => t.medicalSingularVaccination,
+      MedicalRecordKind.allergy => t.medicalSingularAllergy,
+      MedicalRecordKind.condition => t.medicalSingularCondition,
+    };
+
+String _pluralL(AppLocalizations t, MedicalRecordKind k) => switch (k) {
+      MedicalRecordKind.vaccination => t.medicalTabVaccinations,
+      MedicalRecordKind.allergy => t.medicalTabAllergies,
+      MedicalRecordKind.condition => t.medicalTabConditions,
+    };
 
 class MedicalRecordScreen extends ConsumerWidget {
   const MedicalRecordScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Medical record'),
+          title: Text(t.profileMedicalRecord),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
           ),
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Vaccinations'),
-              Tab(text: 'Allergies'),
-              Tab(text: 'Conditions'),
+              Tab(text: t.medicalTabVaccinations),
+              Tab(text: t.medicalTabAllergies),
+              Tab(text: t.medicalTabConditions),
             ],
           ),
         ),
@@ -48,18 +62,19 @@ class _RecordList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final async = ref.watch(medicalRecordProvider);
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddSheet(context, ref, kind),
         icon: const Icon(Icons.add),
-        label: Text('Add ${_singular(kind)}'),
+        label: Text(t.medicalAddItem(_singularL(t, kind))),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
       body: async.when(
         loading: () => const LablioLoader(),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(t.commonError(e.toString()))),
         data: (entries) {
           final filtered =
               entries.where((e) => e.kind == kind).toList();
@@ -67,7 +82,7 @@ class _RecordList extends ConsumerWidget {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
-                child: Text('No ${kind.label.toLowerCase()} logged yet.',
+                child: Text(t.medicalNoneLogged(_pluralL(t, kind).toLowerCase()),
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center),
               ),
@@ -89,11 +104,6 @@ class _RecordList extends ConsumerWidget {
     );
   }
 
-  static String _singular(MedicalRecordKind k) => switch (k) {
-        MedicalRecordKind.vaccination => 'vaccination',
-        MedicalRecordKind.allergy => 'allergy',
-        MedicalRecordKind.condition => 'condition',
-      };
 }
 
 class _Tile extends StatelessWidget {
@@ -103,6 +113,7 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Card(
       child: ListTile(
         title: Text(entry.name,
@@ -110,8 +121,8 @@ class _Tile extends StatelessWidget {
         subtitle: Text([
           if (entry.occurredOn != null)
             DateFormat('MMM d, yyyy').format(entry.occurredOn!),
-          if (entry.severity != null) 'Severity: ${entry.severity}',
-          if (entry.status != null) 'Status: ${entry.status}',
+          if (entry.severity != null) t.medicalSeverityValue(entry.severity!),
+          if (entry.status != null) t.medicalStatusValue(entry.status!),
           if (entry.notes != null && entry.notes!.isNotEmpty) entry.notes!,
         ].join('  ·  ')),
         trailing: IconButton(
@@ -126,6 +137,7 @@ class _Tile extends StatelessWidget {
 
 Future<void> _showAddSheet(
     BuildContext context, WidgetRef ref, MedicalRecordKind kind) async {
+  final t = AppLocalizations.of(context);
   final nameCtl = TextEditingController();
   final notesCtl = TextEditingController();
   DateTime? date;
@@ -149,7 +161,7 @@ Future<void> _showAddSheet(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Add ${_RecordList._singular(kind)}',
+              Text(t.medicalAddItem(_singularL(t, kind)),
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 12),
               TextField(
@@ -158,12 +170,9 @@ Future<void> _showAddSheet(
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   labelText: switch (kind) {
-                    MedicalRecordKind.vaccination =>
-                      'Vaccine (e.g. Tdap, Covishield)',
-                    MedicalRecordKind.allergy =>
-                      'Allergen (e.g. Penicillin, Peanuts)',
-                    MedicalRecordKind.condition =>
-                      'Condition (e.g. Asthma, Hypertension)',
+                    MedicalRecordKind.vaccination => t.medicalNameVaccine,
+                    MedicalRecordKind.allergy => t.medicalNameAllergen,
+                    MedicalRecordKind.condition => t.medicalNameCondition,
                   },
                 ),
               ),
@@ -181,14 +190,14 @@ Future<void> _showAddSheet(
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: kind == MedicalRecordKind.vaccination
-                        ? 'Date given'
+                        ? t.medicalDateGiven
                         : kind == MedicalRecordKind.condition
-                            ? 'Diagnosed on'
-                            : 'First noticed',
+                            ? t.medicalDiagnosedOn
+                            : t.medicalFirstNoticed,
                     prefixIcon: const Icon(Icons.calendar_today_outlined),
                   ),
                   child: Text(date == null
-                      ? 'Select date (optional)'
+                      ? t.medicalSelectDate
                       : DateFormat('MMM d, yyyy').format(date!)),
                 ),
               ),
@@ -196,12 +205,15 @@ Future<void> _showAddSheet(
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: severity,
-                  decoration: const InputDecoration(labelText: 'Severity'),
-                  items: const [
-                    DropdownMenuItem(value: 'Mild', child: Text('Mild')),
+                  decoration: InputDecoration(labelText: t.medicalSeverity),
+                  items: [
                     DropdownMenuItem(
-                        value: 'Moderate', child: Text('Moderate')),
-                    DropdownMenuItem(value: 'Severe', child: Text('Severe')),
+                        value: 'Mild', child: Text(t.medicalSeverityMild)),
+                    DropdownMenuItem(
+                        value: 'Moderate',
+                        child: Text(t.medicalSeverityModerate)),
+                    DropdownMenuItem(
+                        value: 'Severe', child: Text(t.medicalSeveritySevere)),
                   ],
                   onChanged: (v) => setLocal(() => severity = v),
                 ),
@@ -210,12 +222,13 @@ Future<void> _showAddSheet(
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: status,
-                  decoration: const InputDecoration(labelText: 'Status'),
-                  items: const [
+                  decoration: InputDecoration(labelText: t.medicalStatus),
+                  items: [
                     DropdownMenuItem(
-                        value: 'Active', child: Text('Active')),
+                        value: 'Active', child: Text(t.medicalStatusActive)),
                     DropdownMenuItem(
-                        value: 'Resolved', child: Text('Resolved')),
+                        value: 'Resolved',
+                        child: Text(t.medicalStatusResolved)),
                   ],
                   onChanged: (v) => setLocal(() => status = v),
                 ),
@@ -225,7 +238,7 @@ Future<void> _showAddSheet(
                 controller: notesCtl,
                 maxLines: 2,
                 decoration:
-                    const InputDecoration(labelText: 'Notes (optional)'),
+                    InputDecoration(labelText: t.addEntryNotes),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -253,14 +266,14 @@ Future<void> _showAddSheet(
                     } catch (e) {
                       if (sheetCtx.mounted) {
                         ScaffoldMessenger.of(sheetCtx).showSnackBar(SnackBar(
-                          content: Text("Couldn't save: $e"),
+                          content: Text(t.commonCouldNotSave(e.toString())),
                           backgroundColor: AppColors.high,
                           behavior: SnackBarBehavior.floating,
                         ));
                       }
                     }
                   },
-                  child: const Text('Save'),
+                  child: Text(t.commonSave),
                 ),
               ),
               const SizedBox(height: 12),

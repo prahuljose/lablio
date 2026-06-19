@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +15,7 @@ import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../data/account_service.dart';
 import '../data/doctor_report_service.dart';
 import '../data/export_log_service.dart';
+import '../data/medical_record_model.dart';
 import '../data/profile_model.dart';
 import '../providers/medical_record_provider.dart';
 import '../providers/profile_provider.dart';
@@ -22,10 +25,10 @@ final _profileAuthRepoProvider = Provider(
   (ref) => AuthRepository(Supabase.instance.client),
 );
 
-String _sexLabel(String? sex) => switch (sex) {
-      'male' => 'Male',
-      'female' => 'Female',
-      'other' => 'Other',
+String _sexLabel(AppLocalizations t, String? sex) => switch (sex) {
+      'male' => t.formSexMale,
+      'female' => t.formSexFemale,
+      'other' => t.formSexOther,
       _ => '—',
     };
 
@@ -72,10 +75,14 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               children: [
                 _InfoTile(
-                    icon: Icons.person_outlined, label: 'Name', value: fullName),
+                    icon: Icons.person_outlined,
+                    label: t.formName,
+                    value: fullName),
                 const Divider(height: 1),
                 _InfoTile(
-                    icon: Icons.email_outlined, label: 'Email', value: email),
+                    icon: Icons.email_outlined,
+                    label: t.formEmail,
+                    value: email),
               ],
             ),
           ),
@@ -88,9 +95,8 @@ class ProfileScreen extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.medical_information_outlined,
                       color: AppColors.textSecondary),
-                  title: const Text('Medical record'),
-                  subtitle:
-                      const Text('Vaccinations, allergies, conditions'),
+                  title: Text(t.profileMedicalRecord),
+                  subtitle: Text(t.profileMedicalRecordSub),
                   trailing: Icon(Icons.chevron_right,
                       color: AppColors.textTertiary),
                   onTap: () => context.push(AppRoutes.medicalRecord),
@@ -99,9 +105,8 @@ class ProfileScreen extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.settings_outlined,
                       color: AppColors.textSecondary),
-                  title: const Text('Settings'),
-                  subtitle:
-                      const Text('Theme, units, biometric lock, language'),
+                  title: Text(t.profileSettings),
+                  subtitle: Text(t.profileSettingsSub),
                   trailing: Icon(Icons.chevron_right,
                       color: AppColors.textTertiary),
                   onTap: () => context.push(AppRoutes.settings),
@@ -116,8 +121,8 @@ class ProfileScreen extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.medical_services_outlined,
                       color: AppColors.textSecondary),
-                  title: const Text('Share with doctor'),
-                  subtitle: const Text('PDF summary of your results'),
+                  title: Text(t.profileShareWithDoctor),
+                  subtitle: Text(t.profileShareWithDoctorSub),
                   trailing: Icon(Icons.chevron_right,
                       color: AppColors.textTertiary),
                   onTap: () => _shareWithDoctor(context, ref),
@@ -126,8 +131,8 @@ class ProfileScreen extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.download_outlined,
                       color: AppColors.textSecondary),
-                  title: const Text('Export my data'),
-                  subtitle: const Text('Download all results as CSV'),
+                  title: Text(t.profileExportData),
+                  subtitle: Text(t.profileExportDataSub),
                   trailing: Icon(Icons.chevron_right,
                       color: AppColors.textTertiary),
                   onTap: () => _exportData(context, ref),
@@ -136,7 +141,7 @@ class ProfileScreen extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.info_outline,
                       color: AppColors.textSecondary),
-                  title: const Text('About Lablio'),
+                  title: Text(t.profileAboutApp),
                   trailing: Icon(Icons.chevron_right,
                       color: AppColors.textTertiary),
                   onTap: () => _showAbout(context),
@@ -148,8 +153,8 @@ class ProfileScreen extends ConsumerWidget {
           OutlinedButton.icon(
             onPressed: () => _confirmSignOut(context, ref),
             icon: const Icon(Icons.logout, color: AppColors.high),
-            label: const Text('Sign Out',
-                style: TextStyle(color: AppColors.high)),
+            label: Text(t.profileSignOut,
+                style: const TextStyle(color: AppColors.high)),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppColors.high),
               foregroundColor: AppColors.high,
@@ -160,8 +165,8 @@ class ProfileScreen extends ConsumerWidget {
             onPressed: () => _confirmDeleteAccount(context, ref),
             icon: const Icon(Icons.delete_forever_outlined,
                 color: AppColors.high, size: 20),
-            label: const Text('Delete account',
-                style: TextStyle(color: AppColors.high)),
+            label: Text(t.profileDeleteAccount,
+                style: const TextStyle(color: AppColors.high)),
           ),
         ],
         ),
@@ -170,53 +175,104 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _shareWithDoctor(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final entries = ref.read(biomarkerEntriesProvider).valueOrNull ?? [];
     if (entries.isEmpty) {
-      messenger.showSnackBar(const SnackBar(
-        content: Text('No results to summarize yet.'),
+      messenger.showSnackBar(SnackBar(
+        content: Text(t.profileNoResultsToSummarize),
         behavior: SnackBarBehavior.floating,
       ));
       return;
     }
 
-    // Let the user pick which biomarkers go into the PDF (latest per marker).
+    // Load the medical record first so the sheet can offer an include toggle
+    // (and so we honour that choice). valueOrNull returns [] before data loads.
+    final medical = await ref
+        .read(medicalRecordProvider.future)
+        .catchError((_) => <MedicalRecordEntry>[]);
+    if (!context.mounted) return;
+
+    // Let the user pick which biomarkers go into the PDF (latest per marker)
+    // and whether to include the medical-record section.
     final tracked = ref.read(trackedBiomarkersProvider).valueOrNull ?? entries;
-    final selectedIds = await showExportSelectionSheet(context, tracked);
-    if (selectedIds == null || selectedIds.isEmpty) return; // dismissed
+    final selection = await showExportSelectionSheet(
+      context,
+      tracked,
+      medicalCount: medical.length,
+    );
+    if (selection == null || selection.isEmpty) return; // dismissed / nothing
 
     // Keep only entries for the selected biomarkers; the PDF still computes the
     // latest reading per marker internally.
     final selectedEntries =
-        entries.where((e) => selectedIds.contains(e.biomarkerId)).toList();
+        entries.where((e) => selection.biomarkerIds.contains(e.biomarkerId)).toList();
+    final medicalForPdf =
+        selection.includeMedical ? medical : <MedicalRecordEntry>[];
 
     final profile = ref.read(profileProvider).valueOrNull;
-    // Await the async load — valueOrNull returns [] before data arrives.
-    final medical =
-        await ref.read(medicalRecordProvider.future).catchError((_) => []);
+    if (!context.mounted) return;
+    _showPdfLoader(context);
+    final svc = DoctorReportService();
     try {
-      await DoctorReportService()
-          .share(profile: profile, entries: selectedEntries, medical: medical);
-      // Record the export (best-effort — never block the share on logging).
-      try {
-        await ExportLogService(Supabase.instance.client)
-            .logPdfExport(biomarkerCount: selectedIds.length);
-      } catch (_) {/* analytics failure is non-fatal */}
+      final file = await svc.generate(
+          profile: profile, entries: selectedEntries, medical: medicalForPdf);
+      // Record the export in the background — never block the share on logging.
+      unawaited(ExportLogService(Supabase.instance.client)
+          .logPdfExport(
+            biomarkerCount: selection.biomarkerIds.length,
+            includedMedical: selection.includeMedical,
+          )
+          .catchError((_) {/* analytics failure is non-fatal */}));
+      // Dismiss the loader before the system share sheet appears.
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+      await svc.shareFile(file);
     } catch (e) {
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
       messenger.showSnackBar(SnackBar(
-        content: Text('Could not generate PDF: $e'),
+        content: Text(t.profilePdfGenerateError(e.toString())),
         backgroundColor: AppColors.high,
         behavior: SnackBarBehavior.floating,
       ));
     }
   }
 
+  /// A non-dismissible overlay with the looping Lablio mark, shown while the
+  /// PDF is being generated.
+  void _showPdfLoader(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: Dialog(
+          backgroundColor: AppColors.surface,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const LablioLoader(size: 64),
+                const SizedBox(height: 16),
+                Text(AppLocalizations.of(context).exportPreparingPdf,
+                    style: Theme.of(context).textTheme.bodyLarge),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final entries = ref.read(biomarkerEntriesProvider).valueOrNull ?? [];
     if (entries.isEmpty) {
-      messenger.showSnackBar(const SnackBar(
-        content: Text('No results to export yet.'),
+      messenger.showSnackBar(SnackBar(
+        content: Text(t.profileNoResultsToExport),
         behavior: SnackBarBehavior.floating,
       ));
       return;
@@ -225,7 +281,7 @@ class ProfileScreen extends ConsumerWidget {
       await AccountService(Supabase.instance.client).exportEntries(entries);
     } catch (e) {
       messenger.showSnackBar(SnackBar(
-        content: Text('Export failed: $e'),
+        content: Text(t.profileExportFailed(e.toString())),
         backgroundColor: AppColors.high,
         behavior: SnackBarBehavior.floating,
       ));
@@ -233,6 +289,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   void _confirmDeleteAccount(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -241,21 +298,18 @@ class ProfileScreen extends ConsumerWidget {
         var deleting = false;
         return StatefulBuilder(
           builder: (ctx, setLocal) => AlertDialog(
-            title: const Text('Delete account'),
+            title: Text(t.profileDeleteAccount),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'This permanently deletes your account, all reports, '
-                  'biomarker results, and uploaded files. This cannot be undone.',
-                ),
+                Text(t.profileDeleteConfirmBody),
                 const SizedBox(height: 16),
                 TextField(
                   controller: controller,
                   autofocus: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Type DELETE to confirm',
+                  decoration: InputDecoration(
+                    labelText: t.profileDeleteTypeToConfirm,
                   ),
                   onChanged: (v) =>
                       setLocal(() => canDelete = v.trim().toUpperCase() == 'DELETE'),
@@ -265,7 +319,7 @@ class ProfileScreen extends ConsumerWidget {
             actions: [
               TextButton(
                 onPressed: deleting ? null : () => Navigator.pop(dialogContext),
-                child: const Text('Cancel'),
+                child: Text(t.commonCancel),
               ),
               TextButton(
                 onPressed: (!canDelete || deleting)
@@ -285,7 +339,8 @@ class ProfileScreen extends ConsumerWidget {
                         } catch (e) {
                           setLocal(() => deleting = false);
                           messenger.showSnackBar(SnackBar(
-                            content: Text('Could not delete account: $e'),
+                            content:
+                                Text(t.profileDeleteAccountError(e.toString())),
                             backgroundColor: AppColors.high,
                             behavior: SnackBarBehavior.floating,
                           ));
@@ -297,8 +352,8 @@ class ProfileScreen extends ConsumerWidget {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Delete forever',
-                        style: TextStyle(color: AppColors.high)),
+                    : Text(t.profileDeleteForever,
+                        style: const TextStyle(color: AppColors.high)),
               ),
             ],
           ),
@@ -317,15 +372,16 @@ class ProfileScreen extends ConsumerWidget {
         .map((w) => w[0].toUpperCase())
         .join();
 
+    final t = AppLocalizations.of(context);
     final age = profile?.age;
     final sex = switch (profile?.sex) {
-      'male' => 'M',
-      'female' => 'F',
-      'other' => 'Other',
+      'male' => t.formSexShortMale,
+      'female' => t.formSexShortFemale,
+      'other' => t.formSexOther,
       _ => null,
     };
     final subtitleBits = <String>[
-      if (age != null) '$age yrs',
+      if (age != null) t.profileAgeYears(age),
       if (sex != null) sex,
     ];
 
@@ -358,15 +414,16 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Sign out of Lablio?'),
-        content: const Text('You can sign back in anytime.'),
+        title: Text(t.profileSignOutTitle),
+        content: Text(t.profileSignOutConfirm),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel')),
+              child: Text(t.commonCancel)),
           TextButton(
             onPressed: () async {
               // Pop the dialog using its OWN context so we close the dialog
@@ -381,8 +438,8 @@ class ProfileScreen extends ConsumerWidget {
                 // the redirect still fires.
               }
             },
-            child: const Text('Sign Out',
-                style: TextStyle(color: AppColors.high)),
+            child: Text(AppLocalizations.of(context).profileSignOut,
+                style: const TextStyle(color: AppColors.high)),
           ),
         ],
       ),
@@ -426,7 +483,7 @@ class _HealthDetailsCard extends StatelessWidget {
                     const EdgeInsets.fromLTRB(16, 14, 16, 6),
                 child: Row(
                   children: [
-                    Text('Health Details',
+                    Text(AppLocalizations.of(context).profileHealthDetails,
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium
@@ -445,8 +502,8 @@ class _HealthDetailsCard extends StatelessWidget {
               const Divider(height: 1),
               _InfoTile(
                 icon: Icons.wc_outlined,
-                label: 'Sex',
-                value: _sexLabel(profile?.sex),
+                label: AppLocalizations.of(context).authSexLabel,
+                value: _sexLabel(AppLocalizations.of(context), profile?.sex),
               ),
               const Divider(height: 1),
               _InfoTile(

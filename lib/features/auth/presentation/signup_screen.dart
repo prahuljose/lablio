@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../profile/presentation/widgets/profile_form_fields.dart';
 import '../data/auth_repository.dart';
 
@@ -84,12 +85,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final formValid = _formKey.currentState!.validate();
 
     // Age gate — DOB required and must be 18+.
+    final t = AppLocalizations.of(context);
     if (_dob == null) {
-      setState(() => _dobError = 'Date of birth is required');
+      setState(() => _dobError = t.authDobRequired);
       return;
     }
     if (_ageFrom(_dob!) < 18) {
-      setState(() => _dobError = 'You must be at least 18 years old to sign up');
+      setState(() => _dobError = t.authAgeRequirement);
       return;
     }
     if (!formValid) return;
@@ -110,8 +112,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       TextInput.finishAutofillContext();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created! Check your email to confirm.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).authAccountCreated),
             backgroundColor: AppColors.normal,
           ),
         );
@@ -130,6 +132,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -149,18 +152,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       children: [
                         _Section(
                           icon: Icons.lock_outline,
-                          title: 'Account',
+                          title: t.authSectionAccount,
                           children: [
                             TextFormField(
                               controller: _nameController,
                               textCapitalization: TextCapitalization.words,
                               autofillHints: const [AutofillHints.name],
-                              decoration: const InputDecoration(
-                                labelText: 'Full name',
-                                prefixIcon: Icon(Icons.person_outlined),
+                              decoration: InputDecoration(
+                                labelText: t.authFullNameLabel,
+                                prefixIcon: const Icon(Icons.person_outlined),
                               ),
                               validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Enter your name'
+                                  ? t.authEnterName
                                   : null,
                             ),
                             const SizedBox(height: 14),
@@ -168,12 +171,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               autofillHints: const [AutofillHints.email],
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: Icon(Icons.email_outlined),
+                              decoration: InputDecoration(
+                                labelText: t.authEmailLabel,
+                                prefixIcon: const Icon(Icons.email_outlined),
                               ),
                               validator: (v) => v == null || !v.contains('@')
-                                  ? 'Enter a valid email'
+                                  ? t.authInvalidEmail
                                   : null,
                             ),
                             const SizedBox(height: 14),
@@ -182,7 +185,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               obscureText: _obscurePassword,
                               autofillHints: const [AutofillHints.newPassword],
                               decoration: InputDecoration(
-                                labelText: 'Password',
+                                labelText: t.authPasswordLabel,
                                 prefixIcon: const Icon(Icons.lock_outlined),
                                 suffixIcon: IconButton(
                                   icon: Icon(_obscurePassword
@@ -193,7 +196,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 ),
                               ),
                               validator: (v) => v == null || v.length < 6
-                                  ? 'Minimum 6 characters'
+                                  ? t.authMin6Chars
                                   : null,
                             ),
                           ],
@@ -202,10 +205,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                         _Section(
                           icon: Icons.favorite_outline,
-                          title: 'About you',
+                          title: t.authSectionAboutYou,
                           children: [
                             // DOB
-                            _FieldLabel('Date of birth'),
+                            _FieldLabel(t.authDobLabel),
                             const SizedBox(height: 8),
                             InkWell(
                               onTap: _pickDob,
@@ -217,9 +220,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 ),
                                 child: Text(
                                   _dob == null
-                                      ? 'Select your date of birth'
+                                      ? t.authSelectDob
                                       : '${DateFormat('MMMM d, yyyy').format(_dob!)}'
-                                          '  ·  ${_ageFrom(_dob!)} yrs',
+                                          '  ·  ${t.authYearsSuffix(_ageFrom(_dob!))}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: _dob == null
@@ -231,7 +234,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            _FieldLabel('Sex'),
+                            _FieldLabel(t.authSexLabel),
                             const SizedBox(height: 8),
                             SexSelector(
                               value: _sex,
@@ -247,10 +250,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
                                             decimal: true),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Height',
+                                    decoration: InputDecoration(
+                                      labelText: t.authHeightLabel,
                                       suffixText: 'cm',
-                                      prefixIcon: Icon(Icons.height),
+                                      prefixIcon: const Icon(Icons.height),
                                     ),
                                   ),
                                 ),
@@ -261,11 +264,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
                                             decimal: true),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Weight',
+                                    decoration: InputDecoration(
+                                      labelText: t.authWeightLabel,
                                       suffixText: 'kg',
-                                      prefixIcon:
-                                          Icon(Icons.monitor_weight_outlined),
+                                      prefixIcon: const Icon(
+                                          Icons.monitor_weight_outlined),
                                     ),
                                   ),
                                 ),
@@ -273,7 +276,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            _FieldLabel('Blood type'),
+                            _FieldLabel(t.authBloodTypeLabel),
                             const SizedBox(height: 10),
                             BloodTypeSelector(
                               value: _bloodType,
@@ -292,17 +295,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   child: CircularProgressIndicator(
                                       strokeWidth: 2, color: Colors.white),
                                 )
-                              : const Text('Create Account'),
+                              : Text(t.authCreateAccount),
                         ),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('Already have an account?',
+                            Text(t.authHaveAccount,
                                 style: Theme.of(context).textTheme.bodyMedium),
                             TextButton(
                               onPressed: () => context.go(AppRoutes.login),
-                              child: const Text('Sign In'),
+                              child: Text(t.authSignInButton),
                             ),
                           ],
                         ),
@@ -322,6 +325,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
@@ -357,9 +361,9 @@ class _Header extends StatelessWidget {
             child: const Icon(Icons.biotech, color: Colors.white, size: 28),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Create your account',
-            style: TextStyle(
+          Text(
+            t.authCreateYourAccount,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 26,
               fontWeight: FontWeight.w800,
@@ -367,7 +371,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Track your biomarkers and understand your health over time.',
+            t.authSignupSubtitle,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.85),
               fontSize: 14,
