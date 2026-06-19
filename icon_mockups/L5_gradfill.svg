@@ -6,7 +6,8 @@
   </defs>
   <!-- light card so it pops in a dark drawer -->
   <rect width="512" height="512" rx="120" fill="#EAF4FB"/>
-  <path d="M196 150 L196 332 a8 8 0 0 0 8 8 L334 340" fill="none" stroke="url(#lfill)"
+  <!-- Taller stem (~1.4:1 vs foot) so the L reads upright, not squished. -->
+  <path d="M199 169 L199 327 a7 7 0 0 0 7 7 L316 334" fill="none" stroke="url(#lfill)"
         stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="324" cy="180" r="26" fill="#0096C7"/>
+  <circle cx="316" cy="194" r="26" fill="#0096C7"/>
 </svg>

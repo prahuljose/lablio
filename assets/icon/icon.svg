@@ -4,9 +4,9 @@
       <stop offset="0" stop-color="#0096C7"/><stop offset="1" stop-color="#023E8A"/>
     </linearGradient>
   </defs>
-  <!-- L + dot centred within the adaptive-icon safe zone (~58% of canvas).
-       Taller stem (~1.4:1 vs foot) so the L reads upright, not squished.
-       Vertical stem and foot with rounded joins; cyan reading dot top-right. -->
+  <!-- Light rounded card (matches the splash/adaptive background). -->
+  <rect width="1024" height="1024" rx="224" fill="#EAF4FB"/>
+  <!-- Taller stem (~1.4:1 vs foot) so the L reads upright, not squished. -->
   <path d="M398 338 L398 654 a14 14 0 0 0 14 14 L632 668"
         fill="none" stroke="url(#lfill)" stroke-width="74"
         stroke-linecap="round" stroke-linejoin="round"/>

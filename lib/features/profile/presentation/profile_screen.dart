@@ -12,9 +12,11 @@ import '../../auth/data/auth_repository.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../data/account_service.dart';
 import '../data/doctor_report_service.dart';
+import '../data/export_log_service.dart';
 import '../data/profile_model.dart';
 import '../providers/medical_record_provider.dart';
 import '../providers/profile_provider.dart';
+import 'export_selection_sheet.dart';
 
 final _profileAuthRepoProvider = Provider(
   (ref) => AuthRepository(Supabase.instance.client),
@@ -177,13 +179,29 @@ class ProfileScreen extends ConsumerWidget {
       ));
       return;
     }
+
+    // Let the user pick which biomarkers go into the PDF (latest per marker).
+    final tracked = ref.read(trackedBiomarkersProvider).valueOrNull ?? entries;
+    final selectedIds = await showExportSelectionSheet(context, tracked);
+    if (selectedIds == null || selectedIds.isEmpty) return; // dismissed
+
+    // Keep only entries for the selected biomarkers; the PDF still computes the
+    // latest reading per marker internally.
+    final selectedEntries =
+        entries.where((e) => selectedIds.contains(e.biomarkerId)).toList();
+
     final profile = ref.read(profileProvider).valueOrNull;
     // Await the async load — valueOrNull returns [] before data arrives.
     final medical =
         await ref.read(medicalRecordProvider.future).catchError((_) => []);
     try {
       await DoctorReportService()
-          .share(profile: profile, entries: entries, medical: medical);
+          .share(profile: profile, entries: selectedEntries, medical: medical);
+      // Record the export (best-effort — never block the share on logging).
+      try {
+        await ExportLogService(Supabase.instance.client)
+            .logPdfExport(biomarkerCount: selectedIds.length);
+      } catch (_) {/* analytics failure is non-fatal */}
     } catch (e) {
       messenger.showSnackBar(SnackBar(
         content: Text('Could not generate PDF: $e'),

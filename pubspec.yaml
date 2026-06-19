@@ -38,6 +38,8 @@ dependencies:
   # Utilities
   intl: ^0.20.2
   uuid: ^4.5.1
+  device_info_plus: ^11.5.0
+  package_info_plus: ^8.3.0
   shimmer: ^3.0.0
   image_picker: ^1.2.2
   shared_preferences: ^2.5.5
