@@ -1161,4 +1161,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchSectionEntries => 'Results matching notes / tags';
+
+  @override
+  String get pinnedManage => 'Manage';
+
+  @override
+  String get pinnedManageTitle => 'Manage pinned';
+
+  @override
+  String get pinnedEmpty => 'Nothing pinned yet.';
+
+  @override
+  String get pdfPreviewTitle => 'Preview & share';
+
+  @override
+  String get errorNoInternetTitle => 'No connection';
+
+  @override
+  String get errorNoInternetBody =>
+      'You\'re offline. Check your internet connection and try again.';
+
+  @override
+  String get errorGenericTitle => 'Something went wrong';
+
+  @override
+  String get errorGenericBody => 'Please try again in a moment.';
+
+  @override
+  String get commonRetry => 'Retry';
 }

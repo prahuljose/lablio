@@ -1,11 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../core/widgets/lablio_refresh.dart';
@@ -13,8 +12,6 @@ import '../../../l10n/app_localizations.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../biomarkers/providers/biomarkers_provider.dart';
 import '../data/account_service.dart';
-import '../data/doctor_report_service.dart';
-import '../data/export_log_service.dart';
 import '../data/medical_record_model.dart';
 import '../data/profile_model.dart';
 import '../providers/medical_record_provider.dart';
@@ -60,9 +57,13 @@ class ProfileScreen extends ConsumerWidget {
       ),
       body: LablioRefresh(
         onRefresh: () async {
-          ref.invalidate(profileProvider);
           ref.invalidate(medicalRecordProvider);
-          await ref.read(profileProvider.future);
+          try {
+            // refresh() keeps cached data on failure (offline) and rethrows.
+            await ref.read(profileProvider.notifier).refresh();
+          } catch (e) {
+            if (context.mounted) showOfflineAwareSnackBar(context, e);
+          }
         },
         child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -212,57 +213,16 @@ class ProfileScreen extends ConsumerWidget {
 
     final profile = ref.read(profileProvider).valueOrNull;
     if (!context.mounted) return;
-    _showPdfLoader(context);
-    final svc = DoctorReportService();
-    try {
-      final file = await svc.generate(
-          profile: profile, entries: selectedEntries, medical: medicalForPdf);
-      // Record the export in the background — never block the share on logging.
-      unawaited(ExportLogService(Supabase.instance.client)
-          .logPdfExport(
-            biomarkerCount: selection.biomarkerIds.length,
-            includedMedical: selection.includeMedical,
-          )
-          .catchError((_) {/* analytics failure is non-fatal */}));
-      // Dismiss the loader before the system share sheet appears.
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      await svc.shareFile(file);
-    } catch (e) {
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      messenger.showSnackBar(SnackBar(
-        content: Text(t.profilePdfGenerateError(e.toString())),
-        backgroundColor: AppColors.high,
-        behavior: SnackBarBehavior.floating,
-      ));
-    }
-  }
-
-  /// A non-dismissible overlay with the looping Lablio mark, shown while the
-  /// PDF is being generated.
-  void _showPdfLoader(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => PopScope(
-        canPop: false,
-        child: Dialog(
-          backgroundColor: AppColors.surface,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const LablioLoader(size: 64),
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context).exportPreparingPdf,
-                    style: Theme.of(context).textTheme.bodyLarge),
-              ],
-            ),
-          ),
-        ),
-      ),
+    // Show a preview of the PDF; share/print + export logging happen there.
+    context.push(
+      AppRoutes.pdfPreview,
+      extra: {
+        'profile': profile,
+        'entries': selectedEntries,
+        'medical': medicalForPdf,
+        'biomarkerCount': selection.biomarkerIds.length,
+        'includedMedical': selection.includeMedical,
+      },
     );
   }
 

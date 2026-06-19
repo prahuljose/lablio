@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/network/network_error.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../core/widgets/lablio_refresh.dart';
@@ -54,8 +56,14 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: LablioRefresh(
         onRefresh: () async {
-          ref.read(reportsProvider.notifier).refresh();
-          ref.read(biomarkerEntriesProvider.notifier).refresh();
+          try {
+            await Future.wait([
+              ref.read(reportsProvider.notifier).refresh(),
+              ref.read(biomarkerEntriesProvider.notifier).refresh(),
+            ]);
+          } catch (e) {
+            if (context.mounted) showOfflineAwareSnackBar(context, e);
+          }
         },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -104,8 +112,9 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             entriesAsync.when(
               loading: () => const LablioLoader(),
-              error: (e, _) =>
-                  Text(AppLocalizations.of(context).commonError(e.toString())),
+              error: (e, _) => Text(
+                  networkAwareMessage(e, AppLocalizations.of(context)),
+                  style: Theme.of(context).textTheme.bodyMedium),
               data: (entries) => entries.isEmpty
                   ? _buildEmptyResults(context)
                   : Column(
@@ -268,6 +277,13 @@ class _InsightRow extends StatelessWidget {
             : insight.latest.isLow
                 ? AppColors.low
                 : AppColors.textTertiary;
+    final statusIcon = insight.latest.isNormal
+        ? Icons.check_rounded
+        : insight.latest.isHigh
+            ? Icons.arrow_upward_rounded
+            : insight.latest.isLow
+                ? Icons.arrow_downward_rounded
+                : Icons.remove_rounded;
 
     // Arrow reflects health trend, not raw value direction:
     // green trending_up = improving, red trending_down = worsening.
@@ -287,10 +303,12 @@ class _InsightRow extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 8,
-              height: 8,
+              width: 18,
+              height: 18,
+              alignment: Alignment.center,
               decoration:
                   BoxDecoration(color: statusColor, shape: BoxShape.circle),
+              child: Icon(statusIcon, size: 12, color: Colors.white),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -583,6 +601,13 @@ class _RecentResultTile extends StatelessWidget {
             : entry.isLow
                 ? AppColors.low
                 : AppColors.textTertiary;
+    final statusIcon = entry.isNormal
+        ? Icons.check_rounded
+        : entry.isHigh
+            ? Icons.arrow_upward_rounded
+            : entry.isLow
+                ? Icons.arrow_downward_rounded
+                : Icons.remove_rounded;
 
     return Card(
       child: Padding(
@@ -590,10 +615,12 @@ class _RecentResultTile extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 8,
-              height: 8,
+              width: 18,
+              height: 18,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                   color: statusColor, shape: BoxShape.circle),
+              child: Icon(statusIcon, size: 12, color: Colors.white),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -615,7 +642,7 @@ class _RecentResultTile extends StatelessWidget {
 }
 
 class _PinnedSection extends StatelessWidget {
-  final Set<String> pinnedIds;
+  final List<String> pinnedIds;
   final List<BiomarkerEntryModel> entries;
   const _PinnedSection({required this.pinnedIds, required this.entries});
 
@@ -632,8 +659,11 @@ class _PinnedSection extends StatelessWidget {
       }
     }
     if (byId.isEmpty) return const SizedBox.shrink();
-    final tiles = byId.values.toList()
-      ..sort((a, b) => a.biomarkerName.compareTo(b.biomarkerName));
+    // Render in the user's chosen order (not alphabetical).
+    final tiles = [
+      for (final id in pinnedIds)
+        if (byId[id] != null) byId[id]!,
+    ];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
@@ -646,6 +676,15 @@ class _PinnedSection extends StatelessWidget {
               const SizedBox(width: 6),
               Text(AppLocalizations.of(context).homePinned,
                   style: Theme.of(context).textTheme.titleLarge),
+              const Spacer(),
+              if (tiles.length > 1)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(Icons.tune_rounded,
+                      size: 20, color: AppColors.textSecondary),
+                  tooltip: AppLocalizations.of(context).pinnedManage,
+                  onPressed: () => showManagePinnedSheet(context),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -665,6 +704,102 @@ class _PinnedSection extends StatelessWidget {
   }
 }
 
+/// Bottom sheet to reorder (drag) and remove pinned biomarkers.
+void showManagePinnedSheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) => const _ManagePinnedSheet(),
+  );
+}
+
+class _ManagePinnedSheet extends ConsumerWidget {
+  const _ManagePinnedSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final pinned = ref.watch(pinnedBiomarkersProvider);
+    final tracked = ref.watch(trackedBiomarkersProvider).valueOrNull ??
+        const <BiomarkerEntryModel>[];
+    final nameById = {for (final e in tracked) e.biomarkerId: e.biomarkerName};
+    final mq = MediaQuery.of(context);
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: mq.padding.bottom),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: mq.size.height * 0.7),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(t.pinnedManageTitle,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: pinned.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(t.pinnedEmpty,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium),
+                    )
+                  : ReorderableListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: pinned.length,
+                      onReorder: (oldIndex, newIndex) => ref
+                          .read(pinnedBiomarkersProvider.notifier)
+                          .reorder(oldIndex, newIndex),
+                      itemBuilder: (_, i) {
+                        final id = pinned[i];
+                        return ListTile(
+                          key: ValueKey(id),
+                          leading: ReorderableDragStartListener(
+                            index: i,
+                            child: Icon(Icons.drag_handle,
+                                color: AppColors.textTertiary),
+                          ),
+                          title: Text(nameById[id] ?? id),
+                          trailing: IconButton(
+                            icon: Icon(Icons.close_rounded,
+                                color: AppColors.textTertiary, size: 20),
+                            onPressed: () => ref
+                                .read(pinnedBiomarkersProvider.notifier)
+                                .toggle(id),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PinnedCard extends StatelessWidget {
   final BiomarkerEntryModel entry;
   const _PinnedCard({required this.entry});
@@ -678,6 +813,13 @@ class _PinnedCard extends StatelessWidget {
             : entry.isNormal
                 ? AppColors.normal
                 : AppColors.textTertiary;
+    final statusIcon = entry.isHigh
+        ? Icons.arrow_upward_rounded
+        : entry.isLow
+            ? Icons.arrow_downward_rounded
+            : entry.isNormal
+                ? Icons.check_rounded
+                : Icons.remove_rounded;
     return SizedBox(
       width: 160,
       child: Card(
@@ -698,10 +840,12 @@ class _PinnedCard extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      width: 7,
-                      height: 7,
+                      width: 16,
+                      height: 16,
+                      alignment: Alignment.center,
                       decoration:
                           BoxDecoration(color: color, shape: BoxShape.circle),
+                      child: Icon(statusIcon, size: 10, color: Colors.white),
                     ),
                     const SizedBox(width: 6),
                     Expanded(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../l10n/app_localizations.dart';
@@ -56,7 +57,10 @@ class _BrowseBiomarkersScreenState
           Expanded(
             child: biomarkersAsync.when(
               loading: () => const LablioLoader(),
-              error: (e, _) => Center(child: Text(t.commonError(e.toString()))),
+              error: (e, _) => ErrorView(
+                  error: e,
+                  onRetry: () async =>
+                      ref.invalidate(referenceBiomarkersProvider)),
               data: (biomarkers) {
                 final filtered = _query.isEmpty
                     ? biomarkers

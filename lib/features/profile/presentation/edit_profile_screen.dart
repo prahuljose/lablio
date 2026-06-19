@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/branded_date_picker.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/profile_model.dart';
 import '../providers/profile_provider.dart';
@@ -50,7 +51,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _pickDob() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
+    final picked = await showBrandedDatePicker(
       context: context,
       initialDate: _dob ?? DateTime(now.year - 30, now.month, now.day),
       firstDate: DateTime(1900),

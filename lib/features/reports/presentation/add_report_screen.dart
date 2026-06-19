@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/network/network_error.dart';
+import '../../../core/widgets/branded_date_picker.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/reports_provider.dart';
 
@@ -45,7 +47,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final picked = await showBrandedDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
@@ -72,7 +74,9 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(t.reportsError(e.toString())),
+              content: Text(isNetworkError(e)
+                  ? t.errorNoInternetBody
+                  : t.reportsError(e.toString())),
               backgroundColor: AppColors.high),
         );
       }
@@ -137,21 +141,22 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                     Icon(Icons.calendar_today_outlined,
                         color: AppColors.textSecondary),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.addReportDate,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(fontSize: 12)),
-                        Text(
-                          DateFormat('MMMM d, yyyy').format(_selectedDate),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.addReportDate,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontSize: 12)),
+                          Text(
+                            DateFormat('MMMM d, yyyy').format(_selectedDate),
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
                     Icon(Icons.chevron_right,
                         color: AppColors.textTertiary),
                   ],

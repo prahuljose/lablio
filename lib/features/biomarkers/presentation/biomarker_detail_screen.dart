@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/units/unit_converter.dart';
 import '../../../core/units/unit_system_provider.dart';
@@ -86,7 +87,11 @@ class BiomarkerDetailScreen extends ConsumerWidget {
             loading: () => const SliverToBoxAdapter(
                 child: SkeletonList(itemCount: 4)),
             error: (e, _) => SliverFillRemaining(
-                child: Center(child: Text(t.biomarkerDetailError(e.toString())))),
+                child: ErrorView(
+                    error: e,
+                    onRetry: () =>
+                        ref.read(biomarkerEntriesProvider.notifier).refresh()),
+              ),
             data: (entries) => entries.isEmpty
                 ? SliverFillRemaining(
                     hasScrollBody: false,
@@ -250,11 +255,13 @@ class _LatestValueCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
+                  // Filled disc with a glyph so status reads without colour.
                   Container(
-                    width: 9,
-                    height: 9,
+                    width: 18,
+                    height: 18,
                     decoration: BoxDecoration(
                         color: status.color, shape: BoxShape.circle),
+                    child: Icon(status.icon, size: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
                   Text(status.label,

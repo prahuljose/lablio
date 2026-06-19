@@ -1182,4 +1182,33 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get searchSectionEntries =>
       'കുറിപ്പുകൾ / ടാഗുകളുമായി പൊരുത്തപ്പെടുന്ന ഫലങ്ങൾ';
+
+  @override
+  String get pinnedManage => 'നിയന്ത്രിക്കുക';
+
+  @override
+  String get pinnedManageTitle => 'പിൻ ചെയ്തവ നിയന്ത്രിക്കുക';
+
+  @override
+  String get pinnedEmpty => 'ഇതുവരെ ഒന്നും പിൻ ചെയ്തിട്ടില്ല.';
+
+  @override
+  String get pdfPreviewTitle => 'പ്രിവ്യൂ & പങ്കിടുക';
+
+  @override
+  String get errorNoInternetTitle => 'കണക്ഷൻ ഇല്ല';
+
+  @override
+  String get errorNoInternetBody =>
+      'നിങ്ങൾ ഓഫ്‌ലൈനാണ്. നിങ്ങളുടെ ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get errorGenericTitle => 'എന്തോ കുഴപ്പം സംഭവിച്ചു';
+
+  @override
+  String get errorGenericBody =>
+      'ദയവായി അൽപ്പ സമയത്തിന് ശേഷം വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get commonRetry => 'വീണ്ടും ശ്രമിക്കുക';
 }

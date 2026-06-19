@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../core/widgets/skeletons.dart';
@@ -44,7 +45,9 @@ class ReportsScreen extends ConsumerWidget {
       ),
       body: reportsAsync.when(
         loading: () => const SkeletonList(),
-        error: (e, _) => Center(child: Text(t.reportsError(e.toString()))),
+        error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () => ref.read(reportsProvider.notifier).refresh()),
         data: (reports) => reports.isEmpty
             ? _buildEmpty(context)
             : _buildList(context, ref, reports),

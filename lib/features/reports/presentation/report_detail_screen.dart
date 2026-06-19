@@ -332,6 +332,14 @@ class _EntryRow extends StatelessWidget {
                 ? t.reportStatusLow
                 : '—';
 
+    final statusIcon = entry.isNormal
+        ? Icons.check_rounded
+        : entry.isHigh
+            ? Icons.arrow_upward_rounded
+            : entry.isLow
+                ? Icons.arrow_downward_rounded
+                : Icons.remove_rounded;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
@@ -342,11 +350,13 @@ class _EntryRow extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: 18,
+            height: 18,
             margin: const EdgeInsets.only(right: 12),
+            alignment: Alignment.center,
             decoration: BoxDecoration(
                 color: statusColor, shape: BoxShape.circle),
+            child: Icon(statusIcon, size: 12, color: Colors.white),
           ),
           Expanded(
             child: Column(

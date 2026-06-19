@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/branded_date_picker.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/medical_record_model.dart';
@@ -74,7 +76,9 @@ class _RecordList extends ConsumerWidget {
       ),
       body: async.when(
         loading: () => const LablioLoader(),
-        error: (e, _) => Center(child: Text(t.commonError(e.toString()))),
+        error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () async => ref.invalidate(medicalRecordProvider)),
         data: (entries) {
           final filtered =
               entries.where((e) => e.kind == kind).toList();
@@ -179,7 +183,7 @@ Future<void> _showAddSheet(
               const SizedBox(height: 12),
               InkWell(
                 onTap: () async {
-                  final picked = await showDatePicker(
+                  final picked = await showBrandedDatePicker(
                     context: ctx,
                     initialDate: date ?? DateTime.now(),
                     firstDate: DateTime(1900),

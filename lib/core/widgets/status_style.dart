@@ -8,7 +8,12 @@ class StatusStyle {
   final Color color;
   final Color bg;
   final String label;
-  const StatusStyle(this.color, this.bg, this.label);
+
+  /// A shape cue that conveys status *without relying on colour* (≈8% of men
+  /// are red–green colour-blind, and this is medical data). Pair it with the
+  /// colour everywhere status is shown.
+  final IconData icon;
+  const StatusStyle(this.color, this.bg, this.label, this.icon);
 
   static StatusStyle from({
     required bool isNormal,
@@ -16,11 +21,19 @@ class StatusStyle {
     required bool isLow,
   }) {
     if (isNormal) {
-      return StatusStyle(AppColors.normal, AppColors.normalBg, 'Normal');
+      return StatusStyle(
+          AppColors.normal, AppColors.normalBg, 'Normal', Icons.check_rounded);
     }
-    if (isHigh) return StatusStyle(AppColors.high, AppColors.highBg, 'High');
-    if (isLow) return StatusStyle(AppColors.low, AppColors.lowBg, 'Low');
-    return StatusStyle(AppColors.textTertiary, AppColors.surfaceVariant, '—');
+    if (isHigh) {
+      return StatusStyle(
+          AppColors.high, AppColors.highBg, 'High', Icons.arrow_upward_rounded);
+    }
+    if (isLow) {
+      return StatusStyle(
+          AppColors.low, AppColors.lowBg, 'Low', Icons.arrow_downward_rounded);
+    }
+    return StatusStyle(AppColors.textTertiary, AppColors.surfaceVariant, '—',
+        Icons.remove_rounded);
   }
 }
 

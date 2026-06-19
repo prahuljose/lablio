@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/branded_date_picker.dart';
 import '../../../core/router/app_router.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/data/profile_model.dart';
@@ -65,19 +66,11 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final picked = await showBrandedDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppColors.primary,
-              ),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null) setState(() => _selectedDate = picked);
   }
@@ -590,23 +583,24 @@ class _DateTile extends StatelessWidget {
                   color: AppColors.primary, size: 18),
             ),
             const SizedBox(width: 14),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppLocalizations.of(context).addEntryDateOfTest,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppLocalizations.of(context).addEntryDateOfTest,
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary)),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormat('MMMM d, yyyy').format(selectedDate),
                     style: TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
-                const SizedBox(height: 2),
-                Text(
-                  DateFormat('MMMM d, yyyy').format(selectedDate),
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary),
-                ),
-              ],
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
             Icon(Icons.chevron_right,
                 color: AppColors.textTertiary, size: 20),
           ],

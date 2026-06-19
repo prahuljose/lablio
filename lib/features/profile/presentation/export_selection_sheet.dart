@@ -120,11 +120,17 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
     });
   }
 
-  (Color, String) _status(AppLocalizations t, BiomarkerEntryModel e) {
-    if (e.isHigh) return (AppColors.high, t.biomarkersStatusHigh);
-    if (e.isLow) return (AppColors.low, t.biomarkersStatusLow);
-    if (e.isNormal) return (AppColors.normal, t.biomarkersStatusNormal);
-    return (AppColors.textTertiary, '—');
+  (Color, String, IconData) _status(AppLocalizations t, BiomarkerEntryModel e) {
+    if (e.isHigh) {
+      return (AppColors.high, t.biomarkersStatusHigh, Icons.arrow_upward_rounded);
+    }
+    if (e.isLow) {
+      return (AppColors.low, t.biomarkersStatusLow, Icons.arrow_downward_rounded);
+    }
+    if (e.isNormal) {
+      return (AppColors.normal, t.biomarkersStatusNormal, Icons.check_rounded);
+    }
+    return (AppColors.textTertiary, '—', Icons.remove_rounded);
   }
 
   @override
@@ -304,7 +310,7 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
   }
 
   Widget _row(AppLocalizations t, BiomarkerEntryModel e) {
-    final (color, label) = _status(t, e);
+    final (color, label, statusIcon) = _status(t, e);
     final selected = _selected.contains(e.biomarkerId);
     return InkWell(
       onTap: () => setState(() {
@@ -341,11 +347,13 @@ class _ExportSelectionSheetState extends State<_ExportSelectionSheet> {
                   ?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(width: 10),
-            // Status dot + label so a doctor-facing selection shows what's flagged.
+            // Status disc + glyph + label so it reads without relying on colour.
             Container(
-              width: 8,
-              height: 8,
+              width: 16,
+              height: 16,
+              alignment: Alignment.center,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              child: Icon(statusIcon, size: 11, color: Colors.white),
             ),
             const SizedBox(width: 4),
             SizedBox(

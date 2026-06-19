@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/branded_date_picker.dart';
 import '../../../core/router/app_router.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/presentation/widgets/profile_form_fields.dart';
@@ -59,19 +60,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   Future<void> _pickDob() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
+    final picked = await showBrandedDatePicker(
       context: context,
       initialDate: _dob ?? DateTime(now.year - 18, now.month, now.day),
       firstDate: DateTime(1900),
       lastDate: now,
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context)
-              .colorScheme
-              .copyWith(primary: AppColors.primary),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null) {
       setState(() {

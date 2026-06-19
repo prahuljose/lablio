@@ -42,9 +42,13 @@ class ReportsNotifier extends AsyncNotifier<List<ReportModel>> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(reportsRepositoryProvider).fetchAll(),
-    );
+    try {
+      final data = await ref.read(reportsRepositoryProvider).fetchAll();
+      state = AsyncData(data);
+    } catch (e, st) {
+      // Keep cached data visible on a failed refresh; rethrow to warn.
+      if (state.valueOrNull == null) state = AsyncError(e, st);
+      rethrow;
+    }
   }
 }

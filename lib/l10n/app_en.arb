@@ -742,5 +742,14 @@
   "scanOptionPdf": "Choose a PDF",
   "scanOptionPdfSub": "Scan a PDF lab report",
   "searchPrompt": "Start typing to search across your biomarkers, reports, and result notes / tags.",
-  "searchSectionEntries": "Results matching notes / tags"
+  "searchSectionEntries": "Results matching notes / tags",
+  "pinnedManage": "Manage",
+  "pinnedManageTitle": "Manage pinned",
+  "pinnedEmpty": "Nothing pinned yet.",
+  "pdfPreviewTitle": "Preview & share",
+  "errorNoInternetTitle": "No connection",
+  "errorNoInternetBody": "You're offline. Check your internet connection and try again.",
+  "errorGenericTitle": "Something went wrong",
+  "errorGenericBody": "Please try again in a moment.",
+  "commonRetry": "Retry"
 }

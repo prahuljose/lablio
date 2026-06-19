@@ -341,5 +341,14 @@
   "scanOptionPdf": "PDF चुनें",
   "scanOptionPdfSub": "PDF लैब रिपोर्ट स्कैन करें",
   "searchPrompt": "अपने बायोमार्कर, रिपोर्ट और परिणाम नोट्स / टैग में खोजने के लिए टाइप करना शुरू करें.",
-  "searchSectionEntries": "नोट्स / टैग से मेल खाते परिणाम"
+  "searchSectionEntries": "नोट्स / टैग से मेल खाते परिणाम",
+  "pinnedManage": "प्रबंधित करें",
+  "pinnedManageTitle": "पिन प्रबंधित करें",
+  "pinnedEmpty": "अभी कुछ भी पिन नहीं किया गया.",
+  "pdfPreviewTitle": "पूर्वावलोकन और साझा करें",
+  "errorNoInternetTitle": "कोई कनेक्शन नहीं",
+  "errorNoInternetBody": "आप ऑफ़लाइन हैं. अपना इंटरनेट कनेक्शन जाँचें और फिर से प्रयास करें.",
+  "errorGenericTitle": "कुछ गलत हुआ",
+  "errorGenericBody": "कृपया कुछ देर बाद फिर से प्रयास करें.",
+  "commonRetry": "फिर से प्रयास करें"
 }

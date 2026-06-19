@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../core/widgets/lablio_refresh.dart';
 import '../../../core/widgets/skeletons.dart';
@@ -30,7 +31,10 @@ class ScoresScreen extends ConsumerWidget {
       ),
       body: trackedAsync.when(
         loading: () => const SkeletonList(),
-        error: (e, _) => Center(child: Text(t.commonError(e.toString()))),
+        error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () =>
+                ref.read(biomarkerEntriesProvider.notifier).refresh()),
         data: (tracked) {
           final byId = <String, BiomarkerEntryModel>{
             for (final e in tracked) e.biomarkerId: e,
@@ -69,8 +73,13 @@ class ScoresScreen extends ConsumerWidget {
           ));
 
           return LablioRefresh(
-            onRefresh: () =>
-                ref.read(biomarkerEntriesProvider.notifier).refresh(),
+            onRefresh: () async {
+              try {
+                await ref.read(biomarkerEntriesProvider.notifier).refresh();
+              } catch (e) {
+                if (context.mounted) showOfflineAwareSnackBar(context, e);
+              }
+            },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
@@ -811,12 +820,14 @@ class _CriterionRow extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 8),
-          Text(c.label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500)),
-          const Spacer(),
+          Expanded(
+            child: Text(c.label,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w500)),
+          ),
+          const SizedBox(width: 8),
           Text(c.detail,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 12, color: AppColors.textTertiary)),

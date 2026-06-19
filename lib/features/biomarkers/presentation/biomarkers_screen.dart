@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/units/unit_converter.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
@@ -136,7 +137,10 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
       ),
       body: trackedAsync.when(
         loading: () => const SkeletonList(),
-        error: (e, _) => Center(child: Text(t.biomarkersError(e.toString()))),
+        error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () =>
+                ref.read(biomarkerEntriesProvider.notifier).refresh()),
         data: (tracked) {
           if (tracked.isEmpty) return _buildEmpty(context);
           final list = _process(tracked);
@@ -187,8 +191,17 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
               }),
               Expanded(
                 child: LablioRefresh(
-                  onRefresh: () =>
-                      ref.read(biomarkerEntriesProvider.notifier).refresh(),
+                  onRefresh: () async {
+                    try {
+                      await ref
+                          .read(biomarkerEntriesProvider.notifier)
+                          .refresh();
+                    } catch (e) {
+                      if (context.mounted) {
+                        showOfflineAwareSnackBar(context, e);
+                      }
+                    }
+                  },
                   child: list.isEmpty
                       // AlwaysScrollable so pull-to-refresh works even when empty.
                       ? ListView(
@@ -566,12 +579,20 @@ class _BiomarkerTile extends ConsumerWidget {
                                 color: status.bg,
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text(status.label,
-                                  style: TextStyle(
-                                    color: status.color,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  )),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(status.icon,
+                                      size: 13, color: status.color),
+                                  const SizedBox(width: 3),
+                                  Text(status.label,
+                                      style: TextStyle(
+                                        color: status.color,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      )),
+                                ],
+                              ),
                             ),
                           const SizedBox(height: 4),
                           Icon(Icons.chevron_right,

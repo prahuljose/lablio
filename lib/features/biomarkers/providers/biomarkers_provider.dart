@@ -48,10 +48,16 @@ class BiomarkerEntriesNotifier
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(biomarkersRepositoryProvider).fetchAll(),
-    );
+    try {
+      final data = await ref.read(biomarkersRepositoryProvider).fetchAll();
+      state = AsyncData(data);
+    } catch (e, st) {
+      // Keep showing cached data on a failed refresh (e.g. offline); only fall
+      // back to an error state if there's nothing cached. Rethrow so the
+      // pull-to-refresh handler can surface a transient warning.
+      if (state.valueOrNull == null) state = AsyncError(e, st);
+      rethrow;
+    }
   }
 }
 

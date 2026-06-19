@@ -33,6 +33,10 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/scan/presentation/review_extraction_screen.dart';
 import '../../features/scan/presentation/scan_report_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/profile/presentation/pdf_preview_screen.dart';
+import '../../features/profile/data/profile_model.dart';
+import '../../features/profile/data/medical_record_model.dart';
+import '../../features/biomarkers/data/biomarker_entry_model.dart';
 import '../../features/reports/data/report_model.dart';
 import '../../features/reports/presentation/add_report_screen.dart';
 import '../../features/reports/presentation/report_detail_screen.dart';
@@ -60,6 +64,7 @@ class AppRoutes {
   static const reviewExtraction = '/scan/review';
   static const settings = '/settings';
   static const changePassword = '/settings/change-password';
+  static const pdfPreview = '/profile/pdf-preview';
   static const addCustomBiomarker = '/biomarkers/custom/add';
   static const search = '/search';
   static const medicalRecord = '/profile/medical-record';
@@ -233,6 +238,22 @@ final appRouter = GoRouter(
       path: AppRoutes.changePassword,
       pageBuilder: (_, state) =>
           _fadeRisePage(state, const ChangePasswordScreen()),
+    ),
+    GoRoute(
+      path: AppRoutes.pdfPreview,
+      pageBuilder: (_, state) {
+        final m = state.extra as Map<String, dynamic>;
+        return _fadeRisePage(
+          state,
+          PdfPreviewScreen(
+            profile: m['profile'] as ProfileModel?,
+            entries: (m['entries'] as List).cast<BiomarkerEntryModel>(),
+            medical: (m['medical'] as List).cast<MedicalRecordEntry>(),
+            biomarkerCount: m['biomarkerCount'] as int,
+            includedMedical: m['includedMedical'] as bool,
+          ),
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.addCustomBiomarker,

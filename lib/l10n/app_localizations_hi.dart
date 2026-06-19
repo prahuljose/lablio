@@ -1167,4 +1167,32 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get searchSectionEntries => 'नोट्स / टैग से मेल खाते परिणाम';
+
+  @override
+  String get pinnedManage => 'प्रबंधित करें';
+
+  @override
+  String get pinnedManageTitle => 'पिन प्रबंधित करें';
+
+  @override
+  String get pinnedEmpty => 'अभी कुछ भी पिन नहीं किया गया.';
+
+  @override
+  String get pdfPreviewTitle => 'पूर्वावलोकन और साझा करें';
+
+  @override
+  String get errorNoInternetTitle => 'कोई कनेक्शन नहीं';
+
+  @override
+  String get errorNoInternetBody =>
+      'आप ऑफ़लाइन हैं. अपना इंटरनेट कनेक्शन जाँचें और फिर से प्रयास करें.';
+
+  @override
+  String get errorGenericTitle => 'कुछ गलत हुआ';
+
+  @override
+  String get errorGenericBody => 'कृपया कुछ देर बाद फिर से प्रयास करें.';
+
+  @override
+  String get commonRetry => 'फिर से प्रयास करें';
 }

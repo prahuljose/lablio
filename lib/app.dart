@@ -99,7 +99,13 @@ class _LablioAppState extends ConsumerState<LablioApp> {
       // direct AppColors.* reads (in custom widgets) match light/dark.
       builder: (context, child) {
         AppColors.brightness = Theme.of(context).brightness;
-        return AppLockGate(child: child ?? const SizedBox.shrink());
+        // Honor the OS text-size setting, but clamp the extremes so layouts
+        // stay intact (very large scales would otherwise overflow tiles/rows).
+        return MediaQuery.withClampedTextScaling(
+          minScaleFactor: 0.9,
+          maxScaleFactor: 1.3,
+          child: AppLockGate(child: child ?? const SizedBox.shrink()),
+        );
       },
       routerConfig: appRouter,
     );

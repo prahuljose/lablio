@@ -27,9 +27,13 @@ class ProfileNotifier extends AsyncNotifier<ProfileModel?> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(profileRepositoryProvider).fetch(),
-    );
+    try {
+      final data = await ref.read(profileRepositoryProvider).fetch();
+      state = AsyncData(data);
+    } catch (e, st) {
+      // Keep cached profile visible on a failed refresh; rethrow to warn.
+      if (state.valueOrNull == null) state = AsyncError(e, st);
+      rethrow;
+    }
   }
 }

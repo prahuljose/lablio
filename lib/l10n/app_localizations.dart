@@ -2151,6 +2151,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Results matching notes / tags'**
   String get searchSectionEntries;
+
+  /// No description provided for @pinnedManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get pinnedManage;
+
+  /// No description provided for @pinnedManageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage pinned'**
+  String get pinnedManageTitle;
+
+  /// No description provided for @pinnedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing pinned yet.'**
+  String get pinnedEmpty;
+
+  /// No description provided for @pdfPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview & share'**
+  String get pdfPreviewTitle;
+
+  /// No description provided for @errorNoInternetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection'**
+  String get errorNoInternetTitle;
+
+  /// No description provided for @errorNoInternetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Check your internet connection and try again.'**
+  String get errorNoInternetBody;
+
+  /// No description provided for @errorGenericTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get errorGenericTitle;
+
+  /// No description provided for @errorGenericBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Please try again in a moment.'**
+  String get errorGenericBody;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
 }
 
 class _AppLocalizationsDelegate

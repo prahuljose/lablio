@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/units/unit_converter.dart';
 import '../../../core/units/unit_system_provider.dart';
@@ -27,7 +28,10 @@ class BodyMapScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(t.homeBodyMap)),
       body: trackedAsync.when(
         loading: () => const SkeletonList(),
-        error: (e, _) => Center(child: Text(t.commonError(e.toString()))),
+        error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () =>
+                ref.read(biomarkerEntriesProvider.notifier).refresh()),
         data: (tracked) {
           final summaries = _BodySystem.all
               .map((s) => _SystemSummary.from(s, tracked))
@@ -227,13 +231,14 @@ class _SystemSummary {
 class _Legend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    Widget dot(Color c, String label) => Row(
+    Widget dot(Color c, IconData glyph, String label) => Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 9,
-              height: 9,
+              width: 16,
+              height: 16,
               decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+              child: Icon(glyph, size: 11, color: Colors.white),
             ),
             const SizedBox(width: 5),
             Text(label,
@@ -247,10 +252,14 @@ class _Legend extends StatelessWidget {
       spacing: 16,
       runSpacing: 6,
       children: [
-        dot(AppColors.normal, AppLocalizations.of(context).bodyMapInRange),
-        dot(AppColors.low, AppLocalizations.of(context).biomarkersStatusLow),
-        dot(AppColors.high, AppLocalizations.of(context).biomarkersStatusHigh),
-        dot(AppColors.textTertiary, AppLocalizations.of(context).bodyMapNoData),
+        dot(AppColors.normal, Icons.check_rounded,
+            AppLocalizations.of(context).bodyMapInRange),
+        dot(AppColors.low, Icons.arrow_downward_rounded,
+            AppLocalizations.of(context).biomarkersStatusLow),
+        dot(AppColors.high, Icons.arrow_upward_rounded,
+            AppLocalizations.of(context).biomarkersStatusHigh),
+        dot(AppColors.textTertiary, Icons.remove_rounded,
+            AppLocalizations.of(context).bodyMapNoData),
       ],
     );
   }
@@ -577,10 +586,11 @@ class _SheetRow extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 8,
-              height: 8,
+              width: 18,
+              height: 18,
               decoration:
                   BoxDecoration(color: status.color, shape: BoxShape.circle),
+              child: Icon(status.icon, size: 12, color: Colors.white),
             ),
             const SizedBox(width: 12),
             Expanded(
