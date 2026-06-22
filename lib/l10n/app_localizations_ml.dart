@@ -1211,4 +1211,46 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get commonRetry => 'വീണ്ടും ശ്രമിക്കുക';
+
+  @override
+  String get commonSaved => 'സംരക്ഷിച്ചു';
+
+  @override
+  String get settingsAmoled => 'ട്രൂ ബ്ലാക്ക് (AMOLED)';
+
+  @override
+  String get settingsAmoledSub =>
+      'OLED സ്ക്രീനുകളിൽ ബാറ്ററി ലാഭിക്കാൻ ഡാർക്ക് മോഡിൽ ശുദ്ധമായ കറുപ്പ് ഉപയോഗിക്കുക.';
+
+  @override
+  String get settingsAccent => 'ആക്സന്റ് നിറം';
+
+  @override
+  String get discardTitle => 'മാറ്റങ്ങൾ ഉപേക്ഷിക്കണോ?';
+
+  @override
+  String get discardBody => 'സംരക്ഷിക്കാത്ത മാറ്റങ്ങൾ നഷ്ടപ്പെടും.';
+
+  @override
+  String get discardKeep => 'എഡിറ്റിംഗ് തുടരുക';
+
+  @override
+  String get discardDiscard => 'ഉപേക്ഷിക്കുക';
+
+  @override
+  String get pinnedPinned => 'ഹോമിലേക്ക് പിൻ ചെയ്തു';
+
+  @override
+  String get pinnedUnpinned => 'ഹോമിൽ നിന്ന് നീക്കി';
+
+  @override
+  String get commonClose => 'അടയ്ക്കുക';
+
+  @override
+  String get commonRefresh => 'പുതുക്കുക';
+
+  @override
+  String a11yStatusFor(String name, String status) {
+    return '$name: $status';
+  }
 }

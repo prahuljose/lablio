@@ -472,7 +472,7 @@ class _TrendChart extends StatelessWidget {
                     ),
                     getTouchedSpotIndicator: (barData, indexes) => indexes
                         .map((i) => TouchedSpotIndicatorData(
-                              const FlLine(
+                              FlLine(
                                   color: AppColors.primary, strokeWidth: 1.5),
                               FlDotData(
                                 getDotPainter: (spot, _, __, ___) =>
@@ -581,7 +581,7 @@ class _TrendChart extends StatelessWidget {
                       isCurved: true,
                       curveSmoothness: 0.28,
                       preventCurveOverShooting: true,
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         colors: [
                           AppColors.primaryDark,
                           AppColors.primary,
@@ -691,7 +691,7 @@ class _EntryRow extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(t,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w600,
@@ -889,11 +889,8 @@ class _NotesCardState extends ConsumerState<_NotesCard> {
           .save(widget.biomarkerId, _controller.text.trim());
       _saved = _controller.text.trim();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context).biomarkerDetailNoteSaved),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.normal,
-        ));
+        showSuccessSnackBar(
+            context, AppLocalizations.of(context).biomarkerDetailNoteSaved);
       }
     } catch (e) {
       if (mounted) {
@@ -1028,7 +1025,7 @@ class _BiomarkerHeaderDelegate extends SliverPersistentHeaderDelegate {
 
     return ClipRect(
       child: Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

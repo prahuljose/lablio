@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/nav_scroll.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/password_recovery.dart';
 import '../constants/app_colors.dart';
@@ -333,15 +335,15 @@ final appRouter = GoRouter(
   ],
 );
 
-class _AppShell extends StatefulWidget {
+class _AppShell extends ConsumerStatefulWidget {
   final Widget child;
   const _AppShell({required this.child});
 
   @override
-  State<_AppShell> createState() => _AppShellState();
+  ConsumerState<_AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<_AppShell> {
+class _AppShellState extends ConsumerState<_AppShell> {
   static const _navChannel = MethodChannel('com.lablio.app/nav');
   String _path = AppRoutes.home;
 
@@ -417,6 +419,11 @@ class _AppShellState extends State<_AppShell> {
       bottomNavigationBar: _LabNav(
         currentIndex: _selectedIndex(),
         onTap: (i) {
+          // Re-tapping the active tab scrolls its content back to the top.
+          if (i == _selectedIndex()) {
+            scrollTabToTop(ref, i);
+            return;
+          }
           switch (i) {
             case 0: context.go(AppRoutes.home);
             case 1: context.go(AppRoutes.reports);

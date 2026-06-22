@@ -6,7 +6,10 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/confirm_discard.dart';
 import '../../../core/widgets/branded_date_picker.dart';
+import '../../../core/units/unit_converter.dart';
+import '../../../core/units/unit_system_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/data/profile_model.dart';
@@ -42,6 +45,17 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   final List<String> _tags = [];
   DateTime _selectedDate = DateTime.now();
   bool _loading = false;
+  // The unit the user is entering the value in (defaults to their display
+  // system). Stored values are always converted back to the canonical unit.
+  UnitOption? _unit;
+
+  /// The typed value converted to the canonical (stored) unit.
+  double? _canonicalValue() {
+    final v = double.tryParse(_valueController.text);
+    if (v == null) return null;
+    final u = _unit;
+    return u == null ? v : UnitConverter.toCanonical(v, u);
+  }
 
   @override
   void dispose() {
@@ -157,7 +171,9 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       biomarkerId: widget.biomarkerId,
       biomarkerName: widget.biomarkerName,
       biomarkerCategory: biomarker?.category ?? 'Other',
-      value: double.parse(_valueController.text),
+      // Always store in the canonical (conventional) unit, regardless of which
+      // unit the user typed in.
+      value: _canonicalValue() ?? double.parse(_valueController.text),
       unit: biomarker?.unit ?? '',
       date: _selectedDate,
       notes: _notesController.text.trim().isEmpty
@@ -206,11 +222,24 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     }
   }
 
+  bool get _dirty =>
+      _valueController.text.trim().isNotEmpty ||
+      _notesController.text.trim().isNotEmpty ||
+      _tags.isNotEmpty;
+
+  Future<void> _handleClose() async {
+    if (!_dirty) {
+      context.pop();
+      return;
+    }
+    if (await confirmDiscard(context) && mounted) context.pop();
+  }
+
   // Determine status colour based on typed value + ref range
   Color? _statusColor(String? sex) {
     final biomarker = widget.biomarker;
     if (biomarker == null) return null;
-    final val = double.tryParse(_valueController.text);
+    final val = _canonicalValue();
     if (val == null) return null;
     final status = biomarker.statusForValue(val, sex: sex);
     return switch (status) {
@@ -230,13 +259,32 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     final range = biomarker?.rangeForSex(sex);
     final hasRange = range?.low != null && range?.high != null;
 
-    return Scaffold(
+    // Unit options for entry, defaulting to the user's display system.
+    final canonicalUnit = biomarker?.unit ?? '';
+    final unitOptions =
+        UnitConverter.optionsFor(widget.biomarkerId, canonicalUnit);
+    _unit ??= UnitConverter.defaultOptionFor(
+        widget.biomarkerId, canonicalUnit, ref.watch(unitSystemProvider));
+
+    // Live status of the value being typed (converted to canonical first).
+    final canonicalTyped = _canonicalValue();
+    final liveStatus = (biomarker != null && canonicalTyped != null && hasRange)
+        ? biomarker.statusForValue(canonicalTyped, sex: sex)
+        : RangeStatus.unknown;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (!didPop) await _handleClose();
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
+          tooltip: t.commonClose,
+          onPressed: _handleClose,
         ),
         title: Text(
           t.addEntryTitle(widget.biomarkerName),
@@ -264,9 +312,22 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   _ValueField(
                     controller: _valueController,
                     focusNode: _valueFocus,
-                    unit: biomarker?.unit,
+                    units: unitOptions,
+                    selectedUnit: _unit,
+                    onUnitChanged: (u) => setState(() => _unit = u),
                     statusColor: () => _statusColor(sex),
                     onChanged: (_) => setState(() {}),
+                  ),
+
+                  // ── Live status chip (appears once a value is typed) ──
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: liveStatus == RangeStatus.unknown
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: _LiveStatusChip(status: liveStatus),
+                          ),
                   ),
 
                   // ── Live range hint ──────────────────────────────────
@@ -325,7 +386,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                             color: AppColors.primary, width: 1.5),
                       ),
                       contentPadding: const EdgeInsets.all(16),
@@ -340,6 +401,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -347,6 +409,54 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-widgets
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Live "Normal / High / Low" preview chip shown as the user types a value.
+class _LiveStatusChip extends StatelessWidget {
+  final RangeStatus status;
+  const _LiveStatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final (color, label, icon) = switch (status) {
+      RangeStatus.high => (
+          AppColors.high,
+          t.biomarkersStatusHigh,
+          Icons.arrow_upward_rounded
+        ),
+      RangeStatus.low => (
+          AppColors.low,
+          t.biomarkersStatusLow,
+          Icons.arrow_downward_rounded
+        ),
+      _ => (
+          AppColors.normal,
+          t.biomarkersStatusNormal,
+          Icons.check_rounded
+        ),
+    };
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(label,
+                style: TextStyle(
+                    color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _SectionLabel extends StatelessWidget {
   final String text;
@@ -386,7 +496,7 @@ class _InfoCard extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.biotech_outlined,
+            child: Icon(Icons.biotech_outlined,
                 color: AppColors.primary, size: 22),
           ),
           const SizedBox(width: 14),
@@ -414,7 +524,7 @@ class _InfoCard extends StatelessWidget {
             ),
             child: Text(
               biomarker.shortName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primary,
@@ -430,17 +540,59 @@ class _InfoCard extends StatelessWidget {
 class _ValueField extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
-  final String? unit;
+  final List<UnitOption> units;
+  final UnitOption? selectedUnit;
+  final ValueChanged<UnitOption>? onUnitChanged;
   final Color? Function() statusColor;
   final void Function(String) onChanged;
 
   const _ValueField({
     required this.controller,
     required this.focusNode,
-    required this.unit,
+    required this.units,
+    required this.selectedUnit,
+    required this.onUnitChanged,
     required this.statusColor,
     required this.onChanged,
   });
+
+  Widget? _buildUnitSuffix() {
+    if (units.isEmpty) return null;
+    final sel = selectedUnit ?? units.first;
+    // Single unit → static label. Multiple → a picker so the user can enter
+    // a value in the unit their lab used.
+    if (units.length == 1) {
+      if (sel.label.isEmpty) return null;
+      return Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: Text(sel.label,
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary)),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: DropdownButton<UnitOption>(
+        value: sel,
+        isDense: true,
+        underline: const SizedBox.shrink(),
+        borderRadius: BorderRadius.circular(12),
+        style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.primary),
+        items: [
+          for (final u in units)
+            DropdownMenuItem(value: u, child: Text(u.label)),
+        ],
+        onChanged: (u) {
+          if (u != null) onUnitChanged?.call(u);
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +603,7 @@ class _ValueField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
-      autofocus: false,
+      autofocus: true,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       textInputAction: TextInputAction.next,
       onChanged: onChanged,
@@ -471,19 +623,7 @@ class _ValueField extends StatelessWidget {
         ),
         filled: true,
         fillColor: AppColors.surface,
-        suffixIcon: unit != null && unit!.isNotEmpty
-            ? Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Text(
-                  unit!,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              )
-            : null,
+        suffixIcon: _buildUnitSuffix(),
         suffixIconConstraints:
             const BoxConstraints(minWidth: 0, minHeight: 0),
         border: OutlineInputBorder(
@@ -579,7 +719,7 @@ class _DateTile extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.calendar_today_outlined,
+              child: Icon(Icons.calendar_today_outlined,
                   color: AppColors.primary, size: 18),
             ),
             const SizedBox(width: 14),

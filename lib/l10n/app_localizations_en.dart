@@ -1189,4 +1189,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonRetry => 'Retry';
+
+  @override
+  String get commonSaved => 'Saved';
+
+  @override
+  String get settingsAmoled => 'True black (AMOLED)';
+
+  @override
+  String get settingsAmoledSub =>
+      'Use pure black in dark mode to save battery on OLED screens.';
+
+  @override
+  String get settingsAccent => 'Accent color';
+
+  @override
+  String get discardTitle => 'Discard changes?';
+
+  @override
+  String get discardBody => 'Your unsaved changes will be lost.';
+
+  @override
+  String get discardKeep => 'Keep editing';
+
+  @override
+  String get discardDiscard => 'Discard';
+
+  @override
+  String get pinnedPinned => 'Pinned to home';
+
+  @override
+  String get pinnedUnpinned => 'Removed from home';
+
+  @override
+  String get commonClose => 'Close';
+
+  @override
+  String get commonRefresh => 'Refresh';
+
+  @override
+  String a11yStatusFor(String name, String status) {
+    return '$name: $status';
+  }
 }

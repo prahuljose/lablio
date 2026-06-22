@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/nav_scroll.dart';
+import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
@@ -66,6 +68,7 @@ class ProfileScreen extends ConsumerWidget {
           }
         },
         child: ListView(
+        controller: ref.watch(navScrollControllersProvider)[4],
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
@@ -426,7 +429,7 @@ class _HealthDetailsCard extends StatelessWidget {
       loading: () => const Card(
         child: Padding(
           padding: EdgeInsets.all(24),
-          child: LablioLoader(size: 44),
+          child: SkeletonBlock(height: 160),
         ),
       ),
       error: (e, _) => const SizedBox.shrink(),

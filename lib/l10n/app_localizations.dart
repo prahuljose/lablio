@@ -2205,6 +2205,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get commonRetry;
+
+  /// No description provided for @commonSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get commonSaved;
+
+  /// No description provided for @settingsAmoled.
+  ///
+  /// In en, this message translates to:
+  /// **'True black (AMOLED)'**
+  String get settingsAmoled;
+
+  /// No description provided for @settingsAmoledSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Use pure black in dark mode to save battery on OLED screens.'**
+  String get settingsAmoledSub;
+
+  /// No description provided for @settingsAccent.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent color'**
+  String get settingsAccent;
+
+  /// No description provided for @discardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get discardTitle;
+
+  /// No description provided for @discardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your unsaved changes will be lost.'**
+  String get discardBody;
+
+  /// No description provided for @discardKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get discardKeep;
+
+  /// No description provided for @discardDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discardDiscard;
+
+  /// No description provided for @pinnedPinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned to home'**
+  String get pinnedPinned;
+
+  /// No description provided for @pinnedUnpinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from home'**
+  String get pinnedUnpinned;
+
+  /// No description provided for @commonClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commonClose;
+
+  /// No description provided for @commonRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get commonRefresh;
+
+  /// No description provided for @a11yStatusFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {status}'**
+  String a11yStatusFor(String name, String status);
 }
 
 class _AppLocalizationsDelegate

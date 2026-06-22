@@ -149,6 +149,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           children: [
                             TextFormField(
                               controller: _nameController,
+                              autofocus: true,
+                              textInputAction: TextInputAction.next,
                               textCapitalization: TextCapitalization.words,
                               autofillHints: const [AutofillHints.name],
                               decoration: InputDecoration(
@@ -163,6 +165,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
                               autofillHints: const [AutofillHints.email],
                               decoration: InputDecoration(
                                 labelText: t.authEmailLabel,
@@ -322,7 +325,7 @@ class _Header extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,

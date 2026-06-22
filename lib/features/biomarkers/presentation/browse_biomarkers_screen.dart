@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
@@ -56,7 +57,7 @@ class _BrowseBiomarkersScreenState
           const SizedBox(height: 8),
           Expanded(
             child: biomarkersAsync.when(
-              loading: () => const LablioLoader(),
+              loading: () => const SkeletonList(),
               error: (e, _) => ErrorView(
                   error: e,
                   onRetry: () async =>

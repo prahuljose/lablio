@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/network/network_error.dart';
+import '../../../core/widgets/skeletons.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../l10n/app_localizations.dart';
@@ -66,8 +68,17 @@ class ReportDetailScreen extends ConsumerWidget {
           _SectionLabel(t.reportDetailResults),
           const SizedBox(height: 12),
           linkedEntries.when(
-            loading: () => const LablioLoader(),
-            error: (e, _) => Text(t.reportsError(e.toString())),
+            loading: () => Column(
+              children: List.generate(
+                  3,
+                  (_) => const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: SkeletonBlock(height: 64),
+                      )),
+            ),
+            error: (e, _) => Text(
+                networkAwareMessage(e, t),
+                style: Theme.of(context).textTheme.bodyMedium),
             data: (entries) => entries.isEmpty
                 ? _EmptyEntries(report: report)
                 : Column(
@@ -156,7 +167,7 @@ class _HeaderCard extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.description_outlined,
+                child: Icon(Icons.description_outlined,
                     color: AppColors.primary, size: 24),
               ),
               const SizedBox(width: 16),
@@ -254,7 +265,7 @@ class _PdfButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(double.infinity, 52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        side: const BorderSide(color: AppColors.primary),
+        side: BorderSide(color: AppColors.primary),
         foregroundColor: AppColors.primary,
       ),
       icon: const Icon(Icons.picture_as_pdf_outlined),
@@ -340,19 +351,27 @@ class _EntryRow extends StatelessWidget {
                 ? Icons.arrow_downward_rounded
                 : Icons.remove_rounded;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 18,
-            height: 18,
-            margin: const EdgeInsets.only(right: 12),
+        onTap: () => context.push(AppRoutes.biomarkerDetail, extra: {
+          'biomarkerId': entry.biomarkerId,
+          'biomarkerName': entry.biomarkerName,
+        }),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.divider),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 18,
+                height: 18,
+                margin: const EdgeInsets.only(right: 12),
             alignment: Alignment.center,
             decoration: BoxDecoration(
                 color: statusColor, shape: BoxShape.circle),
@@ -405,6 +424,8 @@ class _EntryRow extends StatelessWidget {
             ],
           ),
         ],
+      ),
+        ),
       ),
     );
   }

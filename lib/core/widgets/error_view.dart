@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../l10n/app_localizations.dart';
 import '../constants/app_colors.dart';
 import '../network/network_error.dart';
+
+/// Success feedback: a light haptic tap + a green confirmation SnackBar.
+/// Resolves against the app-level ScaffoldMessenger, so it survives a pop
+/// (e.g. when a form closes right after saving).
+void showSuccessSnackBar(BuildContext context, String message) {
+  HapticFeedback.lightImpact();
+  ScaffoldMessenger.of(context)
+    ..clearSnackBars()
+    ..showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: AppColors.normal,
+      behavior: SnackBarBehavior.floating,
+    ));
+}
 
 /// Shows a transient, network-aware warning (used when a pull-to-refresh fails
 /// but cached content is still on screen — no need to replace the whole view).

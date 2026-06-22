@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/nav_scroll.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/units/unit_converter.dart';
@@ -15,6 +16,7 @@ import '../../../core/widgets/status_style.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/biomarker_entry_model.dart';
 import '../providers/biomarkers_provider.dart';
+import '../providers/pinned_biomarkers_provider.dart';
 import 'quick_log_sheet.dart';
 
 class BiomarkersScreen extends ConsumerStatefulWidget {
@@ -215,6 +217,8 @@ class _BiomarkersScreenState extends ConsumerState<BiomarkersScreen> {
                           ],
                         )
                       : ListView.separated(
+                          controller:
+                              ref.watch(navScrollControllersProvider)[2],
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
                           itemCount: list.length,
@@ -321,7 +325,7 @@ class _SearchBarState extends State<_SearchBar> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+            borderSide: BorderSide(color: AppColors.primary, width: 1.5),
           ),
         ),
       ),
@@ -519,6 +523,19 @@ class _BiomarkerTile extends ConsumerWidget {
             'biomarkerName': entry.biomarkerName,
           },
         ),
+        // Long-press to pin/unpin this marker on the home dashboard.
+        onLongPress: () {
+          final notifier = ref.read(pinnedBiomarkersProvider.notifier);
+          final wasPinned = notifier.isPinned(entry.biomarkerId);
+          notifier.toggle(entry.biomarkerId);
+          HapticFeedback.mediumImpact();
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(
+              content: Text(wasPinned ? t.pinnedUnpinned : t.pinnedPinned),
+              behavior: SnackBarBehavior.floating,
+            ));
+        },
         child: IntrinsicHeight(
           child: Row(
             children: [

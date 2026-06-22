@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/confirm_discard.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/network/network_error.dart';
 import '../../../core/widgets/branded_date_picker.dart';
 import '../../../l10n/app_localizations.dart';
@@ -69,7 +71,10 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                 : _notesController.text.trim(),
             pdfFile: _pdfFile,
           );
-      if (mounted) context.pop();
+      if (mounted) {
+        showSuccessSnackBar(context, t.commonSaved);
+        context.pop();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -85,15 +90,34 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
     }
   }
 
+  bool get _dirty =>
+      _titleController.text.trim().isNotEmpty ||
+      _notesController.text.trim().isNotEmpty ||
+      _pdfFile != null;
+
+  Future<void> _handleClose() async {
+    if (!_dirty) {
+      context.pop();
+      return;
+    }
+    if (await confirmDiscard(context) && mounted) context.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (!didPop) await _handleClose();
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(t.addReportTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
+          tooltip: t.commonClose,
+          onPressed: _handleClose,
         ),
         actions: [
           TextButton(
@@ -105,7 +129,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : Text(t.commonSave,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600)),
           ),
@@ -118,6 +142,9 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
           children: [
             TextFormField(
               controller: _titleController,
+              autofocus: true,
+              textInputAction: TextInputAction.next,
+              textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 labelText: t.addReportTitleLabel,
                 hintText: t.addReportTitleHint,
@@ -178,6 +205,7 @@ class _AddReportScreenState extends ConsumerState<AddReportScreen> {
             _buildPdfPicker(),
           ],
         ),
+      ),
       ),
     );
   }

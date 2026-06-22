@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/security/app_lock.dart';
+import '../../../core/theme/appearance_provider.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../core/units/unit_converter.dart';
 import '../../../core/units/unit_system_provider.dart';
@@ -64,6 +66,51 @@ class SettingsScreen extends ConsumerWidget {
                       onSelectionChanged: (s) => ref
                           .read(themeModeProvider.notifier)
                           .set(s.first),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: SwitchListTile(
+                value: ref.watch(amoledProvider),
+                onChanged: (v) => ref.read(amoledProvider.notifier).set(v),
+                secondary: Icon(Icons.contrast, color: AppColors.textSecondary),
+                title: Text(t.settingsAmoled),
+                subtitle: Text(t.settingsAmoledSub),
+                activeThumbColor: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Icon(Icons.palette_outlined,
+                          color: AppColors.textSecondary),
+                      const SizedBox(width: 16),
+                      Text(t.settingsAccent),
+                    ]),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (final (_, color) in kAccentOptions)
+                          _AccentSwatch(
+                            color: color,
+                            selected:
+                                ref.watch(accentColorProvider).toARGB32() ==
+                                    color.toARGB32(),
+                            onTap: () => ref
+                                .read(accentColorProvider.notifier)
+                                .set(color),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -167,6 +214,36 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
+class _AccentSwatch extends StatelessWidget {
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+  const _AccentSwatch(
+      {required this.color, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected ? AppColors.textPrimary : Colors.transparent,
+            width: 2.5,
+          ),
+        ),
+        child: selected
+            ? const Icon(Icons.check, color: Colors.white, size: 18)
+            : null,
+      ),
+    );
+  }
+}
+
 class _Section extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -228,11 +305,8 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
             current.copyWith(defaultTags: List<String>.from(_tags!)),
           );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context).settingsTagsSaved),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.normal,
-        ));
+        showSuccessSnackBar(
+            context, AppLocalizations.of(context).settingsTagsSaved);
       }
     } catch (e) {
       if (mounted) {
@@ -287,7 +361,7 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
                     visualDensity: VisualDensity.compact,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.10),
                     side: BorderSide(color: AppColors.primary.withValues(alpha: 0.30)),
-                    labelStyle: const TextStyle(fontSize: 13, color: AppColors.primary),
+                    labelStyle: TextStyle(fontSize: 13, color: AppColors.primary),
                     deleteIconColor: AppColors.primary,
                   ),
               ],
@@ -307,7 +381,7 @@ class _TagsEditorState extends ConsumerState<_TagsEditor> {
                         borderSide: BorderSide(color: AppColors.divider)),
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                        borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
                   ),
                 ),
               ),

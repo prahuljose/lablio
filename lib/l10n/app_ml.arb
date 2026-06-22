@@ -350,5 +350,18 @@
   "errorNoInternetBody": "നിങ്ങൾ ഓഫ്‌ലൈനാണ്. നിങ്ങളുടെ ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
   "errorGenericTitle": "എന്തോ കുഴപ്പം സംഭവിച്ചു",
   "errorGenericBody": "ദയവായി അൽപ്പ സമയത്തിന് ശേഷം വീണ്ടും ശ്രമിക്കുക.",
-  "commonRetry": "വീണ്ടും ശ്രമിക്കുക"
+  "commonRetry": "വീണ്ടും ശ്രമിക്കുക",
+  "commonSaved": "സംരക്ഷിച്ചു",
+  "settingsAmoled": "ട്രൂ ബ്ലാക്ക് (AMOLED)",
+  "settingsAmoledSub": "OLED സ്ക്രീനുകളിൽ ബാറ്ററി ലാഭിക്കാൻ ഡാർക്ക് മോഡിൽ ശുദ്ധമായ കറുപ്പ് ഉപയോഗിക്കുക.",
+  "settingsAccent": "ആക്സന്റ് നിറം",
+  "discardTitle": "മാറ്റങ്ങൾ ഉപേക്ഷിക്കണോ?",
+  "discardBody": "സംരക്ഷിക്കാത്ത മാറ്റങ്ങൾ നഷ്ടപ്പെടും.",
+  "discardKeep": "എഡിറ്റിംഗ് തുടരുക",
+  "discardDiscard": "ഉപേക്ഷിക്കുക",
+  "pinnedPinned": "ഹോമിലേക്ക് പിൻ ചെയ്തു",
+  "pinnedUnpinned": "ഹോമിൽ നിന്ന് നീക്കി",
+  "commonClose": "അടയ്ക്കുക",
+  "commonRefresh": "പുതുക്കുക",
+  "a11yStatusFor": "{name}: {status}"
 }

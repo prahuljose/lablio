@@ -119,7 +119,7 @@ class _LockScreen extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.lock_outline,
+              child: Icon(Icons.lock_outline,
                   size: 56, color: AppColors.primary),
             ),
             const SizedBox(height: 24),

@@ -191,7 +191,7 @@ class _BiomarkerHit extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(Icons.biotech_outlined, color: AppColors.primary),
+        leading: Icon(Icons.biotech_outlined, color: AppColors.primary),
         title: _highlight(biomarker.name, query, context,
             base: Theme.of(context).textTheme.titleMedium),
         subtitle: _highlight(biomarker.category, query, context,
@@ -219,7 +219,7 @@ class _ReportHit extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(Icons.description_outlined,
+        leading: Icon(Icons.description_outlined,
             color: AppColors.primary),
         title: _highlight(report.title, query, context,
             base: Theme.of(context).textTheme.titleMedium),
@@ -247,7 +247,7 @@ class _EntryHit extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading:
-            const Icon(Icons.science_outlined, color: AppColors.primary),
+            Icon(Icons.science_outlined, color: AppColors.primary),
         title: Text(
             '${entry.biomarkerName} · ${entry.value} ${entry.unit}'),
         subtitle: _highlight(subtitle, query, context,

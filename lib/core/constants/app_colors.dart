@@ -13,10 +13,25 @@ class AppColors {
   static Brightness brightness = Brightness.light;
   static bool get _dark => brightness == Brightness.dark;
 
-  // ── Brand (constant) ──────────────────────────────────────────
-  static const primary = Color(0xFF0077B6);
-  static const primaryLight = Color(0xFF00B4D8);
-  static const primaryDark = Color(0xFF023E8A);
+  // ── Brand (accent) ────────────────────────────────────────────
+  // Mutable so the user can choose an accent colour; [applyAccent] re-tints the
+  // whole ramp and the MaterialApp builder calls it from the accent provider.
+  static const defaultAccent = Color(0xFF0077B6);
+  static Color primary = defaultAccent;
+  static Color primaryLight = const Color(0xFF00B4D8);
+  static Color primaryDark = const Color(0xFF023E8A);
+
+  static void applyAccent(Color seed) {
+    primary = seed;
+    final h = HSLColor.fromColor(seed);
+    primaryLight =
+        h.withLightness((h.lightness + 0.12).clamp(0.0, 1.0)).toColor();
+    primaryDark =
+        h.withLightness((h.lightness - 0.16).clamp(0.0, 1.0)).toColor();
+  }
+
+  /// True-black (AMOLED) dark mode — darkens dark surfaces toward pure black.
+  static bool amoled = false;
 
   // ── Status (constant) ─────────────────────────────────────────
   static const normal = Color(0xFF10B981);
@@ -41,9 +56,12 @@ class AppColors {
   static const lightDivider = Color(0xFFE5E7EB);
 
   // ── Dark raw values ───────────────────────────────────────────
-  static const darkSurface = Color(0xFF1A1F26);
-  static const darkSurfaceVariant = Color(0xFF222A33);
-  static const darkBackground = Color(0xFF0F1419);
+  static Color get darkSurface =>
+      amoled ? const Color(0xFF0C0C0E) : const Color(0xFF1A1F26);
+  static Color get darkSurfaceVariant =>
+      amoled ? const Color(0xFF161618) : const Color(0xFF222A33);
+  static Color get darkBackground =>
+      amoled ? const Color(0xFF000000) : const Color(0xFF0F1419);
   static const darkTextPrimary = Color(0xFFF3F4F6);
   static const darkTextSecondary = Color(0xFF9CA3AF);
   static const darkTextTertiary = Color(0xFF6B7280);

@@ -1195,4 +1195,46 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get commonRetry => 'फिर से प्रयास करें';
+
+  @override
+  String get commonSaved => 'सहेजा गया';
+
+  @override
+  String get settingsAmoled => 'ट्रू ब्लैक (AMOLED)';
+
+  @override
+  String get settingsAmoledSub =>
+      'OLED स्क्रीन पर बैटरी बचाने के लिए डार्क मोड में शुद्ध काला उपयोग करें.';
+
+  @override
+  String get settingsAccent => 'एक्सेंट रंग';
+
+  @override
+  String get discardTitle => 'परिवर्तन छोड़ें?';
+
+  @override
+  String get discardBody => 'आपके सहेजे न गए परिवर्तन खो जाएँगे.';
+
+  @override
+  String get discardKeep => 'संपादन जारी रखें';
+
+  @override
+  String get discardDiscard => 'छोड़ें';
+
+  @override
+  String get pinnedPinned => 'होम पर पिन किया गया';
+
+  @override
+  String get pinnedUnpinned => 'होम से हटाया गया';
+
+  @override
+  String get commonClose => 'बंद करें';
+
+  @override
+  String get commonRefresh => 'रिफ़्रेश करें';
+
+  @override
+  String a11yStatusFor(String name, String status) {
+    return '$name: $status';
+  }
 }

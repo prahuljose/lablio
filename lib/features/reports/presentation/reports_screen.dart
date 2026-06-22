@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/nav_scroll.dart';
+import '../../../core/widgets/lablio_refresh.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
@@ -28,6 +30,7 @@ class ReportsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: t.commonRefresh,
             onPressed: () => ref.read(reportsProvider.notifier).refresh(),
           ),
         ],
@@ -43,22 +46,35 @@ class ReportsScreen extends ConsumerWidget {
           foregroundColor: Colors.white,
         ),
       ),
-      body: reportsAsync.when(
-        loading: () => const SkeletonList(),
-        error: (e, _) => ErrorView(
-            error: e,
-            onRetry: () => ref.read(reportsProvider.notifier).refresh()),
-        data: (reports) => reports.isEmpty
-            ? _buildEmpty(context)
-            : _buildList(context, ref, reports),
+      body: LablioRefresh(
+        onRefresh: () async {
+          try {
+            await ref.read(reportsProvider.notifier).refresh();
+          } catch (e) {
+            if (context.mounted) showOfflineAwareSnackBar(context, e);
+          }
+        },
+        child: reportsAsync.when(
+          loading: () => const SkeletonList(),
+          error: (e, _) => ErrorView(
+              error: e,
+              onRetry: () => ref.read(reportsProvider.notifier).refresh()),
+          data: (reports) => reports.isEmpty
+              ? _buildEmpty(context)
+              : _buildList(context, ref, reports),
+        ),
       ),
     );
   }
 
   Widget _buildEmpty(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Center(
-      child: Column(
+    // Scrollable so pull-to-refresh works even when the list is empty.
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+        Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.folder_open_outlined,
@@ -71,12 +87,14 @@ class ReportsScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodyMedium),
         ],
       ),
+      ],
     );
   }
 
   Widget _buildList(
       BuildContext context, WidgetRef ref, List<ReportModel> reports) {
     return ListView.separated(
+      controller: ref.watch(navScrollControllersProvider)[1],
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       itemCount: reports.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -109,7 +127,7 @@ class _ReportCard extends ConsumerWidget {
                   color: AppColors.primaryLight.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.description_outlined,
+                child: Icon(Icons.description_outlined,
                     color: AppColors.primary),
               ),
               const SizedBox(width: 16),
@@ -134,7 +152,7 @@ class _ReportCard extends ConsumerWidget {
                         ),
                         if (report.pdfUrl != null) ...[
                           const SizedBox(width: 12),
-                          const Icon(Icons.picture_as_pdf,
+                          Icon(Icons.picture_as_pdf,
                               size: 12, color: AppColors.primary),
                           const SizedBox(width: 4),
                           Flexible(

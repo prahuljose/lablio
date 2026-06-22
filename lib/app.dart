@@ -8,6 +8,7 @@ import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/security/app_lock.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/appearance_provider.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'features/biomarkers/providers/biomarker_notes_provider.dart';
 import 'features/biomarkers/providers/biomarkers_provider.dart';
@@ -84,6 +85,9 @@ class _LablioAppState extends ConsumerState<LablioApp> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    // Apply accent + AMOLED before themes are built so both recompute on change.
+    AppColors.applyAccent(ref.watch(accentColorProvider));
+    AppColors.amoled = ref.watch(amoledProvider);
 
     return MaterialApp.router(
       title: 'Lablio',
@@ -104,7 +108,12 @@ class _LablioAppState extends ConsumerState<LablioApp> {
         return MediaQuery.withClampedTextScaling(
           minScaleFactor: 0.9,
           maxScaleFactor: 1.3,
-          child: AppLockGate(child: child ?? const SizedBox.shrink()),
+          // Tap anywhere outside a field to dismiss the keyboard.
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: AppLockGate(child: child ?? const SizedBox.shrink()),
+          ),
         );
       },
       routerConfig: appRouter,

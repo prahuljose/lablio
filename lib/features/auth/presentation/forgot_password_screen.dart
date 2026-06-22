@@ -60,7 +60,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
                       AppColors.primaryDark,

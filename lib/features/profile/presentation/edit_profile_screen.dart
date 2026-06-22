@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/confirm_discard.dart';
 import '../../../core/widgets/branded_date_picker.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/profile_model.dart';
@@ -31,6 +33,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _initialised = false;
   bool _saving = false;
   bool _uploadingAvatar = false;
+  ProfileModel? _initial;
 
   @override
   void dispose() {
@@ -42,6 +45,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void _hydrate(ProfileModel? p) {
     if (_initialised || p == null) return;
     _initialised = true;
+    _initial = p;
     _dob = p.dateOfBirth;
     _sex = p.sex;
     _bloodType = p.bloodType;
@@ -117,7 +121,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  bool get _dirty {
+    final p = _initial;
+    if (p == null) return false;
+    return _dob != p.dateOfBirth ||
+        _sex != p.sex ||
+        _bloodType != p.bloodType ||
+        double.tryParse(_heightController.text.trim()) != p.heightCm ||
+        double.tryParse(_weightController.text.trim()) != p.weightKg;
+  }
+
+  Future<void> _handleClose() async {
+    if (!_dirty) {
+      context.pop();
+      return;
+    }
+    if (await confirmDiscard(context) && mounted) context.pop();
+  }
+
   void _snack(String msg, {bool isError = false}) {
+    HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
@@ -135,13 +158,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final name = profileAsync.valueOrNull?.fullName ?? 'User';
     final t = AppLocalizations.of(context);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (!didPop) await _handleClose();
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(t.editProfileTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
+          tooltip: t.commonClose,
+          onPressed: _handleClose,
         ),
       ),
       body: ListView(
@@ -161,7 +190,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     child: avatarUrl == null
                         ? Text(
                             _initials(name),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primary,
@@ -301,6 +330,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 : Text(t.editProfileSaveChanges),
           ),
         ],
+      ),
       ),
     );
   }

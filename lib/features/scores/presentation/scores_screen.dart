@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/nav_scroll.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
 import '../../../core/widgets/lablio_refresh.dart';
@@ -81,6 +82,7 @@ class ScoresScreen extends ConsumerWidget {
               }
             },
             child: ListView(
+              controller: ref.watch(navScrollControllersProvider)[3],
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
               children: [
@@ -218,7 +220,7 @@ class _PhenoAgeInfoSheet extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.cake_outlined,
+                  Icon(Icons.cake_outlined,
                       color: AppColors.primary, size: 22),
                   const SizedBox(width: 10),
                   Text('Biological Age',
@@ -334,7 +336,7 @@ class _PhenoAgeCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.primaryDark, AppColors.primaryLight],
@@ -457,7 +459,7 @@ class _PhenoAgeCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.cake_outlined,
+                Icon(Icons.cake_outlined,
                     size: 18, color: AppColors.primary),
                 const SizedBox(width: 8),
                 Expanded(
@@ -587,7 +589,7 @@ class _SummaryHeader extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.primaryDark, AppColors.primary],

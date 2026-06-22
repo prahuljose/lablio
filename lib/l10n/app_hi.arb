@@ -350,5 +350,18 @@
   "errorNoInternetBody": "आप ऑफ़लाइन हैं. अपना इंटरनेट कनेक्शन जाँचें और फिर से प्रयास करें.",
   "errorGenericTitle": "कुछ गलत हुआ",
   "errorGenericBody": "कृपया कुछ देर बाद फिर से प्रयास करें.",
-  "commonRetry": "फिर से प्रयास करें"
+  "commonRetry": "फिर से प्रयास करें",
+  "commonSaved": "सहेजा गया",
+  "settingsAmoled": "ट्रू ब्लैक (AMOLED)",
+  "settingsAmoledSub": "OLED स्क्रीन पर बैटरी बचाने के लिए डार्क मोड में शुद्ध काला उपयोग करें.",
+  "settingsAccent": "एक्सेंट रंग",
+  "discardTitle": "परिवर्तन छोड़ें?",
+  "discardBody": "आपके सहेजे न गए परिवर्तन खो जाएँगे.",
+  "discardKeep": "संपादन जारी रखें",
+  "discardDiscard": "छोड़ें",
+  "pinnedPinned": "होम पर पिन किया गया",
+  "pinnedUnpinned": "होम से हटाया गया",
+  "commonClose": "बंद करें",
+  "commonRefresh": "रिफ़्रेश करें",
+  "a11yStatusFor": "{name}: {status}"
 }

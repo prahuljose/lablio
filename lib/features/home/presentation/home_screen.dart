@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/nav_scroll.dart';
+import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/network/network_error.dart';
 import '../../../core/router/app_router.dart';
@@ -66,6 +68,7 @@ class HomeScreen extends ConsumerWidget {
           }
         },
         child: ListView(
+          controller: ref.watch(navScrollControllersProvider)[0],
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
           children: [
             _StatsRow(
@@ -111,7 +114,14 @@ class HomeScreen extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             entriesAsync.when(
-              loading: () => const LablioLoader(),
+              loading: () => Column(
+                children: List.generate(
+                    3,
+                    (_) => const Padding(
+                          padding: EdgeInsets.only(bottom: 10),
+                          child: SkeletonBlock(height: 64),
+                        )),
+              ),
               error: (e, _) => Text(
                   networkAwareMessage(e, AppLocalizations.of(context)),
                   style: Theme.of(context).textTheme.bodyMedium),
@@ -189,7 +199,7 @@ class _InsightsCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.insights_outlined,
+                Icon(Icons.insights_outlined,
                     size: 18, color: AppColors.primary),
                 const SizedBox(width: 8),
                 Expanded(
@@ -204,7 +214,7 @@ class _InsightsCard extends StatelessWidget {
                   GestureDetector(
                     onTap: onViewAll,
                     child: Text(t.homeViewAll,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
                             fontSize: 13)),
@@ -532,10 +542,22 @@ class _ActionCard extends StatelessWidget {
     this.comingSoon = false,
   });
 
+  /// In dark mode a dark tint (e.g. brand navy) looks dull and is hard to read
+  /// on a near-black card, so lift its lightness to stay vivid.
+  Color _readableTint(Color c, bool dark) {
+    if (!dark) return c;
+    final h = HSLColor.fromColor(c);
+    return h.lightness < 0.5
+        ? h.withLightness(0.62).withSaturation(0.85).toColor()
+        : c;
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final tint = comingSoon ? AppColors.textTertiary : color;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final tint =
+        comingSoon ? AppColors.textTertiary : _readableTint(color, dark);
     return InkWell(
       onTap: comingSoon
           ? () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -601,6 +623,7 @@ class _RecentResultTile extends StatelessWidget {
             : entry.isLow
                 ? AppColors.low
                 : AppColors.textTertiary;
+    final t = AppLocalizations.of(context);
     final statusIcon = entry.isNormal
         ? Icons.check_rounded
         : entry.isHigh
@@ -608,19 +631,29 @@ class _RecentResultTile extends StatelessWidget {
             : entry.isLow
                 ? Icons.arrow_downward_rounded
                 : Icons.remove_rounded;
+    final statusLabel = entry.isNormal
+        ? t.biomarkersStatusNormal
+        : entry.isHigh
+            ? t.biomarkersStatusHigh
+            : entry.isLow
+                ? t.biomarkersStatusLow
+                : '';
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
-            Container(
-              width: 18,
-              height: 18,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                  color: statusColor, shape: BoxShape.circle),
-              child: Icon(statusIcon, size: 12, color: Colors.white),
+            Semantics(
+              label: statusLabel,
+              child: Container(
+                width: 18,
+                height: 18,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                    color: statusColor, shape: BoxShape.circle),
+                child: Icon(statusIcon, size: 12, color: Colors.white),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -672,7 +705,7 @@ class _PinnedSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.push_pin, size: 16, color: AppColors.primary),
+              Icon(Icons.push_pin, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
               Text(AppLocalizations.of(context).homePinned,
                   style: Theme.of(context).textTheme.titleLarge),

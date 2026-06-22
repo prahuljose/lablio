@@ -751,5 +751,28 @@
   "errorNoInternetBody": "You're offline. Check your internet connection and try again.",
   "errorGenericTitle": "Something went wrong",
   "errorGenericBody": "Please try again in a moment.",
-  "commonRetry": "Retry"
+  "commonRetry": "Retry",
+  "commonSaved": "Saved",
+  "settingsAmoled": "True black (AMOLED)",
+  "settingsAmoledSub": "Use pure black in dark mode to save battery on OLED screens.",
+  "settingsAccent": "Accent color",
+  "discardTitle": "Discard changes?",
+  "discardBody": "Your unsaved changes will be lost.",
+  "discardKeep": "Keep editing",
+  "discardDiscard": "Discard",
+  "pinnedPinned": "Pinned to home",
+  "pinnedUnpinned": "Removed from home",
+  "commonClose": "Close",
+  "commonRefresh": "Refresh",
+  "a11yStatusFor": "{name}: {status}",
+  "@a11yStatusFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -58,7 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final isLast = _page == slides.length - 1;
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
               AppColors.primaryDark,

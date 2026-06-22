@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/skeletons.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/branded_date_picker.dart';
 import '../../../core/widgets/animated_lablio_logo.dart';
@@ -75,7 +76,7 @@ class _RecordList extends ConsumerWidget {
         foregroundColor: Colors.white,
       ),
       body: async.when(
-        loading: () => const LablioLoader(),
+        loading: () => const SkeletonList(),
         error: (e, _) => ErrorView(
             error: e,
             onRetry: () async => ref.invalidate(medicalRecordProvider)),
@@ -132,6 +133,7 @@ class _Tile extends StatelessWidget {
         trailing: IconButton(
           icon: Icon(Icons.delete_outline,
               color: AppColors.textTertiary),
+          tooltip: t.commonDelete,
           onPressed: onDelete,
         ),
       ),
@@ -266,7 +268,10 @@ Future<void> _showAddSheet(
                       await ref
                           .read(medicalRecordProvider.notifier)
                           .add(entry);
-                      if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+                      if (sheetCtx.mounted) {
+                        showSuccessSnackBar(sheetCtx, t.commonSaved);
+                        Navigator.pop(sheetCtx);
+                      }
                     } catch (e) {
                       if (sheetCtx.mounted) {
                         ScaffoldMessenger.of(sheetCtx).showSnackBar(SnackBar(

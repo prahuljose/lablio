@@ -32,7 +32,7 @@ class SexSelector extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             gradient: selected
-                ? const LinearGradient(
+                ? LinearGradient(
                     colors: [AppColors.primary, AppColors.primaryLight],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,

@@ -121,7 +121,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
+                      borderSide: BorderSide(
                           color: AppColors.primary, width: 1.5),
                     ),
                   ),
@@ -183,7 +183,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
                         itemBuilder: (_, i) {
                           final b = results[i];
                           return ListTile(
-                            leading: const Icon(Icons.biotech_outlined,
+                            leading: Icon(Icons.biotech_outlined,
                                 color: AppColors.primary),
                             title: Text(b.name),
                             subtitle: Text(b.category),
